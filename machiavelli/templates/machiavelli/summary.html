@@ -2,7 +2,6 @@
 
 {% load i18n %}
 {% load cache %}
-{% load forum_tags %}
 {% load game_icons %}
 {% load stars %}
 
@@ -113,27 +112,6 @@
 {% endif %}
 </div>
 
-
-{% if forum %}
-{% cache 600 "forum_latest" LANGUAGE_CODE %}
-<div id="forum_latest" class="section">
-{% forum_latest_thread_activity 5 as latest_activity %}
-<h2>{% trans "Latest forum posts" %}</h2>
-<ul class="thread_list">
-{% for thread in latest_activity %}
-<li>
-<a href="{{ thread.thread_latest_post.get_absolute_url }}">{{ thread.title }}</a>
-<span class="thread_info">{% blocktrans with thread.thread_latest_post.author as author and thread.latest_post_time|timesince as time %}{{ time }} ago by {{ author }}{% endblocktrans %}</span>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% endcache %}
-{% endif %}
-
-
-
-
 {% endblock %}
 
 {% block right_column_extra %}
@@ -161,4 +139,8 @@
 </ul>
 </div>
 {% endif %}
+
+<img src="{{ STATIC_URL }}machiavelli/img/sleep.png" title="{% trans "Delayed" %}" />
+<a href="{{ twitter_url }}"><img src="{{ STATIC_URL }}img/{{ twitter_banner }}" alt="{% trans "Follow Condottieri on Twitter" %}"/></a>
+<a href="{{ gplus_url }}"><img src="{{ STATIC_URL }}img/{{ gplus_banner }}" alt="{% trans "Follow Condottieri on Google+" %}"/></a>
 {% endblock %}

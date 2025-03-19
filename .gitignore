@@ -1,3 +1,5 @@
+.venv
+mise.toml
 *.pyc
 *.db
 .htaccess

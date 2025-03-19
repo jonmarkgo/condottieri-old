@@ -42,7 +42,7 @@
 			<li id="tab_messages"><a href="{% url messages_inbox %}">{% trans "Mail" %}
 			({{ messages_inbox_count }})</a></li>
 			{% endif %}
-			<li id="tab_forum"><a href="{% url forum_index %}">{% trans "Forum" %}</a></li>
+
 			<li id="tab_help"><a href="{% url help-index %}">{% trans "Help" %}</a></li>
 			<li id="tab_contribute"><a href="{% url help-contribute %}">{% trans "Contribute" %}</a></li>
         {% endspaceless %}</ul>
@@ -59,7 +59,5 @@
 
 {% block extra_body_base %}
 	{% block extra_body %}{% endblock %}
-	{% ifsetting INCLUDE_GOOGLE_ANALYTICS %}
-		{% include 'ganalytics.html' %}
-	{% endifsetting %}
+
 {% endblock %}

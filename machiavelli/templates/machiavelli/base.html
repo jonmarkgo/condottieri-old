@@ -72,9 +72,7 @@
 </div>
 
 {% if user.is_authenticated %}
-{% ifsetting INCLUDE_HOSTING_BANNER %}
-	{% include 'hosting.html' %}
-{% endifsetting %}
+
 {% endif %}
 </div>
 {% endblock %}
