@@ -29,7 +29,7 @@ django-uni-form==0.6.0
 django-wikiapp==0.2.0
 template_utils==0.4p2
 django-staticfiles==0.1.2
-psycopg2==2.2.2
+PyMySQL==0.9.3
 django-debug-toolbar==0.9.4
 django-forum==0.0.1
 django-avatar==1.0.0
