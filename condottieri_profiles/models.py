@@ -32,9 +32,12 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from machiavelli.signals import government_overthrown
 
 
-KARMA_MINIMUM = settings.KARMA_MINIMUM
-KARMA_DEFAULT = settings.KARMA_DEFAULT
-KARMA_MAXIMUM = settings.KARMA_MAXIMUM
+# Default KARMA settings in case they're not in settings
+KARMA_MINIMUM = getattr(settings, 'KARMA_MINIMUM', 10)
+KARMA_DEFAULT = getattr(settings, 'KARMA_DEFAULT', 100)
+KARMA_MAXIMUM = getattr(settings, 'KARMA_MAXIMUM', 200)
+BONUS_TIME = getattr(settings, 'BONUS_TIME', 0.2)
+KARMA_TO_JOIN = getattr(settings, 'KARMA_TO_JOIN', 50)
 
 
 class CondottieriProfile(models.Model):

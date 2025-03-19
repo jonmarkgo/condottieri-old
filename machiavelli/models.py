@@ -130,10 +130,11 @@ TIME_LIMITS = (
 ## points assigned to the first, second and third players
 SCORES=[20, 10, 5]
 
-KARMA_MINIMUM = settings.KARMA_MINIMUM
-KARMA_DEFAULT = settings.KARMA_DEFAULT
-KARMA_MAXIMUM = settings.KARMA_MAXIMUM
-BONUS_TIME = settings.BONUS_TIME
+# Default KARMA settings in case they're not in settings
+KARMA_MINIMUM = getattr(settings, 'KARMA_MINIMUM', 10)
+KARMA_DEFAULT = getattr(settings, 'KARMA_DEFAULT', 100)
+KARMA_MAXIMUM = getattr(settings, 'KARMA_MAXIMUM', 200)
+BONUS_TIME = getattr(settings, 'BONUS_TIME', 0.2)
 
 class Invasion(object):
 	""" This class is used in conflicts resolution for conditioned invasions.
