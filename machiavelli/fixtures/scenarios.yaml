@@ -21,67 +21,67 @@
 ## The following is a development scenario. Comment it out if you want to use
 ## it in your development server. Note that the scenario is disabled by default
 ####
-#- fields: {cities_to_win: 6, enabled: false, name: development, start_year: 1521, title: Condottieri Development }
-#  model: machiavelli.scenario
-#  pk: 7
-#
-#- fields: {area: 8, country: null, scenario: 7, unit_type: G}
-#  model: machiavelli.setup
-#  pk: 246
-#- fields: {area: 35, country: 4, scenario: 7, unit_type: A}
-#  model: machiavelli.setup
-#  pk: 247
-#- fields: {area: 44, country: 4, scenario: 7, unit_type: A}
-#  model: machiavelli.setup
-#  pk: 248
-#- fields: {area: 47, country: 4, scenario: 7, unit_type: A}
-#  model: machiavelli.setup
-#  pk: 249
-#- fields: {area: 46, country: 4, scenario: 7, unit_type: F}
-#  model: machiavelli.setup
-#  pk: 250
-#- fields: {area: 39, country: 6, scenario: 7, unit_type: A}
-#  model: machiavelli.setup
-#  pk: 251
-#- fields: {area: 38, country: 6, scenario: 7, unit_type: A}
-#  model: machiavelli.setup
-#  pk: 252
-#- fields: {area: 36, country: 6, scenario: 7, unit_type: F}
-#  model: machiavelli.setup
-#  pk: 253
-#- fields: {area: 10, country: null, scenario: 7, unit_type: G}
-#  model: machiavelli.setup
-#  pk: 254
-#- fields: {area: 12, country: null, scenario: 7, unit_type: G}
-#  model: machiavelli.setup
-#  pk: 255
-#- fields: {area: 18, country: null, scenario: 7, unit_type: G}
-#  model: machiavelli.setup
-#  pk: 256
-#- fields: {area: 13, country: null, scenario: 7, unit_type: G}
-#  model: machiavelli.setup
-#  pk: 257
-#- fields: {area: 46, country: 4, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 166
-#- fields: {area: 39, country: 6, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 167
-#- fields: {area: 35, country: 4, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 168
-#- fields: {area: 38, country: 6, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 169
-#- fields: {area: 44, country: 4, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 170
-#- fields: {area: 36, country: 6, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 171
-#- fields: {area: 47, country: 4, is_home: true, scenario: 7}
-#  model: machiavelli.home
-#  pk: 172
+- fields: {cities_to_win: 6, enabled: false, name: development, start_year: 1521, title: Condottieri Development}
+  model: machiavelli.scenario
+  pk: 7
+
+- fields: {area: 8, country: null, scenario: 7, unit_type: G}
+  model: machiavelli.setup
+  pk: 246
+- fields: {area: 35, country: 4, scenario: 7, unit_type: A}
+  model: machiavelli.setup
+  pk: 247
+- fields: {area: 44, country: 4, scenario: 7, unit_type: A}
+  model: machiavelli.setup
+  pk: 248
+- fields: {area: 47, country: 4, scenario: 7, unit_type: A}
+  model: machiavelli.setup
+  pk: 249
+- fields: {area: 46, country: 4, scenario: 7, unit_type: F}
+  model: machiavelli.setup
+  pk: 250
+- fields: {area: 39, country: 6, scenario: 7, unit_type: A}
+  model: machiavelli.setup
+  pk: 251
+- fields: {area: 38, country: 6, scenario: 7, unit_type: A}
+  model: machiavelli.setup
+  pk: 252
+- fields: {area: 36, country: 6, scenario: 7, unit_type: F}
+  model: machiavelli.setup
+  pk: 253
+- fields: {area: 10, country: null, scenario: 7, unit_type: G}
+  model: machiavelli.setup
+  pk: 254
+- fields: {area: 12, country: null, scenario: 7, unit_type: G}
+  model: machiavelli.setup
+  pk: 255
+- fields: {area: 18, country: null, scenario: 7, unit_type: G}
+  model: machiavelli.setup
+  pk: 256
+- fields: {area: 13, country: null, scenario: 7, unit_type: G}
+  model: machiavelli.setup
+  pk: 257
+- fields: {area: 46, country: 4, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 166
+- fields: {area: 39, country: 6, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 167
+- fields: {area: 35, country: 4, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 168
+- fields: {area: 38, country: 6, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 169
+- fields: {area: 44, country: 4, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 170
+- fields: {area: 36, country: 6, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 171
+- fields: {area: 47, country: 4, is_home: true, scenario: 7}
+  model: machiavelli.home
+  pk: 172
 ############################################################
 ############################################################
 

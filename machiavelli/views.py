@@ -581,7 +581,7 @@ def play_orders(request, game, player):
 										'new_order': new_order.explain()})
 				response_json = simplejson.dumps(response_dict, ensure_ascii=False)
 
-				return HttpResponse(response_json, mimetype='application/javascript')
+				return HttpResponse(response_json, mimetype='application/json')
 			## not ajax
 			else:
 				if order_form.is_valid():
@@ -610,7 +610,7 @@ def delete_order(request, slug='', order_id=''):
 		response_dict.update({'bad': 'true'})
 	if request.is_ajax():
 		response_json = simplejson.dumps(response_dict, ensure_ascii=False)
-		return HttpResponse(response_json, mimetype='application/javascript')
+		return HttpResponse(response_json, mimetype='application/json')
 		
 	return redirect(game)
 
@@ -1291,3 +1291,39 @@ def whisper_list(request, slug):
 	return render_to_response('machiavelli/whisper_list.html',
 							context,
 							context_instance=RequestContext(request))
+
+@login_required
+def get_destinations(request, slug, unit_id):
+	try:
+		print("Getting destinations for unit:", unit_id, "in game:", slug)
+		unit = get_object_or_404(Unit, id=unit_id)
+		player = get_object_or_404(Player, game__slug=slug, user=request.user)
+		
+		if unit.type == 'A':  # Army
+			destinations = GameArea.objects.filter(
+				game=player.game,
+				board_area__borders=unit.area.board_area,
+				board_area__is_sea=False
+			).exclude(board_area__code='VEN')
+			print("Found", destinations.count(), "destinations for army")
+		elif unit.type == 'F':  # Fleet
+			destinations = GameArea.objects.filter(
+				game=player.game,
+				board_area__borders=unit.area.board_area
+			).filter(
+				Q(board_area__is_sea=True) |  # Sea areas
+				Q(board_area__is_coast=True)  # Coastal areas
+			)
+			print("Found", destinations.count(), "destinations for fleet")
+		else:  # Garrison
+			destinations = GameArea.objects.none()
+			print("No destinations for garrison")
+		
+		destinations = destinations.order_by('board_area__code')
+		destinations_list = [{'id': d.id, 'name': d.board_area.code + ' - ' + d.board_area.name} for d in destinations]
+		print("Returning destinations:", destinations_list)
+		
+		return HttpResponse(simplejson.dumps({'destinations': destinations_list}), mimetype='application/json')
+	except Exception as e:
+		print("Error in get_destinations:", str(e))
+		return HttpResponse(simplejson.dumps({'error': str(e)}), status=500, mimetype='application/json')

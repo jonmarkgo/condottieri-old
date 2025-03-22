@@ -17,6 +17,35 @@ function toggle_params() {
 			$("#id_subdestination").parent().fadeOut('slow');
 			$("#id_subtype").parent().fadeOut('slow');
 			$("#id_destination").parent().fadeIn('slow');
+			
+			// If a unit is selected, fetch its destinations
+			var unitId = $("#id_unit").val();
+			if (unitId) {
+				var url = game_url + "/get_destinations/" + unitId + "/";
+				console.log("Fetching destinations from:", url);
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					success: function(data) {
+						console.log("Received data:", data);
+						var destinationSelect = $("#id_destination");
+						destinationSelect.empty();
+						if (data.destinations && data.destinations.length > 0) {
+							destinationSelect.append($('<option></option>').val('').text('---------'));
+							$.each(data.destinations, function(i, dest) {
+								destinationSelect.append($('<option></option>').val(dest.id).text(dest.name));
+							});
+							destinationSelect.parent().show();
+						} else {
+							destinationSelect.parent().hide();
+						}
+					},
+					error: function(jqXHR, textStatus, errorThrown) {
+						console.error("AJAX request failed:", textStatus, errorThrown);
+						console.error("Response:", jqXHR.responseText);
+					}
+				});
+			}
 			break;
 		case '=':
 			$("#id_destination").parent().fadeOut('slow');
@@ -76,6 +105,39 @@ function hideOptional() {
 function addChangeHandlers() {
 	$("#id_code").change( toggle_params );
 	$("#id_subcode").change (toggle_subparams );
+	$("#id_unit").change( function() {
+		// When unit changes, get destinations via AJAX
+		var unitId = $(this).val();
+		var orderType = $("#id_code").val();
+		if (unitId && orderType === '-') {
+			var url = game_url + "/get_destinations/" + unitId + "/";
+			console.log("Fetching destinations from:", url);
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				success: function(data) {
+					console.log("Received data:", data);
+					var destinationSelect = $("#id_destination");
+					destinationSelect.empty();
+					if (data.destinations && data.destinations.length > 0) {
+						destinationSelect.append($('<option></option>').val('').text('---------'));
+						$.each(data.destinations, function(i, dest) {
+							destinationSelect.append($('<option></option>').val(dest.id).text(dest.name));
+						});
+						destinationSelect.parent().show();
+					} else {
+						destinationSelect.parent().hide();
+					}
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					console.error("AJAX request failed:", textStatus, errorThrown);
+					console.error("Response:", jqXHR.responseText);
+				}
+			});
+		} else {
+			$("#id_destination").parent().hide();
+		}
+	});
 }
 
 function deleteOrder(pk) {
@@ -153,4 +215,9 @@ $(document).ready(function() {
 	prepareForm();
 	addClickHandlers();
 	addChangeHandlers();
-	});
+	
+	// If a unit is selected when the page loads, show its destinations only if it's a move order
+	if ($("#id_unit").val() && $("#id_code").val() === '-') {
+		$("#id_destination").parent().show();
+	}
+});

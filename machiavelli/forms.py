@@ -106,9 +106,10 @@ def make_order_form(player):
 	else:
 		units_qs = player.unit_set.select_related().all()
 	all_units = player.game.get_all_units()
-	# Get unique areas based on board_area that are visible to the player
+
+	# Get all possible destinations based on unit type and adjacency
 	all_areas = GameArea.objects.filter(game=player.game).filter(
-		Q(player=player) |  # Areas controlled by the player
+		Q(board_area__borders__in=player.unit_set.values_list('area__board_area', flat=True)) |  # Adjacent areas
 		Q(board_area__home__country=player.country,  # Areas in player's home country
 		  board_area__home__scenario=player.game.scenario,
 		  board_area__home__is_home=True)
@@ -120,16 +121,47 @@ def make_order_form(player):
 	class OrderForm(forms.ModelForm):
 		unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"))
 		code = forms.ChoiceField(choices=ORDER_CODES, label=_("Order"))
-		destination = forms.ModelChoiceField(required=False, queryset=all_areas, label=_("Destination"))
+		destination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
 		type = forms.ChoiceField(choices=UNIT_TYPES, label=_("Convert into"))
 		subunit = forms.ModelChoiceField(required=False, queryset=all_units, label=_("Unit"))
 		subcode = forms.ChoiceField(required=False, choices=ORDER_SUBCODES, label=_("Order"))
-		subdestination = forms.ModelChoiceField(required=False, queryset=all_areas, label=_("Destination"))
+		subdestination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
 		subtype = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
 		
 		def __init__(self, player, **kwargs):
 			super(OrderForm, self).__init__(**kwargs)
 			self.instance.player = player
+			
+			# Get the unit from either POST data or initial data
+			unit = None
+			if 'unit' in self.data:
+				try:
+					unit_id = int(self.data.get('unit'))
+					unit = Unit.objects.get(id=unit_id)
+				except (ValueError, TypeError):
+					pass
+			elif 'initial' in kwargs and 'unit' in kwargs['initial']:
+				unit = kwargs['initial']['unit']
+			elif self.instance.unit_id:  # If we have a unit_id from the model instance
+				unit = Unit.objects.get(id=self.instance.unit_id)
+			
+			# Set destinations based on unit type
+			if unit:
+				if unit.type == 'A':  # Army
+					destinations = GameArea.objects.filter(
+						game=player.game,
+						board_area__borders=unit.area.board_area,
+						board_area__is_sea=False
+					).exclude(board_area__code='VEN')
+				elif unit.type == 'F':  # Fleet
+					destinations = GameArea.objects.filter(
+						game=player.game,
+						board_area__borders=unit.area.board_area,
+						board_area__is_sea=True
+					)
+				else:  # Garrison
+					destinations = GameArea.objects.none()
+				self.fields['destination'].queryset = destinations.order_by('board_area__code')
 		
 		class Meta:
 			model = Order

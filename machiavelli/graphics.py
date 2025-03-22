@@ -25,10 +25,7 @@ from django.conf import settings
 
 BASEDIR=os.path.join(settings.PROJECT_ROOT, 'machiavelli/media/machiavelli/tokens')
 BASEMAP='base-map.png'
-if settings.DEBUG:
-	MAPSDIR = os.path.join(settings.PROJECT_ROOT, 'machiavelli/media/machiavelli/maps')
-else:
-	MAPSDIR = os.path.join(settings.MEDIA_ROOT, 'maps')
+MAPSDIR = os.path.join(settings.MEDIA_ROOT, 'machiavelli/maps')
 
 def make_map(game):
 	""" Opens the base map and add flags, control markers, unit tokens and other tokens. Then saves
