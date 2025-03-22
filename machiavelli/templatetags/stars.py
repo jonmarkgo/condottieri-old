@@ -12,6 +12,8 @@ register = template.Library()
 def karma_stars(value):
 	""" Integer between 0 and 10 to represent the average karma with stars """
 	highest = settings.KARMA_MAXIMUM
+	if highest == 0:
+		return mark_safe("<img src=\"%smachiavelli/img/0-blue.png\" alt=\"0 stars\" />" % settings.STATIC_URL)
 	stars = int(ceil(10. * value / highest))
 	img = "<img src=\"%(static_url)smachiavelli/img/%(stars)s-blue.png\" alt=\"%(stars)s stars\" />" % {
 		'static_url': settings.STATIC_URL,
@@ -22,11 +24,16 @@ def karma_stars(value):
 @register.filter
 def score_stars(value):
 	""" Integer between 0 and 10 to represent the average score with stars """
-	highest = CondottieriProfile.objects.order_by('-total_score')[0].total_score
-	stars = int(ceil(10. * value / highest))
-	img = "<img src=\"%(static_url)smachiavelli/img/%(stars)s-red.png\" alt=\"%(stars)s stars\" />" % {
-		'static_url': settings.STATIC_URL,
-		'stars': stars,
-		}
-	return mark_safe(img)
+	try:
+		highest = CondottieriProfile.objects.order_by('-total_score')[0].total_score
+		if highest == 0:
+			return mark_safe("<img src=\"%smachiavelli/img/0-red.png\" alt=\"0 stars\" />" % settings.STATIC_URL)
+		stars = int(ceil(10. * value / highest))
+		img = "<img src=\"%(static_url)smachiavelli/img/%(stars)s-red.png\" alt=\"%(stars)s stars\" />" % {
+			'static_url': settings.STATIC_URL,
+			'stars': stars,
+			}
+		return mark_safe(img)
+	except IndexError:
+		return mark_safe("<img src=\"%smachiavelli/img/0-red.png\" alt=\"0 stars\" />" % settings.STATIC_URL)
 

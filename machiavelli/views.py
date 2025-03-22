@@ -1003,7 +1003,7 @@ def scenario_list(request):
 							context,
 							context_instance = RequestContext(request))
 
-#@cache_page(60 * 60)
+@never_cache
 def show_scenario(request, scenario_id):
 	scenario = get_object_or_404(Scenario, id=scenario_id, enabled=True)
 
@@ -1019,9 +1019,15 @@ def show_scenario(request, scenario_id):
 		data['name'] = c.name
 		data['homes'] = c.home_set.select_related().filter(scenario=scenario)
 		data['setups'] = c.setup_set.select_related().filter(scenario=scenario)
-		treasury = c.treasury_set.get(scenario=scenario)
-		data['ducats'] = treasury.ducats
-		data['double'] = treasury.double
+		try:
+			treasury = c.treasury_set.get(scenario=scenario)
+			data['ducats'] = treasury.ducats
+			data['double'] = treasury.double
+		except Treasury.DoesNotExist:
+			# Create a default treasury for this country
+			treasury = Treasury.objects.create(scenario=scenario, country=c, ducats=0, double=False)
+			data['ducats'] = 0
+			data['double'] = False
 		countries_dict[c.static_name] = data
 
 	return render_to_response('machiavelli/scenario_detail.html',

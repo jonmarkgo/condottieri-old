@@ -161,8 +161,8 @@ class Scenario(models.Model):
 	enabled = models.BooleanField(default=False) # this allows me to create the new setups in the admin
 
 	def get_slots(self):
-		#slots = len(self.setup_set.values('country').distinct()) - 1
-		return self.number_of_players
+		slots = len(self.setup_set.values('country').distinct()) - 1
+		return slots
 
 	def __unicode__(self):
 		return self.title

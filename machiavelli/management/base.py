@@ -9,10 +9,10 @@ if "notification" in settings.INSTALLED_APPS:
 		print "Creating notices"
 		notification.create_notice_type("game_started",
 										_("Game started"),
-										_("a game that you're a player in has started"))
+										_("a game that you are a player in has started"))
 		notification.create_notice_type("game_over",
 										_("Game over"),
-										_("a game that you're playing is over"))
+										_("a game that you arre playing is over"))
 		notification.create_notice_type("new_phase",
 										_("New phase"),
 										_("a new phase has begun"))
