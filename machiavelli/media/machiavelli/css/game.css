@@ -329,7 +329,7 @@ tr.closed_game a{
 
 .action_block {
 	padding: 0 0 0.5em 0;
-	background-color: #4f4f4f;
+	background-color: #fff;
 	border-bottom: solid 2px #191919;
 }
 .action_block a, .action_block a:visited {
@@ -392,7 +392,7 @@ tr.closed_game a{
 	margin-left: 75%;
 	padding: 0 0 0.5em 0;
 	margin-top: 1em;
-	background-color: #4f4f4f;
+	background-color: #fff;
 }
 
 #mini_shoutbox h2 {

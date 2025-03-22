@@ -1,3 +1,21 @@
+from django.db import connection
+
+class DatabaseConnectionMiddleware(object):
+    """
+    Middleware to ensure database connections are closed properly and handle reconnection.
+    """
+    def process_request(self, request):
+        connection.close()
+        return None
+
+    def process_response(self, request, response):
+        connection.close()
+        return response
+
+    def process_exception(self, request, exception):
+        connection.close()
+        return None
+
 class TimezoneFixMiddleware(object):
     """
     Middleware to fix timezone object conversion issues with old Django/Pinax.

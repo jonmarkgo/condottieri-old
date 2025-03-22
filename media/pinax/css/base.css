@@ -296,7 +296,7 @@ ul#messages .error {
 
 .section {
 	padding: 0px 0px 0.5em 0px;
-	background: #4f4f4f;
+	background: #fff;
 	border-bottom: solid 2px #191919;
 }
 
@@ -333,7 +333,7 @@ ul#messages .error {
 	width: 80%;
 	margin-left: 10%;
 	padding: 0px;
-	background: #4f4f4f;
+	background: #fff;
 	border-left: solid 1px #666;
 	border-right: solid 1px #666;
 }

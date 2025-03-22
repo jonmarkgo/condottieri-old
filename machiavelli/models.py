@@ -403,7 +403,9 @@ class Game(models.Model):
 		return "%d" % (self.pk)
 
 	def get_map_url(self):
-		return "map-%s.jpg" % self.id
+		if self.slots > 0:  # If game is pending
+			return "scenario-%s.png" % self.scenario.pk
+		return "map-%s.png" % self.id
 	
 	def get_absolute_url(self):
 		return ('show-game', None, {'slug': self.slug})
