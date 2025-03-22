@@ -2,7 +2,7 @@
 	clear: both;
 }
 
-.uniForm .focused{ background: #444; }
+.uniForm .focused{ background: #999; }
 
 tr.open_game {
 	background: #c4efc2;

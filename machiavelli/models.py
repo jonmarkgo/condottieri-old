@@ -960,7 +960,16 @@ class Game(models.Model):
 		codes = disasters.get_plague()
 		plague_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
 		for p in plague_areas:
-			signals.plague_placed.send(sender=p)
+			# Check if a plague event already exists for this area
+			from condottieri_events.models import DisasterEvent
+			existing_plague = DisasterEvent.objects.filter(
+				game=self,
+				area=p.board_area,
+				message=1  # 1 is the message type for plague
+			).exists()
+			
+			if not existing_plague:
+				signals.plague_placed.send(sender=p)
 			for u in p.unit_set.all():
 				u.delete()
 
