@@ -1,5 +1,8 @@
 function toggle_params() {
 	var code = $("#id_code").val()
+	var selectedUnit = $("#id_unit option:selected").text()
+	console.log("Selected unit:", selectedUnit)
+	
 	switch (code) {
 		case 'H':
 		case 'B':
@@ -11,6 +14,7 @@ function toggle_params() {
 			$("#id_subtype").parent().fadeOut('slow');
 			break;
 		case '-':
+		case 'S':
 			$("#id_type").parent().fadeOut('slow');
 			$("#id_subunit").parent().fadeOut('slow');
 			$("#id_subcode").parent().fadeOut('slow');
@@ -63,15 +67,15 @@ function toggle_params() {
 			$("#id_subunit").parent().fadeIn('slow');
 			$("#id_subdestination").parent().fadeIn('slow');
 			break;
-		case 'S':
-			$("#id_destination").parent().fadeOut('slow');
-			$("#id_type").parent().fadeOut('slow');
-			$("#id_subdestination").parent().fadeOut('slow');
-			$("#id_subtype").parent().fadeOut('slow');
-			$("#id_subunit").parent().fadeIn('slow');
-			$("#id_subcode").parent().fadeIn('slow');
-			toggle_subparams();
-			break;
+	}
+
+	// Hide Convoy option for army units
+	if (selectedUnit.startsWith('Army')) {
+		console.log("Hiding convoy option for army unit");
+		$("#id_code option[value='C']").hide();
+	} else {
+		console.log("Showing convoy option for non-army unit");
+		$("#id_code option[value='C']").show();
 	}
 }
 
@@ -109,24 +113,23 @@ function addChangeHandlers() {
 		// When unit changes, get destinations via AJAX
 		var unitId = $(this).val();
 		var orderType = $("#id_code").val();
-		if (unitId && orderType === '-') {
-			var url = game_url + "/get_destinations/" + unitId + "/";
-			console.log("Fetching destinations from:", url);
+		
+		if (unitId) {
+			// Get conversion types
+			var conversionUrl = game_url + "/get_conversion_types/" + unitId + "/";
+			console.log("Fetching conversion types from:", conversionUrl);
 			$.ajax({
-				url: url,
+				url: conversionUrl,
 				dataType: 'json',
 				success: function(data) {
-					console.log("Received data:", data);
-					var destinationSelect = $("#id_destination");
-					destinationSelect.empty();
-					if (data.destinations && data.destinations.length > 0) {
-						destinationSelect.append($('<option></option>').val('').text('---------'));
-						$.each(data.destinations, function(i, dest) {
-							destinationSelect.append($('<option></option>').val(dest.id).text(dest.name));
+					console.log("Received conversion types:", data);
+					var typeSelect = $("#id_type");
+					typeSelect.empty();
+					typeSelect.append($('<option></option>').val('').text('---------'));
+					if (data.types && data.types.length > 0) {
+						$.each(data.types, function(i, type) {
+							typeSelect.append($('<option></option>').val(type[0]).text(type[1]));
 						});
-						destinationSelect.parent().show();
-					} else {
-						destinationSelect.parent().hide();
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
@@ -134,9 +137,63 @@ function addChangeHandlers() {
 					console.error("Response:", jqXHR.responseText);
 				}
 			});
-		} else {
-			$("#id_destination").parent().hide();
+			
+			// Get destinations if it's a move order
+			if (orderType === '-') {
+				var url = game_url + "/get_destinations/" + unitId + "/";
+				console.log("Fetching destinations from:", url);
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					success: function(data) {
+						console.log("Received data:", data);
+						var destinationSelect = $("#id_destination");
+						destinationSelect.empty();
+						if (data.destinations && data.destinations.length > 0) {
+							destinationSelect.append($('<option></option>').val('').text('---------'));
+							$.each(data.destinations, function(i, dest) {
+								destinationSelect.append($('<option></option>').val(dest.id).text(dest.name));
+							});
+							destinationSelect.parent().show();
+						} else {
+							destinationSelect.parent().hide();
+						}
+					},
+					error: function(jqXHR, textStatus, errorThrown) {
+						console.error("AJAX request failed:", textStatus, errorThrown);
+						console.error("Response:", jqXHR.responseText);
+					}
+				});
+			} else {
+				$("#id_destination").parent().hide();
+			}
+
+			// Update order codes based on unit type
+			var selectedUnit = $(this).find("option:selected").text();
+			console.log("Selected unit:", selectedUnit);
+			var codeSelect = $("#id_code");
+			var currentValue = codeSelect.val();
+			codeSelect.empty();
+			
+			// Add all options except Convoy for armies
+			codeSelect.append($('<option></option>').val('').text('---------'));
+			codeSelect.append($('<option></option>').val('H').text('Hold'));
+			codeSelect.append($('<option></option>').val('B').text('Besiege'));
+			codeSelect.append($('<option></option>').val('-').text('Advance'));
+			codeSelect.append($('<option></option>').val('=').text('Conversion'));
+			if (!selectedUnit.startsWith('Army')) {
+				codeSelect.append($('<option></option>').val('C').text('Convoy'));
+			}
+			codeSelect.append($('<option></option>').val('S').text('Support'));
+			
+			// Restore previous selection if it's still valid
+			if (currentValue && codeSelect.find("option[value='" + currentValue + "']").length > 0) {
+				codeSelect.val(currentValue);
+			}
 		}
+		
+		// Call toggle_params to update order type options
+		toggle_params();
 	});
 }
 

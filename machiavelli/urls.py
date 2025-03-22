@@ -42,6 +42,7 @@ urlpatterns = patterns('machiavelli.views',
 	url(r'^game/(?P<slug>[-\w]+)/whisper$', 'new_whisper', name='new-whisper'),
 	url(r'^game/(?P<slug>[-\w]+)/whisper_list$', 'whisper_list', name='whisper-list'),
 	url(r'^game/(?P<slug>[-\w]+)/get_destinations/(?P<unit_id>\d+)/$', 'get_destinations', name='get-destinations'),
+	url(r'^game/(?P<slug>[-\w]+)/get_conversion_types/(?P<unit_id>\d+)/$', 'get_conversion_types', name='get-conversion-types'),
 	url(r'^game/(?P<slug>[-\w]+)', 'play_game', name='show-game'),
 	#url(r'^jsgame/(?P<slug>[-\w]+)', 'js_play_game', name='js-play-game'),
 )

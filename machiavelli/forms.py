@@ -153,14 +153,22 @@ def make_order_form(player):
 						board_area__borders=unit.area.board_area,
 						board_area__is_sea=False
 					).exclude(board_area__code='VEN')
+					# For conversion, only show Fleet and Garrison options
+					self.fields['type'].choices = [('', '---'), ('F', _('Fleet')), ('G', _('Garrison'))]
 				elif unit.type == 'F':  # Fleet
 					destinations = GameArea.objects.filter(
 						game=player.game,
-						board_area__borders=unit.area.board_area,
-						board_area__is_sea=True
+						board_area__borders=unit.area.board_area
+					).filter(
+						Q(board_area__is_sea=True) |  # Sea areas
+						Q(board_area__is_coast=True)  # Coastal areas
 					)
+					# For conversion, only show Army and Garrison options
+					self.fields['type'].choices = [('', '---'), ('A', _('Army')), ('G', _('Garrison'))]
 				else:  # Garrison
 					destinations = GameArea.objects.none()
+					# For conversion, only show Army and Fleet options
+					self.fields['type'].choices = [('', '---'), ('A', _('Army')), ('F', _('Fleet'))]
 				self.fields['destination'].queryset = destinations.order_by('board_area__code')
 		
 		class Meta:

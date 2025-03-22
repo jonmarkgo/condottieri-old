@@ -1327,3 +1327,24 @@ def get_destinations(request, slug, unit_id):
 	except Exception as e:
 		print("Error in get_destinations:", str(e))
 		return HttpResponse(simplejson.dumps({'error': str(e)}), status=500, mimetype='application/json')
+
+@login_required
+def get_conversion_types(request, slug, unit_id):
+	try:
+		print("Getting conversion types for unit:", unit_id, "in game:", slug)
+		unit = get_object_or_404(Unit, id=unit_id)
+		player = get_object_or_404(Player, game__slug=slug, user=request.user)
+		
+		# Get valid conversion types based on current unit type
+		if unit.type == 'A':  # Army
+			types = [('F', unicode(_('Fleet'))), ('G', unicode(_('Garrison')))]
+		elif unit.type == 'F':  # Fleet
+			types = [('A', unicode(_('Army'))), ('G', unicode(_('Garrison')))]
+		else:  # Garrison
+			types = [('A', unicode(_('Army'))), ('F', unicode(_('Fleet')))]
+			
+		print("Returning conversion types:", types)
+		return HttpResponse(simplejson.dumps({'types': types}), mimetype='application/json')
+	except Exception as e:
+		print("Error in get_conversion_types:", str(e))
+		return HttpResponse(simplejson.dumps({'error': str(e)}), status=500, mimetype='application/json')
