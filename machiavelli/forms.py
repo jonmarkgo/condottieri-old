@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from django.db import models
 
 from machiavelli.models import *
 
@@ -105,7 +106,16 @@ def make_order_form(player):
 	else:
 		units_qs = player.unit_set.select_related().all()
 	all_units = player.game.get_all_units()
-	all_areas = player.game.get_all_gameareas()
+	# Get unique areas based on board_area that are visible to the player
+	all_areas = GameArea.objects.filter(game=player.game).filter(
+		Q(player=player) |  # Areas controlled by the player
+		Q(board_area__home__country=player.country,  # Areas in player's home country
+		  board_area__home__scenario=player.game.scenario,
+		  board_area__home__is_home=True)
+	).values('board_area').distinct().annotate(
+		id=models.Min('id')
+	).values_list('id', flat=True)
+	all_areas = GameArea.objects.filter(id__in=all_areas).order_by('board_area__code')
 	
 	class OrderForm(forms.ModelForm):
 		unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"))
@@ -127,8 +137,8 @@ def make_order_form(player):
 					'subunit', 'subcode', 'subdestination', 'subtype')
 		
 		class Media:
-			js = ("%smachiavelli/js/order_form.js" % settings.STATIC_URL,
-				  "%smachiavelli/js/jquery.form.js" % settings.STATIC_URL)
+			js = ("/site_media/static/machiavelli/js/order_form.js",
+				  "/site_media/static/machiavelli/js/jquery.form.js")
 			
 		def clean(self):
 			cleaned_data = self.cleaned_data
