@@ -31,6 +31,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.forms.formsets import formset_factory
 from django.forms.models import modelformset_factory
 from django.db.models import Q, F, Sum
+from django.db.models.query import QuerySet
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache, cache_page
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -1460,7 +1461,7 @@ def get_valid_support_destinations(request, slug):
                     destinations = destinations.filter(board_area__is_coast=True)
             
             # Convert back to queryset if needed
-            if not isinstance(destinations, models.QuerySet):
+            if not isinstance(destinations, QuerySet):
                 destinations = GameArea.objects.filter(id__in=[d.id for d in destinations])
             
             # Always exclude the supported unit's current location for advances
@@ -1502,7 +1503,9 @@ def get_area_info(request, slug):
 		return HttpResponse(simplejson.dumps({'has_city': False}), mimetype='application/json')
 
 	area_info = {
-		'has_city': unit.area.board_area.has_city
+		'has_city': unit.area.board_area.has_city,
+		'is_fortified': unit.area.board_area.is_fortified,
+		'has_port': unit.area.board_area.has_port
 	}
 	
 	return HttpResponse(simplejson.dumps(area_info), mimetype='application/json')
@@ -1586,19 +1589,27 @@ def get_supportable_units_query(game, unit, valid_areas=None):
         # Get territories the army could support into
         supportable_areas = get_valid_adjacent_areas(game, unit.area, for_fleet=False)
         
-        # Find fleets in seas that border our supportable areas
-        fleet_areas = GameArea.objects.filter(
-            game=game,
-            board_area__is_sea=True
-        ).filter(
-            board_area__borders__in=[area.board_area for area in supportable_areas]
-        ).distinct()
+        # For fleets, we need to check if they can actually move to any of our supportable areas
+        fleet_areas = []
+        for area in supportable_areas:
+            # Find seas adjacent to this supportable area
+            adjacent_seas = GameArea.objects.filter(
+                game=game,
+                board_area__is_sea=True,
+                board_area__borders=area.board_area
+            )
+            # Only include seas that are actually adjacent for fleets
+            fleet_areas.extend([s for s in adjacent_seas 
+                              if s.board_area.is_adjacent(area.board_area, fleet=True)])
         
-        # Include units in current area, supportable areas, and fleet areas
+        # Convert to unique list
+        fleet_areas = list(set(fleet_areas))
+        
+        # Include units in current area, supportable areas, and valid fleet areas
         area_conditions = (
-            Q(area=unit.area) |
-            Q(area__in=supportable_areas) |
-            Q(area__in=fleet_areas, type='F')
+            Q(area=unit.area) |  # Units in same area
+            Q(area__in=supportable_areas, type='A') |  # Armies in supportable areas
+            Q(area__in=fleet_areas, type='F')  # Fleets that can move to supportable areas
         )
         query &= area_conditions
     else:  # Garrison

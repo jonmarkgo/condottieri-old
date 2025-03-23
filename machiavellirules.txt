@@ -1,0 +1,2640 @@
+Machiavelli
+A GAME OF COMBAT AND POLITICS
+IN RENAISSANCE ITALY
+RULES
+
+(Image Description: Cover of the rulebook for the game "Machiavelli."  It shows various Renaissance-era polearms - halberds, a morning star, and an axe. The title is in a bold, serif font.)
+TABLE OF CONTENTS
+
+INTRODUCTION TO THE GAME
+I. GENERAL INTRODUCTION. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 2
+11. GAME COMPONENTS. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 2
+
+SET UP AND PREPARATION FOR PLAY
+I. SELECTION OF SCENARIO AND SIDES . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 3
+11. МАРBOARD SET UP . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 3
+III. ORDER SHEET SET UP. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 4
+
+BASIC GAME
+I. INTRODUCTION TO THE BASIC GAME . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 4
+II. BASIC FLOW OF THE GAME . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 4
+III. HOW TO WIN-THE OBJECT OF THE GAME. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 4
+IV. SEQUENCE OF PLAY.. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 4
+V. THE MILITARY UNIT ADJUSTMENT PHASE . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 5
+VI. THE NEGOTIATION PHASE. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 5
+VII. THE ORDER WRITING PHASE-MEANING OF THE ORDERS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 6
+VIII. ORDER EXECUTION AND CONFLICT RESOLUTION PHASE . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 8
+IX. THE INTRODUCTORY GAME. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 9
+
+ADVANCED GAME
+I. INTRODUCTION TO THE ADVANCED GAME. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 11
+II. ADVANCED VICTORY CONDITIONS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 11
+111. ASSASSINATION UNIT SET UP. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 11
+IV.ADVANCED GAME SEQUENCE OF PLAY . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 11
+V. FINANCES-INCOME AND MILITARY UNIT COSTS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 12
+VI, FINANCES-EXPENDITURES. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 13
+
+OPTIONAL RULES
+I. INTRODUCTION TO THE OPTIONAL RULES. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 15
+II. SEQUENCE OF PLAY WITH ALL OPTIONAL RULES . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 15
+III. NATURAL DISASTERS. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 16
+IV.SPECIAL MILITARY UNITS. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 16
+V. OPTIONAL BRIBERY RULES. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 17
+VI. OPTIONAL ASSASSINATION SET UP. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 17
+VII. OPTION WHEN PLAYER QUITS THE GAME. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 17
+VIII.DISTANT PLAY RULES . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 17
+IX. LUCK . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 18
+X. THE MONEY LENDERS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 18
+XI. RATINGS POINTS.. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 18
+
+SCENARIOS-HISTORICAL SUMMARY
+I. INTRODUCTION TO THE SCENARIOS. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 19
+II. INDEX TO THE SCENARIOS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 19
+III. THE SCENARIOS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 19
+IV. DOING YOUR OWN SCENARIOS. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 22
+V. NICCOLO MACHIAVELLI-A SHORT BIOGRAPHY. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Page 22
+INTRODUCTION TO THE GAME
+
+1.  GENERAL
+
+MACHIAVELLI recreates the historical situation of the
+fast developing and ever shifting balance of power struggles
+in Renaissance Italy. MACHIAVELLI can be played by two
+to eight players. The players manuever their forces over the
+map in order to conquer neighboring territories while
+attempting to fulfill to the game's Victory Conditions.
+Information is provided for recreating the balance of power
+in four different eras, and for setting up numerous variant
+scenarios in each era to provide a large variety of games that
+can be played using the same rules.
+
+There are five major Italian powers: The Republics of Florence and
+Venice, the Duchy of Milan, the Kingdom of Naples, and the Papacy
+(which was very much a secular power in this era). There are three
+major foreign powers: Valois France, Hapsburg Austria, and the
+Ottoman Turks, all of which are partially shown on the mapboard.
+All of these states, singly, or in combination, compete for the
+control of the Italian peninsula. Up for grabs are the independent,
+non-aligned, and autonomous states and provinces as well as your
+opponent's territories.
+
+In MACHIAVELLI, you control the fortunes of one of
+eight major powers through a tangled web of intrigues,
+bluffs, naked displays of power, and infamous double-
+crosses. Through careful planning, skillful negotiating,
+and a subtle and unerring sense of timing, you may be able
+to accomplish what historically was unattainable-the
+unification of Renaissance Italy.
+
+Can you, as the Pope, persuade the Kingdom of Naples
+and the Republic of Florence to join in a coalition against
+Venice rather than carving up the Papal States? Can you, as
+the Duke of Milan, survive a treacherous stab in the back by
+the Austrian Hapsburgs (your nominal ally)? Can anyone
+stop the French from marching (as they did in real life)
+straight down the peninsula to the boot of Italy? If you are
+power-mad, treacherous by nature, can lie with a straight
+face, and like fast-moving action, then MACHIAVELLI
+is the game for you!
+
+New gamers should not be overwhelmed by the length
+of this rulebook. Much of the material contained in this
+booklet is historical data included to familiarize the reader
+with what may be unfamiliar events, and to explain the
+workings of the various game mechanics. For this reason,
+simple and easily-understood concepts may often require
+rather lengthy explanations in order to be perfectly clear
+and comprehensive. The rules do not have to be memorized,
+only read carefully, and used as a reference to be consulted
+when question arise during the course of a game. In
+addition, the rules do not have to be learned all at once,
+For ease in learning and mastering these rules, they are divided
+into sections that can be learned as the player's skill with the game
+increases.
+
+II. GAME COMPONENTS
+
+The following items should be included in the box, and are
+used for the play of MACHIAVELLI:
+
+A. MAPBOARD: The mapboard shows, in a somewhat
+simplified form, the various major provinces and states
+of Renaissance Italy, its immediate neighbors, and the
+local bodies of water, called "seas". Seas are in light blue,
+and are divided from one another by black lines and land
+masses. The multi-colored land areas are divided by black
+lines into a number of different provinces and states. For
+simplicity, these will all be referred to as "provinces"
+throughout the rules. Provinces that are grouped together
+and are of the same color show the approximate outlines
+of the various major powers. Many provinces contain a
+solid black square or circle within their boundaries. These
+represent cities, the square ones being fortified cities,
+and the circular ones being cities which are not fortified.
+The black square outlines in some provinces are not cities,
+but represent fortresses that are used only in certain
+specified scenarios-otherwise, they are ignored. Cities
+and fortresses with an anchor symbol next to them are
+ports. Cities containing a white number have an enhanced
+value that is discussed in the Advanced Rules, but have no
+special value in the Basic Rules. Provinces that border on a
+sea or seas are sometimes referred to as coastal provinces.
+
+B. UNIT COUNTERS: Contrasting colored die-cut
+counters are provided for the play of MACHIAVELLI.
+There are two sheets of these extra-thick (for ease of play)
+counters, and, when punched out, provide over 600 playing
+pieces for the game. These "units" represent the various
+military forces available to the opposing sides, as well as
+units required by the mechanics of the game. It will be to
+your advantage to keep the units separated by color and
+type once punched out, as this greatly facilitates set up
+and play of the game.
+
+The units of the eight powers in the game are of a color
+similar to the color of their provinces on this mapboard.
+The military units are further differentiated by bearing
+the coat-of-arms of that power. The units of all autono-
+mous areas are colored gray, and are printed with a blank
+coat-of-arms. Other units are white, and contain a symbol
+that shows their type. The military units are distinguished
+by type by their shape and by the numbers printed on their
+faces. Please examine the samples below, and study the
+unit counters to familiarize yourself with them.
+
+1.  Major Power Units:
+
+(Image Description:  Examples of unit counters.)
+ a. Fleet Unit:  (Shows a "6" inside a pointed oval shape.)
+ b. Army Unit: (Shows a shield shape)
+ c. Garrison Unit: (Shows a square)
+ d. Control Unit: (In power's color) (Shows a circle)
+ e. Assassination Unit: (Optional Rules) (Shows a dagger)
+
+FLEET, ARMY, AND GARRISON
+UNITS ARE ALL CALLED
+"MILITARY" UNITS.
+Country     Color           Coat-of-Arms
+--------    -------         --------------
+Naples      Blue            (Image Description:  A shield divided into quarters, two with vertical stripes, and two with fleur-de-lis.)
+Turks       Light Red       (Image Description: A crescent moon and star.)
+Venice      Brown           (Image Description: A winged lion.)
+Papacy      Orange          (Image Description: Crossed keys under a papal tiara.)
+Austria     Red             (Image Description: A double-headed eagle.)
+Florence    Light Brown     (Image Description: A fleur-de-lis.)
+Milan       Green           (Image Description: A serpent devouring a human.)
+Franice      Yellow         (Image Description: Three fleur-de-lis.)
+
+2.  Autonomous Garrison Unit
+(Gray with blank white shield)
+
+(Image Description: A square with a blank shield shape inside.)
+
+3.  Ducat Units: (Advanced Rules)
+(White with yellow coins)
+Ducats come in various denominations.
+
+(Image Description:  Circular counters with the numbers 1, 5, 10, 20, and 50.)
+
+4. Rebellion and famine units:
+(White with symbols)
+
+(Image Description:  "REVOLT" (Advanced Rules) with a clenched fist symbol.  "FAMINE" (Optional Rules) with a skull symbol.)
+
+C. UNIT SORTING TRAYS: Two compartmented plastic trays
+are included for use in separating and storing the units after they
+are punched out. There are a number of ways in which the trays
+can be used:
+
+1.  If the box is stored flat when the game is not in use, simply lay
+out the trays in the bottom of the box (the edges of the trays can
+be trimmed so they will fit side-by-side, or the last row of pockets
+from one tray can be stuck into the last row of pockets on the
+other tray). The mapboard and other game components can be
+laid on top of these to hold the units in their proper pockets.
+
+2.  If the box is not stored flat, or if it is usually carried on its side
+some care must be taken to prevent the units from falling out of
+their proper pockets. Either put all the units in the pockets of
+one tray, then secure the other empty tray on top of this with
+rubber bands, or make cardboard "lids" for the trays by cutting
+some cardboard to size, then securing the tops to the trays with
+rubber bands or cellophane tape.
+
+D. ORDER SHEET PAD: Each player uses one sheet from this pad
+on which to write orders for the military units.
+
+E. RULES AND SCENARIOS MANUAL: This booklet contains all
+rules for the play of this game, and the information for the various
+scenarios. Additional reference material is also included. For ease in
+locating various rules, a Table of Contents is provided inside the
+front cover.
+
+F. GAME TABLES CARDS: These two identical cards contain the
+charts and tables, plus other material that players will want for
+reference during a game. They also contain a Conference Map
+which players can use for reference when negotiating with other
+players.
+
+G.OTHER COMPONENTS: Not included in the game, but nec-
+essary for play, are a pencil for each player to use in marking the
+Order Sheets, and a pair of ordinary six-sided dice (needed only
+for Advanced Game and Optional Rules).
+SET UP AND PREPARATION FOR PLAY
+
+I. SELECTION OF SCENARIO AND SIDES
+
+A. SCENARIO: Select a scenario from the scenario section of this
+booklet. All the information necessary for the set up is included
+in the individual scenarios. The major scenarios are listed in chrono-
+logical order, and the variants of each scenario tell the proper
+number of players for that particular variant. Depending on the
+number of participating players, you will have to find a variant
+for that number. After deciding on a scenario and variant, players
+should decide what level of the game they will play (Basic or
+Advanced), and which, if any, of the Optional Rules will be used.
+
+B. SIDES: Take one unit from each power that will be used in
+the game. Invert these units and mix them thoroughly. Each
+player then selects one of these units, the unit determining which
+power the player will take.
+
+11. MAPBOARD SET UP
+
+A. MACHIAVELLI can be set up and played on any smooth, level
+surface, but a table that is large enough to allow the placement of
+the mapboard and all other game materials (Order Sheets, extra unit
+counters, dice, etc.) makes the ideal playing area. The players should
+be ideally seated around the table in close proximity to their home
+provinces.
+
+B. Players should select the units needed for the game, and place
+them as designated in the selected variant on the mapboard.
+III. ORDER SHEET SET UP
+
+A. All scenarios begin with the Spring Campaign of a particular
+year, the year being determined by the scenario. Each Campaign
+is individually identified by the season and the year, for instance
+"Spring, 1385".
+
+B. The years should be filled in consecutively on the YEAR line
+on the Order Sheet. For instance, a game starting in 1385 would
+be filled in "1385", "1386", "1387", etc.
+
+C. It is useful for each player to write his name and the name of
+his country at the top of the Order Sheet to establish ownership
+for that sheet.
+
+BASIC GAME
+
+1.  INTRODUCTION TO THE BASIC GAME
+
+The Basic Game Rules cover all information needed to play
+MACHIAVELLI in its simplest form. After reading this section of
+the rules, it is suggested that the new player play through the
+Introductory Game for further clarification of these rules. The
+Basic Game covers the basic mechanics of the game, while the
+Advanced and Optional Rules build on the Basic Game to introduce
+more topics, and to add additional realism and complexity to
+concepts that have already become familiar through the play of the
+Basic Game. Not all units are required to play the Basic Game;
+the Assassination units, the Ducat units, the Revolt units, and
+the Famine units are not used.
+
+II. BASIC FLOW OF THE GAME
+
+The players look over the mapboard, make their evaluation of the
+situation, then try to negotiate and make deals with other players
+to carry out their plans. Based on the results of their negotiations,
+and on their plans, the players then simultaneously and secretly
+make notations on their Order Sheets for the individual orders of
+their own units. These units are then moved exactly as marked, if
+possible, and the conflict resolution takes place as the moves are
+made. This cycle is repeated during every Campaign. There is an
+additional Phase during the Spring Campaign when new military
+units are placed on the mapboard.
+
+III. HOW TO WIN-THE OBJECT OF THE GAME
+
+A To win, a player must gain the control of new provinces,
+especially provinces that contain cities. The Campaigns continue,
+one after another, until, at the end of a Campaign, one player
+controls the required number of cities.
+
+B. For the Basic Game, the winner is the first player to control at
+least twelve cities, including all the home country cities and at least
+six conquered cities, at the end of a Campaign.
+
+IV. SEQUENCE OF PLAY
+
+Play begins after all set up and preparation is complete. The game is
+played in "Campaigns", each Campaign representing the passage of
+a season during a year-thus, each year consists of a Spring
+Campaign, a Summer Campaign, and a Fall Campaign (there is no
+Winter Campaign, as military operations normally ceased during
+cold weather in this era), in that order. Each Campaign is divided
+into Phases which must be carried out in a specific order. The exact
+Sequence of Play, which is repeated during every Campaign of the
+game, is in this order:
+
+A. MILITARY UNIT ADJUSTMENT PHASE: This is done only
+during Spring Campaigns. During this Phase, all players may place
+new military units on the mapboard, or remove excess military
+units from the mapboard.
+
+B. NEGOTIATION PHASE: This is done during all Campaigns.
+During this Phase, the players may talk to each other, either openly
+or secretly, to form pacts, alliances, or plot joint actions.
+
+C. ORDER WRITING PHASE: This is done during all Campaigns.
+During this Phase, each player secretly writes the proposed orders
+for each of their military units on their Order Sheet. Specific
+notations are used to indicate specific movements or actions by each
+military unit.
+
+D. ORDER EXECUTION AND CONFLICT RESOLTUION PHASE
+This is done during all Campaigns. When all players have completed
+writing their orders, all units are simultaneously moved, exactly
+as written on the Order Sheets. Although this is considered to be
+simultaneous, it is impractical for all players to actually move all
+of their units at exactly the same time. For this reason, the players
+should read their orders aloud and make their moves in clockwise
+order, with conflicts being resolved as they occur.
+
+(Image Description:  Two illustrations.  The first shows two men in armor, one with a sword and shield, the other with a two-handed sword.  The second shows two men talking, one pointing at a map or document.)
+V. THE MILITARY UNIT ADJUSTMENT PHASE
+
+A. GAME START: The Military Unit Adjustment Phase is only
+performed during Spring Campaigns. The initial set up and place-
+ment of military units at the start of a game counts as this Phase
+for the first Spring Campaign of the game. (Note that in many cases
+this initial set up allows more military units on the mapboard than
+would ordinarily be allowed).
+
+B. PROCEDURE: At the start of each Spring Campaign, all players
+count the number of cities they control, and the number of military
+units they have on the mapboard.
+
+1.  If a player controls more cities than the number of military units
+he has on the mapboard, extra military units may be placed on the
+mapboard until the total number of military units equals the
+number of controlled cities (if possible).
+    a. New military units may be placed only in controlled provinces
+    that contain a city, and are located in the player's home country.
+    They may be placed in either the city or the province, as the player
+    desires.
+    b. Only one new unit may be placed in each province. They may be
+    placed in the province if another unit is already in the city, or in the
+    city if another unit is already in the province, but new units may
+    not be placed in both the city and in the province.
+    c. New units may not be placed in provinces or cities that are not
+    part of the player's home country.
+    d. Old military units may not be traded for new ones. For instance,
+    a player could not remove an army unit from the mapboard and
+    replace it with a Fleet unit.
+    e. It is possible that a player will not be able to place all the new
+    military units allowed. In this case they are simply not placed on
+    the mapboard. The number and types of military units provided
+    for each major power are the maximum any one player is permitted
+    to have in play.
+    f. Only new Garrison units may be placed in cities. Army units
+    must be placed in provinces. Fleet units may be placed only in
+    provinces that contain a port city.
+
+2.  If a player controls less cities than the number of military
+units he has on the mapboard, excess units must be removed
+until the total number of military units exactly equals the
+number of controlled cities. The units to be removed are at the
+controlling player's discretion, and can be any military units
+he has anywhere on the mapboard.
+
+3.  If the number of military units which a player has on the map-
+board exacly equals the number of controlled cities, there are no
+changes made to those units.
+
+C. DETERMINING CONTROL: In order to count a city for adding
+new military units during a Spring Campaign, a player must control
+that city. To do so, the player must control both the city and the
+province in which the city is located.
+
+1. To control a city, the player must have a military unit either in
+the city or in the city's province, if there are no other player's
+military units in either, or be the last player to have had a military
+unit in either the city or the province at the same time as there were
+no other player's military units in either.
+    a. If one player has a military unit in the city while another player
+    has a military unit in that city's province, no one controls the city.
+    b. If no military unit is in the city, a military unit that enters the
+    city's province will automatically control the city. It is not
+    necessary to actually enter the city to control it.
+    c. For purposes of control, Autonomous Garrison units are treated
+    the same as it they were another player's units.
+    d. A player controls all provinces listed as being part of his home
+    country until an enemy military unit advances into any of them.
+2.  Once control is established, a player may move his military units
+out, and still retain control as long as no other player's military
+units enter the province. For ease in remembering who controls a
+province and city, players may mark their unoccupied provinces
+with Control units of their color.
+
+D. THE CONTROL OF HOME COUNTRIES: The provinces
+controlled by each player at the start of a game constitute their
+home countries.
+
+1.  A player who controls no cities in his home country at the end
+of a Campaign is eliminated from the game. All of that player's
+military units are immediately removed from the mapboard.
+
+2.  To gain complete control of another player's home country, one
+player must control all provinces and cities of that other player's
+home country at the end of a Campaign.
+    a. Once complete control is gained over another player's home
+    country, the controlling player may start to use the conquered
+    home country as if it were part of his own home country.
+    b. New military units may be placed on the mapboard during the
+    Military Unit Adjustment Phase in the controlled city-containing
+    provinces of the conquered home country. This can be done even
+    if control over some of the conquered provinces is lost after the
+    complete control is established.
+    c. Once a player has established complete control over another
+    player's home country (or, over several other player's home
+    countries), all provinces of the conquered home countries plus
+    the player's original home country would have to be lost for that
+    player to be eliminated from the game.
+    d. A player who gains complete control over a home country that
+    was previously conquered by another player may start to use the
+    conquered home country the same as if it were taken from the
+    original owner (ie. as if it were part of his own home country).
+
+3.  Note that the general outlines of the various home countries
+are denoted by various colors on the mapboard. These vary some-
+what in various scenarios, and do not always follow the mapboard
+color schemes. Each player's home country provinces are named
+in the various scenarios. Home countries that are not used in a
+scenario are not treated as home countries in that scenario.
+
+VI. THE NEGOTIATION PHASE
+
+The Negotiation Phases are one of the keys to the successful play
+of MACHIAVELLI, as the agreements reached by players during
+these periods can have a far-reaching affect on the course of the
+game, and on the various strategies each player must adopt. During
+the Negotiation Phases, the players may say as much or as little as
+they wish. They may openly discuss plans and projects around the
+mapboard, or may go off in groups to keep their negotiations secret.
+The negotiations may cover threats, bargaining, joint planning, the
+exchange of information, the spreading of lies and rumors, etc.
+Despite appearances where some powers may seem to be in more
+favorable strategic positions than others, the true value of each
+power depends to a large extent on the controlling player's skill
+in negotiations.
+
+A. During this Phase, the players may negotiate with each other.
+Negotiations can include the formation of long-term pacts or
+alliances, the plotting of joint actions, and/or the exchange of any
+types of information. Negotiations may be carried out publically or
+privately-the Conference Maps are provided for reference by
+players who wish to move away from the mapboard for private dis-
+cussions.
+
+B. The object of negotiations is to influence other players to
+cooperate in some ways in various manuevers. What players will
+agree to, or demand in return for cooperation is entirely up to the
+players involved.
+C. Agreements may be made between two players, or among
+several players.
+
+D. Players may agree to almost anything that can be legally done
+within the framework of the game's rules. They may even support
+each other's military units, or transport each other's units by sea.
+
+E. No agreements made in negotiating are binding, even if written
+and signed in blood. A player must simply be trusted to honor any
+agreements that are made. If a player does not honor an agreement
+with you, you are simply out of luck. Determining each player's
+honesty is up to the players in the game, and is an integral part of
+playing the game.
+
+F. Players may set any desired and convenient time limits for the
+Negotiation Phase which they desire and feel proper. Normally,
+if you wish a game of under four hour's length, a limit of five to
+ten minutes should be set.
+
+G. Although players will undoubtably be talking to each other all
+through the game, they should try to restrict halting play in favor
+of discussions to only the Negotiation Phase.
+
+VII. THE ORDER WRITING PHASE-MEANING OF THE
+ORDERS
+
+A. GENERAL RULES FOR WRITING ORDERS: All military
+units are assumed to be carrying out their orders simultaneously.
+The orders for each unit must be secretly written on the player's
+Order Sheets before any unit is actually moved. It is suggested that
+players mark their Order Sheets with pencils, instead of with ink,
+to facilitate erasing. After the completion of writing, be sure to
+check over the written orders to be sure they are correct, complete,
+and legible. All players must use the notation system given in these
+rules, so that any other player looking at a notation
+would know
+exactly what it means.
+
+1.  One of seven possible orders can be written for a military unit.
+Each of these orders is expressed by a notation specifying the
+particular order given to that military unit. No unit may be given
+more than one order during a Campaign. For easy reference, these
+Military Orders are listed on the Game Cards.
+
+2.  If necessary, the order notation is followed by the abbreviated
+name of the province or sea to which the action is directed. A
+province may be abbreviated by using the first five letters (if there
+are that many) of its name. For instance, "Otran" is the abbre-
+viation for Otranto province. A sea may be abbreviated by using,
+capitalized, the first letter of each word in its name. For instance,
+"BOT" is the abbreviation for Bay of Tunis, "IS" is the abbreviation
+for Ionian Sea, etc.
+
+3.  Orders for a military unit are written in the column of the
+current Campaign on the line containing the identification of the
+military unit. For instance, the orders for Army unit No. 1 for the
+Spring, 1385 Campaign are written in the Spring, 1385 column on
+line "A1" ("A1"=Army Unit No. 1). Orders should be written on
+all lines corresponding to the player's military units that are current-
+ly on the mapboard.
+
+4.  Once the Order Writing Phase is over, no orders can be changed.
+Incorrect orders must be followed, if possible. Invalid orders (those
+which were written incorrectly, and are impossible to follow) are
+ignored, and the units they were written for merely hold.
+
+5.  Players write orders only for their own military units. They may
+not write orders for other player's units, or for Autonomous
+Garrison units.
+
+6.  Although a player may not write orders for other player's
+military units, there are times when, due to agreements reached
+during negotiations, a player may wish to write support orders to
+aid another player's military unit, or that will transport another
+player's Army unit. In these cases, the notation for that other major
+power must be written as part of the notation-if no notation of this
+type appears, the orders are assumed to automatically apply to the
+player's own units. For easy reference, the Major Power Notations
+are listed on the Game Tables Cards.
+
+7.  The order that can be given to each type of military unit are
+summarized as follows:
+    a. FLEET: Fleet units are the only type that can carry out all
+    seven possible orders: Advance, Besiege, Hold, Lift Siege, Support,
+    Transport, or Convert.
+    b. ARMY: Army units can carry out any of six possible orders:
+    Advance, Besiege, Hold, Lift Siege, Support, or Convert.
+    c. GARRISON: Garrison units are the most limited type, and can
+    carry out only three possible orders: Hold, Support, or Convert.
+
+B. THE POSSIBLE MILITARY ORDERS: Each written order gives
+specific instructions to the unit to be carried out. These orders are
+written during the Order Writing Phase, and performed during the
+Order Execution and Conflict Resolution Phase.
+
+1.  ADVANCE (A): This order may be given to a Fleet or an Army
+unit. It tells the unit to advance into a specific province or sea. The
+name of the province or sea to be entered must be noted, also. For
+instance, the notation "A-Capua" orders a unit to advance into the
+province of Capua. When this order is carried out, the unit will
+actually be moved into Capua province.
+    a. A Fleet unit or an Army unit (except when transported) may
+    advance only into an immediately adjacent province or sea during
+    a Campaign. To be considered adjacent, the province or sea to be
+    entered must have a common border with the unit's original
+    location.
+    b. There may be no more than one Fleet or Army unit in each
+    province or sea at one time. There may be no more than one
+    Garrison unit in each fortified city or fortress at one time.
+    c. Only Garrison units are allowed in fortified cities or fortresses.
+    Garrison units are not allowed in provinces or seas. Garrison units
+    may not be given orders to advance.
+    d. Army units (except when transported-see 6., below) may
+    advance only on land, into an adjacent province. They may not
+    advance into a sea.
+    e. Fleet units may advance from one sea to an adjacent sea; from a
+    sea to a coastal province that borders directly on that sea (they are
+    considered to be on the coastline); from a coastal province to an
+    adjacent sea; and from one province to an adjacent province along
+    the coastline. They may not advance from one province to another
+    adjacent province if the movement is not along the coastline.
+    f. A Fleet unit in a coastal province, or on an island which contains
+    a single province (Corsica or Sardinia), can be considered to be any-
+    where along that particular coastline. For instance, a Fleet unit in
+    Otranto province could advance from there into the Lower Adriatic,
+    the Ionian Sea, or the Gulf of Naples.
+    6
+    g. The presence of a Garrison unit in the fortified city or fortress
+    of a province will not prevent any other military unit from entering
+    or exiting that province.
+
+2.  BESIEGE (B): This order may be given to a Fleet or an Army
+unit. It tells the unit to besiege the enemy-held fortified city or
+fortress in the province in which it is currently located. For instance
+an Army unit in Florence province that was given the order "B"
+would besiege the fortified city located in that province. When
+this order is carried out, the unit will be placed under the
+Garrison unit in the fortified city.
+    a. An Army unit may besiege any fortress or fortified city. Fleet
+    units may besiege only fortified cities and fortresses that are ports.
+    b. Only one unit may besiege a fortified city at one time. The
+    unit counts as the military unit in that province, and no other unit
+    may be in the province at the same time.
+    c. Units beseiging a fortress or fortified city may be supported.
+    3.  HOLD (H): This order may be given to a Fleet, Army, or
+Garrison unit. It tells the unit to remain in place (ie. do nothing).
+Invalid orders always become hold orders.
+
+4.  LIFT SIEGE (L): This order may be given to a Fleet or Army
+unit. It is just the opposite of the besiege order, and tells the unit
+to end a siege in which it is currently involved. When this order
+is carried out, remove the Fleet or Army unit from under the
+Garrison unit, and place it in the province. A unit that is besieging
+a fortified city or fortress may not be ordered to advance into
+another province until the siege has ended or been lifted.
+
+5.  SUPPORT (S): This order may be given to a Fleet, Army, or
+Garrison unit. It tells the unit to support some other unit in carrying
+out its orders. The name of the province or sea supported must be
+noted, also. For instance, the notation "S-Flore" orders a unit to
+support into the province of Florence. A unit with support orders
+remains in place-it does not advance into the named province or
+sea.
+    a. To support, the supporting unit must have the capability to
+    actually advance into the province or sea where its support is given.
+    This capability to advance may not include being transported.
+    In other words, military units may only support into provinces or
+    seas that are immediately adjacent. Army units may not support
+    into seas. Fleet units may not support into provinces into which
+    they could not advance.
+    b. Any possible number of military units may be used to support
+    into the same province or sea. A single unit may only support into
+    one province or sea during one Campaign.
+    c. A Garrison unit may be used to support only into the province
+    containing its city.
+
+6.  TRANSPORT (T): This order may be given only to a Fleet unit.
+It tells the Fleet unit to transport an Army unit by water through
+the sea or coastal province it occupies. The name of the Army unit
+to be transported must be noted, also. For instance, the notation
+"T-A2" orders the Fleet unit to transport Army unit No. 2. When
+this order is carried out, the Army unit will actually be moved to
+show each Fleet unit used for transport, and then advanced into
+the final province.
+    a. A Fleet unit may transport only an Army unit, and not more
+    than one Army unit per Campaign.
+    b. A Fleet unit must remain in place when used for transport.
+    A Fleet unit used for transport may take no other actions
+    during that Campaign. A transported Army unit must end its
+    advance on land in a province.
+    c. A transported Army unit may use any possible number of
+    Fleet units for transport during one Campaign. An Army unit
+    may be transported through any number of contiguous seas and/or
+    coastline provinces in a single Campaign if each contains a trans-
+    porting Fleet unit. The Army unit's orders should be to advance to
+    the desired provinces. A transported Army unit may only be
+    given orders to advance; it may not be given orders to support.
+    d. A fleet unit may transport an Army unit only into provinces into
+    which the Fleet unit itself could legally move.
+
+7.  CONVERSION: This order may be given to a Fleet, Army or
+Garrison unit. It tells the unit to convert itself into another type of
+unit by naming the new unit. For instance, if the notation "A8"
+were written on the Garrison unit No. 3 ("G3") line, this would
+indicate that Garrison unit No. 3 is to be converted into Army unit
+No. 8. When a conversion takes place, the original unit is removed
+from the mapboard, and the new one put in its place-moved either
+into the fortified city or fortress, or out into the province, as the
+case may be.
+    a. Conversions may only take place in provinces which contain
+    fortified cities or fortresses.
+    b. Only Garrison units are allowed in fortified cities and fortresses.
+    Therefore, for a Fleet or Army unit to enter a fortified city or
+    fortress, it must be converted into a Garrison unit, then placed
+    there. For a Garrison unit to leave a fortified city, it must be con-
+    verted into a Fleet or Army unit, then placed in the province.
+    c. When a Garrison unit is converted in an inland fortified city or
+    fortress, it must be converted into an Army unit. When a Garrison
+    unit is converted in a port, it may be converted into either a Fleet
+    or an Army unit.
+    d. A unit may only be converted once per Campaign. It is not
+    possible to convert an Army unit directly into a Fleet unit, or
+    vice-versa, during one Campaign, although this could be accomp-
+    lished over two Campaigns (ie. converted into a Garrison unit during
+    the first Campaign, then into the desired Fleet or Army unit during
+    the second Campaign).
+    e. Autonomous Garrison units may never leave the city or fortress
+    they are placed in at the start of the game. They may never be con-
+    verted.
+    f. A unit may be ordered to disband by writing "0". In this case,
+    the unit is removed from the mapboard (ie. it is converted into
+    nothing).
+    g. A military unit of one major power may not be given orders to
+    convert into a military unit of another major power.
+    h. Besieged Garrison unit may not convert.
+
+C. EXAMPLES OF ORDERS FOR MILITARY UNITS: Orders
+should be written in this manner: Order Notation-Province or Unit
+Notation (if needed) - (Major Power Notation) (if needed). Some
+examples are given below:
+
+1.  A-Saler: Unit is ordered to advance into Salerno province.
+
+2.  B: Unit is ordered to besiege the fortified city or fortress in its
+province.
+
+3.  H: Unit is ordered to hold and remain in place.
+
+4.  L: Unit is ordered to lift siege and move back into the province.
+
+5.  S-UA: Unit is ordered to support into Upper Adriatic.
+
+6.  S-Arezz-(A): Unit is ordered to support into Arezzo in favor of
+the Austrians.
+
+7.  T-A3: Unit is ordered to transport Army unit No. 3.
+
+8.  T-A4-(Fr): Unit is ordered to transport French Army unit No. 4.
+
+9.  F5: Unit is ordered to convert into Fleet unit No. 5.
+
+D. SPECIAL MAPBOARD FEATURES AND RULES: This section
+clarifies some of the more unusual sections of the mapboard.
+
+1. PIOMBINO: This province includes the offshore island of Elba.
+A Fleet unit in this province controls the straits between the main-
+land and the island. An Army unit in this province does not control
+the straits. The straits (shown on the mapboard by a broken line)
+are not a separate sea, but are part of the Eastern Tyrrhenian Sea.
+If they are not controlled by a Fleet unit in Piombino province,
+a hostile Fleet unit could move directly from Pisa province to the
+Eastern Tyrrhenian Sea, and vice-versa, or transport an Army unit
+from one to the other.
+
+2.  SICILY: The island of Sicily is composed of the provinces of
+Palermo and Messina. Fleet units may move directly from Bay of
+Tunis to Ionian Sea. However, a Fleet unit in Messina province
+controls the narrow straits between Messina and Otranto. An Army
+unit in Messina does not control the straits, nor does a Fleet or
+Army unit in Otranto. As long as there is a Fleet unit in Messina, no
+hostile Fleet unit could move directly from Gulf of Naples to
+Ionian Sea, or vice-versa, or transport an Army unit from one
+of these seas to another.
+
+NOTE CONCERNING PIOMBINO AND MESSINA: If a Fleet unit
+is ordered to, and makes, an advance to Piombino or Messina at the
+same time as a hostile Fleet tries to move or transport through the
+straits, the movement through the straits becomes impossible. As
+long as a Fleet unit is in these provinces, no other player's units
+may use the straits without the controlling player's permission.
+
+3.  DALMATIA: The islands south of Istria province, and west of
+Croatia and Dalmatia are considered to be part of Dalmatia province
+Croatia province, therefore, has direct access to the upper Adriatic
+only on that part of its coastline that is to the north of Istria
+province. A Fleet unit may land on the southern coast of Croatia,
+but must first move into Dalmatia or Istria provinces in order to do
+so. A Fleet unit may not land on the southern coast of Croatia and
+leave from the northern coast, or vice-versa.
+
+4.  PROVENCE Provence province has two separate coastlines
+which are separated by Marseille. A fleet landing on one of these
+coastlines may not leave from the other.
+
+NOTE CONCERNING CROATIA AND PROVENCE: If any doubt
+exist as to which coast these provinces a unit is ordered to ad-
+vance to, add the letter "N" for "north coast" or "S" for "south
+coast" to specify which coast is intended. For instance, "ProveN"
+and "ProveS" are the correct notations for the north and south
+coasts, respectively, of Provence.
+
+5.  VENICE LAGOON: The Venice Lagoon, although small, is
+treated as a regular sea.
+
+6.  VENICE: Due to its small size, Venice is a province as well as a
+city, but may not be used as both at the same time. Thus, it could
+contain a Fleet, Army, or Garrison unit, but not more than one unit
+at any one time. Because of this it is not possible to besiege Venice.
+The anchor symbol in the Venice Lagoon applies only to Venice-
+Padua and Treviso are not ports.
+
+7.  MINOR ISLANDS: There are a number of small black islands
+shown on the mapboard near Palermo and Sardinia. These play
+no part in the game, but are merely decorative.
+
+8.  If a major power is defined as being neutral in a scenario variant,
+treat the provinces of that power as if they were not on the map-
+board. No units may advance or retreat into those neutral provinces.
+
+9.  No movement allowed between Eastern Tyrrhenian Sea and
+Capua. Movement is allowed between Gulf of Naples and Tivoli.
+
+VIII. ORDER EXECUTION AND CONFLICT RESOLUTION
+PHASE
+
+A. ORDER EXECUTION: The written orders for the units are now
+actually carried out, and the units actually moved on the mapboard.
+
+1.  Order Sheets should be laid out in full view of the other players,
+No further notations may be made on the Order Sheets during
+this Phase.
+
+2.  The units should carry out their orders exactly as indicated by
+their Order Sheet notations, if at all possible. Invalid orders are
+changed to hold orders. Other orders may prove impossible to carry
+out due to conflicts with other player's units.
+
+3.  The units are all considered to be carrying out orders simultan-
+eously, although having all players actually moving all their units
+at one time is impractical, so the players should take turns reading
+their orders aloud, and carrying them out as they are read. Any
+player may start reading orders and carrying them out, with the
+other players following in clockwise order. The player who reads
+first should be rotated every Campaign. Conflicts should be resolved
+as soon as they occur.
+
+4.  ORDER EXECUTION PROCEDURE: The following procedure
+should be followed in executing orders:
+    a. As each player reads the orders, unopposed advances, etc. are
+    made as they are read. Other orders that involve no actual move-
+    ment, such as support and hold orders, should be mentioned.
+    b. As the orders are read, any players with conflicting orders
+    should say so, and the conflicts should be immediately resolved.
+
+B' CONFLICT RESOLUTION: Conflicts occur, and must be
+resolved, whenever military units have orders that would cause more
+than one unit occupy a single place (province, sea, fortified city, or
+fortress) at the same time. Conflicts may occur between forces that
+are either equal or unequal in strength. In order for a conflict to
+occur, one or more sides must be attempting to advance or convert
+into the disputed place, Conflicts may be simple or quite complex,
+involving many units. The rules given in this section will apply to all
+conflicts.
+
+1.  STRENGTHS: All Fleet, Army and Garrison units are con-
+sidered to be exactly equal in strength, all having a strength of
+"one".
+
+2.  FORCES: A force may consist of a single military unit, or it may
+consist of a single military unit plus all military units which are
+supporting the place it is in or to which it is advancing. It should be
+noted that, for instance, three separate units all ordered to advance
+into the same place constitute three forces, each of a strength of
+"one". If only one of those units had orders to advance, while the
+other two units had orders to support into that same place, this
+would constitute one force with a strength of "three".
+
+3.  CONFLICTS BETWEEN EQUAL FORCES: If the orders of two
+or more equal forces conflict, no moves can be made. Below,
+specific conflict situtations between equal forces are discussed:
+    a. If two or more equal forces are ordered to advance to the same
+    place, none of them may enter the place. This is a "standoff'
+    situation, and no other units may retreat into the place where the
+    advances were prevented.
+    EXAMPLE: Opposing Army units in Fornova and Como both have
+    orders "A-Pavia". Since they are of equal strength, neither may
+    advance into Pavia, and both must remain in their original provinces.
+    b. If two equal forces are ordered to advance, each to the place that
+    the other occupies, neither may advance.
+    EXAMPLE: An Army unit in Bologna has orders "A-Ferra", while
+    another Army unit in Ferrara has orders "A-Bolog". Since they are
+    of equal strength, and are trying to advance over a common border,
+    neither may advance.
+    However, if one force successfully advances into a different place
+    while another force enters its original place, no conflict occurs.
+    EXAMPLE: An Army unit in Bologna has orders "A-Lucca", while
+    another Army unit Ferrara has orders "A-Bolog". Since the first
+    Army is leaving Bologna at the same time as the second Army is
+    entering it, no conflict results.
+    c. An equal force ordered to advance into a place already occupied
+    by another unit (with orders to besiege, hold, lift siege, transport,
+    or convert) may not advance, and the occupying force may carry
+    out its orders.
+    d. An equal force ordered to advance into a place already occupied
+    by another unit with orders to support, may not advance, but the
+    occupying unit may not carry out its support orders, unless the
+    advance came from the place to which its support was directed.
+    EXAMPLE: An Army unit in Bologna has orders "S-Moden", while
+    an opposing Army unit in Mantua has orders "A-Bolog". Since they
+    are of equal strength, the advance may not be made, but the
+    Bologna Army unit may not carry out its support orders (if the
+    Mantua Army had been in Modena, the Bologna Army unit could
+    have still supported).
+    e. A unit with orders to advance that could not do so due to
+    conflicting with an equal force, may still prevent another equal
+    force from advancing into the place it occupies.
+    EXAMPLE: A Fleet unit in Eastern Tyrrhenian Sea has orders
+    "A-WTS". A Fleet unit in Western Tyrrhenian Sea has orders "H",
+    while another Fleet unit in Gulf of Naples has orders "A-ETS".
+    Since the Fleet unit in Eastern Tyrrhenian Sea cannot advance
+    against the equal force in Western Tyrrhenian Sea, it must remain
+    in its original place, and can prevent the advance of the Fleet unit
+in the Gulf of Naples.
+    f. A Garrison unit with orders to convert into a Fleet or Army unit
+    may not do so if there is an enemy unit of equal force already in the
+    province.
+
+4.  CONFLICTS BETWEEN UNEQUAL FORCES: If the orders of
+unequal forces conflict, the strongest side will always win. The
+player who can bring more units (including supporting units) into a
+conflict will win, forcing the weaker force to remain in place or
+retreat, as called for in the particular situation. Below, specific con-
+flict situations between unequal forces are discussed:
+    a. If a superior force is ordered to advance into a place at the same
+    time as a weaker force or forces is ordered to advance into the same
+    place, the superior force may advance while the weaker forces
+    remain where they were.
+    b. It a superior force is ordered to advance to a place that an inferior
+    force occupies, the superior force may advance, and the inferior
+    force must retreat.
+    C. If two forces are ordered to advance, each to the place that the
+    other occupies, the superior force may advance, and the inferior
+    force must retreat.
+    d. If a Garrison unit, in the same province with an enemy military
+    unit, has orders to convert, and is part of a superior force, it may
+    convert, and the enemy military unit must retreat. The Garrison
+    unit may not convert if the enemy force is equal or superior, but
+    remains in the fortified city or fortress.
+    e. If a superior force is ordered to hold a place, and an inferior
+    force attempts to advance, the advance may not be made.
+
+5.  CONFLICTS WITH YOUR OWN UNITS: Anytime a player
+orders one of his own units into a place already occupied by one of
+his own units, the advancing or converting force must hold. A
+player may never force one of his own units to retreat.
+
+6.  RETREATS: A military unit is forced to retreat whenever a
+superior opposing force is ordered to advance into its province or
+sea. Garrison units, in fortified cities or fortresses, may never be
+forced to retreat.
+    a. A military unit which is forced to retreat may only retreat into
+    an unoccupied place it could have ordinarily advanced into (with-
+    out using transport)-ie. an adjacent province or sea.
+    b. Fleet units may not retreat to an inland province or to a non-
+    port city, Army units may not retreat into seas.
+    c. Units may retreat to places which are vacated by other units
+    during the same Campaign with teh following restrictions:
+        1) If a province or sea is not occupied due to a standoff situation,
+        it may not be retreated into.
+        2) Units may not retreat into the province or sea from which the
+        advancing enemy unit came.
+        d. If the retreating unit is in a province which contains an un-
+        occupied fortified city or fortress, and no other place to retreat
+        is available, the retreating unit may be converted into a Garrison
+        unit and placed in the city or fortress.
+        e. If no place of retreat is available, the unit is eliminated and re-
+        moved from play. This includes retreats off the mapboard, or into
+        neutral provinces.
+        f. A retreat will cancel all orders to advance, besiege, hold, lift
+        siege, support, or transport. It will not cancel orders to convert.
+        A Fleet or an Army unit that has orders to convert into a Garrison
+        unit will do so and enter the fortified city or fortress rather than
+        retreating. A Garrison unit that is converting into a Fleet or an
+        Army unit will do so, but the unit would then have to immediately
+        retreat from the advancing opposing force.
+        g. Retreats are carried out as soon as they occur, in the order in
+        which they are read out.
+
+C. GARRISONS AND SIEGES: Garrison units do not advance and
+retreat in the same manner as Fleet and Army units. This, plus the
+fact that Autonomous Garrison units (which no player controls)
+exist, requires some special rules for their use.
+
+1.  GARRISON UNITS:
+    a. AUTONOMOUS GARRISON UNITS: Certain neutral and auto-
+    nomous provinces, which are not powerful enough to field Fleet
+    or Army units, yet are not pushover conquests, either, start
+    scenarios with Autonomous Garrison units in their fortified cities
+    or fortresses. Autonomous Garrison units are passive; no orders
+    need be written for them, as they automatically always have hold
+    orders. They may not convert or support. They are simply obstacles
+    that must be besieged in order to control their provinces.
+    b. COMMITTED GARRISON UNITS: A committed Garrison unit
+    is one which is controlled by one of the players. Unlike Auto-
+    nomous Garrison units, committed Garrison units may convert or
+    support. Garrison units which are besieged may not convert. They
+    may, however, support into their own province.
+
+2.  SIEGES: A Fleet or Army unit with besiege orders, and which is
+placed under the Garrison unit, is "laying siege" to the fortified city
+or fortress.
+    a. Fortified cities and fortresses that contain a Garrison unit must
+    be besieged to be captured. It will require at least three Campaigns
+    to successfully beseige a fortified city or fortress.
+        1) The unit which is to besiege a city must first advance into the
+        province containing the city, if not already there.
+        2) On the next Campaign, the unit may be given a besieging order,
+        and the unit is placed under the defending Garrison unit to show
+        that the place is under siege. Remember that an inland fortified
+        city or fortress may only be besieged by an Army unit, but a port
+        may be besieged by either a Fleet or an Army unit.
+        3) For the following Campaign, the besieging unit should be given
+        besiege orders again. If the unit is still in place at the end of that
+        Campaign, the Garrison unit is eliminated and removed from the
+        mapboard. Once the Garrison unit is removed, the besieging unit
+        automatically controls the city or fortress, and is considered to be
+        located in the province.
+        4) If a unit lifts siege before the sequence is complete, or is forced
+        to retreat, the siege fails. To besiege the place again would require
+        starting over.
+        5) A unit may be in the province with the Garrison unit in its fort-
+        ified city or fortress without besieging it. Sieges must be specifically
+        ordered, they are not automatic.
+
+IX. THE INTRODUCTORY GAME
+
+This section presents an actual game of MACHIAVELLI being play-
+ed, and is intended to help players learn and understand the rules.
+New players should set up this situation on their own mapboards,
+making the moves as they follow the commentary in this section.
+
+Six Campaigns out of scenario III.A. are played through. Only the
+Basic Game rules are being used. This demonstration is not meant
+to show a well-played game, or to display a suggested strategy, but
+only to show an example of the game actually being played.
+
+INITIAL SET UP: The identifications of the units, and where they
+are placed at the start of the game are as follows:
+
+MILAN: Pavia (Al), Milan (A2), Cremona (A3), Bologna (A4),
+Genoa (F1).
+VENICE: Dalmatia (F1), Ragusa (F2), Venice (G1).
+NAPLES: Naples (F1), Salerno (F2), Bari (A1), Aquila (A2).
+FLORENCE: Pistoia (A1), Florence (A2), Pisa (F1).
+
+The players are seated clockwise around the mapboard in the order
+in which the major powers are listed. Written orders shown for all
+Campaigns below will be in the order in which they are read and
+carried out. The Negotiations of the players will not be covered,
+only the mechanics of their orders.
+SPRING, 1385:
+
+        Milan       Venice      Naples          Florence
+A1      A-Montf
+A2      A-Trent
+A3      A-Mantu
+A4      H
+A5
+F1      A-Savoy     A-Croat     A-Capua         A-EGOL
+F2                  A-Alban     A-GON
+F3
+F4
+F5
+G1                              F3
+
+                                                H
+                                                S-Bolog
+                                                A-Ancon     A-Bolog
+
+COMMENTS: No orders cause any conflicts, except for the advance
+of Florence A2 (supported by Florence A1) into Bologna.Milan A4
+retreats into Modena.
+
+SUMMER, 1385:
+        Venice   Naples        Florence      Milan
+A1              A-Aquil     S-Bolog      A-Genoa
+A2             B-Ancon      H           B-Trent
+A3                                      A-Bolog
+A4                                     S-Bolog
+A5
+F1   A-Istri       A-Tivol   A-Genoa      B-Savoy
+F2   A-Duraz     A-Messi
+F3    A-L
+
+COMMENTS: Note how both Milan A1 and Florence F1 tried to
+advance into Genoa. Since both were equal in strength, neither
+could advance. Milan still controls Genoa, as it was the last power
+with a military unit there. Milan A3, with the support of Milan A4
+failed to advance into Bologna, as Florence A2 there was supported
+by Florence A1--both forces of equal strength.
+
+FALL, 1385:
+        Naples         Florence          Milan          Venice
+A1      A-Capua        S-Bolog        A-Genoa
+A2      B-Ancon        H           B-Trent
+A3                                      A-Bolog
+A4                                      S-Bolog
+A5
+F1      B-Tivol        A-Corsi    B-Savoy     A-Crout N
+F2      B-Messi                               B-Ouraz
+F3                                           A-UA
+
+COMMENTS: Note that Milan A3 again failed to advance into
+Bologna. Sieges end in Trent, Savoy, and Ancona, and the Auto-
+nomous Garrison units there are eliminated.
+
+SPRING, 1386:
+THE MILITARY UNIT ADJUSTMENT PHASE: All players count
+the cities they control, and adjust their military units.
+FLORENCE: Florence now controls four cities (Pisa, Florence,
+Corsica, and Bologna). A3 is placed in Pisa.
+MILAN: Milan now controls six cities (Savoy, Genoa, Pavia, Milan,
+Trent, and Cremona). A5 is placed in Cremona.
+VENICE: Venice now controls five cities (Venice, Croatia, Ragusa,
+Dalmatia, and Albania). F4 is placed in Venice, and F5 in Ragusa.
+NAPLES: Naples now controls three cities (Naples, Bari, and
+Ancona). A1 in Capua must be removed.
+
+        Florence       Milan           Venice      Naples
+A1      S-Bolog         A-Moden
+A2      H               A-Veron                     H
+A3      A-Lucca         A-Ferra
+A4                     A-Lucca
+A5                  A-Mantu
+F1    A-EGOL         A-EGOL          A-Carni      B-Tivol
+F2                                  B-Duraz         B-Messi
+F3                                                      H
+F4                                                     A-L
+F5                                                  A-LA
+
+COMMENTS: Milan F1 and Florence F1 both tried to advance into
+Eastern Gulf of Lyons. Since they are of equal force, neither may
+advance. Florence A3 and Milan A4 both tried and failed (equal
+strength) to enter Lucca. The failure of Milan A4 to advance, made
+the advance of Milan A1 impossible, also. Sieges end in Messina,
+Tivoli, and Durazzo, and the Autonomous Garrison units there
+are eliminated.
+
+SUMMER, 1386:
+
+      Milan            Venice           Naples             Florence
+A1    H
+A2   A-Padua                                              H            S-Lucca
+A3    S-Bolos                                                            G1
+A4    S-Bolog                                                         A-Lucca
+A5    A-Bolog
+F1     A-EGOL     A-Friul          A-ETS                 A-WTS
+F2                       A-IS               A-Paler
+F3                    A-LA
+F4                   A-UA
+F5                  A-Bari
+
+COMMENTS: Milan A5, supported by two other Army units was
+able to advance into Bologna. Florence A2 did not have to retreat,
+as it converted into Florence G1, and was placed in the fortified
+city.
+FALL, 1386:
+
+       Venice         Naples     Florence         Milan
+A1
+A2                 H                        A-Bolog    A-Corsi
+A3                                       S-Bolog   B-Padua
+A4                                                     S-Bolog
+A5                                                   S-Modena
+F1       A-L      A-Messi       A-Pisa         T-Al
+F2       A-Messi   B-Paler
+F3      A-Ancon
+F4    S-Ancon
+F5     A-Aquil
+G1                                  S-Bolog
+
+COMMENTS: Naples F1 and Venice F2 both tried to advance to
+Messina, and, as their strengths are equal, neither may advance.
+Venice F3, supported by Venice F4, successfully advanced into
+Ancona. Naples A2 retreats into Spoleto. Florence G1 and A3
+supported the successful advance of Florence A1 into Bologna.
+Milan A5 chooses to retreat into Mantua.
+
+This concludes the commentary and examples of the Introductory
+Game. Of course, if this were an actual game, it would continue
+until one major power had fulfilled the Victory Conditions.
+
+ADVANCED GAME
+
+I. INTRODUCTION TO THE ADVANCED GAME
+
+It is suggested that players master the rules, concepts, and mech-
+anics of the Basic Game before proceeding into the Advanced Game.
+A few games played using the Basic Game rules only will make the
+mastering of this section of the rules much easier. Most players will
+wish to start using these Advanced Game rules as soon as they are
+familiar with the Basic Game.
+
+The Advanced Game rules not only modify, extend, and
+supplement the Basic Game rules, but also introduce concepts
+that are absent in the Basic Game. Their total result is to pro-
+duce a more realistic, and also, more complex game. Players
+are challenged with more options to consider in making their
+decisions that will determine the outcome of the game.
+
+These rules, in most cases, simply add to the Basic Game rules.
+All Basic Game rules still apply, unless stated otherwise. All
+units are needed for play of the Advanced Game, with the
+exception of the Famine units.
+
+II. ADVANCED VICTORY CONDITIONS
+
+A. The Basic Game Victory Conditions may still be used by players
+who prefer a fairly short game. The twelve city requirement will
+usually result in a game that can be finished in a single evening. For
+players who prefer longer, more demanding games, the following
+Victory Conditjons are suggested.
+
+B. For four or less players, the winner must control at least
+eighteen cities at the end of a campaign, and must have control of at
+least one other player's home country.
+
+C. For five or more players, the winner must control at least
+fifteen cities at the end of a Campaign, and must have control
+of at least one other player's home country.
+
+D. ULTIMATE VICTORY: All the Victory Conditions
+mentioned so far make for interesting games, but more or
+less ignore the historic goal of the actual participants-to
+unify Italy into one state. To do this, the winner must
+control at least twenty-three cities at the end of a
+and must have control of at least two other player's home
+countries. This can result in a very long game, and possibly
+one that no player will be able to win (it proved impossible
+historically)!
+
+E. SETTING YOUR OWN VICTORY CONDITIONS:
+Experienced players may wish to establish their own
+Victory Conditions tailored to the type and length of game
+they wish to play.
+
+III. ASSASSINATION UNIT SET UP
+
+A. Assassination units are used with the Advanced Game
+rules. Each player is given some Assassination units, and a
+player must have the appropriate Assassination unit in
+order to attempt to assassinate another player. Just the
+name of these units gives you an idea of just how rough
+games played under the Advanced rules can get!
+
+B. As the game is being set up, each player gives each of the
+other players one Assassination unit of the color of the
+major power he controls. Thus, each player should start
+the game with one Assassination unit for each of the other
+players in the game. The players keep these units until they
+are used.
+
+IV. ADVANCED GAME SEQUENCE OF PLAY
+
+The following sequence of play, although quite similar to
+the one found in the Basic Game rules, incorporates the
+new elements found in the Advanced Game rules.
+
+A. MILITARY UNIT ADJUSTMENT AND INCOME PHASE: This
+is done only during Spring Campaigns. During this Phase, all players
+calculate their incomes, and place or remove military units on the
+mapboard.
+
+B. NEGOTIATION PHASE: This is done during all Cam-
+paigns. During this Phase, the players may talk to each
+other, either openly or secretly, to form pacts, alliances,
+plot joint actions, or transfer ducats.
+
+C. ORDER WRITING PHASE: This is done during all Cam-
+paigns. During this Phase, each player secretly writes the
+proposed orders for each of their military units, and for
+each of their ducat expenditures on their Order Sheets.
+Specific notations are used to indicate specific movements,
+actions, or expenditures.
+
+D. DUCAT EXPENDITURE PHASE: This is done during
+all Campaigns. During this Phase, players with expenses
+noted on their Order Sheets announce them in the same
+order as their moves will be made. As each player takes his
+turn reading these orders, he should turn in (spend) an
+appropriate value of Ducat units to pay for the expenses.
+
+E. ASSASSINATION PHASE: This is done during all Cam-
+paigns. During this Phase, players present Assassination
+units to their intended victims, announce the cost and pay
+the appropriate value of Ducat units, announce the num-
+bers chosen, and roll the die to determine the success of the
+attempt. Adjustments are then made on the mapboard to
+show the results of any successful assassinations.
+
+F. ORDER EXECUTION AND CONFLICT RESOLUTION
+PHASE: This is done during all Campaigns. When all players
+have completed writing their orders, all units are simultan-
+eously moved, exactly as written on the Order Sheets.
+Although this is considered to be simultaneous, it is im-
+practical for all players to actually move all their units at
+exactly the same time. For this reason, the players should
+read their orders aloud and make their moves in clockwise
+order, with conflicts being resolved as they occur.
+
+V. FINANCES-INCOME AND MILITARY UNIT COSTS
+
+The rules found in this section replace many of the rules
+found in section V (A. and B. of this section are completely
+replaced) of the Basic Game rules. These rules place the
+raising and disbanding of military units on a financial,
+rather than a geographical basis. Players obtain an income
+every Spring Campaign, which they can then use
+immediately to pay for their current military units or to raise new
+military units, or to place in their Treasuries for later use.
+
+A. GAME START: Players compute their income during
+the Military Unit Adjustment and Income Plase, which
+is only performed during Spring Campaigns. The initial set up
+and placement of military units at the start of the game
+counts as this Phase for the first Spring Campaign of the
+game.
+
+1.  For this first Spring Campaign, players must set up their
+military units as given in the scenarios. They may not
+change the unit types or their locations.
+
+2.  Players then compute their incomes in the normal way,
+including variable income.
+
+3.  Players must then pay for all their military units, if at
+all possible. If there is not enough income available to pay
+for all military units, a player may remove any excess unit
+or units that cannot be paid for. No new military units may
+be placed on the mapboard during this initial set up, even
+if income is available to pay for them.
+
+4.  All surplus income may be taken in Ducat units, and
+forms each player's starting Treasury.
+
+B. PROCEDURE FOR COMPUTING INCOME: At the
+start of each Spring Campaign, all players compute their
+individual incomes, which are based on the number of
+cities, provinces, and seas they control. Income is com-
+puted in terms of "ducats" according to a combination
+of fixed and variable formulas that, together, show each
+player's economic power. The top of the Spring Cam-
+paign columns on the Order Sheets is set up to aid in
+computing income. Unspent ducats are represented and
+recorded by the players taking Ducat units of the
+appropriate denominations, and keeping them. Each
+player's unspent Ducat units are known as his Trea-
+sury. These Ducat units are taken out of play as they are
+spent.
+
+1.  SOURCES OF INCOME: There are four sources of
+income
+
+    a. BODIES OF WATER: A player receives one ducat
+    of income for each sea that contains one of his Fleet
+    units.
+    b. PROVINCES: A player receives one ducat of income for
+    each province he controls.
+C. CITIES: A player receives income for each city he controls.
+
+1) NORMAL CITIES: A player receives one ducat of income for
+each normal city, both fortified and unfortified, he controls.
+2) MAJOR CITIES: Major cities are those which contain a white
+number. The number indicates the number od ducats of income
+each major city is worth. A player receives the ducat income for
+each major city he controls.
+    d. VARIABLE INCOME: In addition to the fixed income sources
+    listed above, each major power has a variable state income, and, in
+    specific scenarios, some individual major cities also have a variable
+    income. The Variable Income Chart on the Game Tables Card is
+    used to determine the variable income. Depending on the home
+    country or city, and on the scenario being played, players may roll
+    either one or two dice to determine their variable incomes.
+        1) To determine variable income, the player should find the name
+        of the home country or city on the Variable Income Chart.
+        2) Roll one die. Crossgrid the number rolled with the name of the
+        appropriate home country or city. The number found on the Chart
+        is the number of ducats of variable income. If two dice are to be
+        used, roll each one separately, find the number of ducats for both
+        rolls, and add both amounts for the total variable income from that
+        one source. Use separate lines on the Chart and separate die rolls
+        for each when variable income is from several sources (several
+        home countries or major cities).
+        3) When a player gains control of another player's home country,
+        the control of the variable income of that home country is also
+        gained, and may be rolled for separately.
+
+2.  COMPUTING TOTAL INCOME: As players determine their
+incomes from each of the four sources, they should write down the
+number of ducats from each on the appropriate lines of the
+"Finances" sections of their Order Sheets. These four lines should
+then be added together, and the sum written on the "Total Income"
+line. It can be readily seen that a player's income will change from
+year to year, depending on what is controlled, and what the die
+rolls are for variable incomes.
+
+3.  MILITARY UNIT PAYMENT: Once the total income is comput-
+ed, the player must pay three ducats for each military unit he has on
+the mapboard, or new military unit he wishes to place on the map-
+board.
+    a. There are no limits how many or how few military units a player
+    may have on the mapboard. The only requirement is that three
+    ducats must be paid for each unit a player has on the mapboard.
+    Military units may be removed from the mapboard and/or added
+    during the Military Unit Adjustment and Income Phase.
+    b. New military units may be placed only in controlled provinces
+    that contain a city, and are located in the player's home country.
+    They may be placed in either a fortified city or the province, as the
+    player desires.
+    c. Only one new unit may be placed in each province. They may
+    be placed in the province if another unit is already in the city,
+    or in a fortified city it antoher unit is already in the province, but
+    new units mav not be placed in both the city and the province.
+    d. Old military units may not be traded for new ones in that same
+    province. However, a player could remove a unit from one province
+    or city (ie. not pay for it), and then place that same or another
+    military unit in another province or city.
+    e. It is possible that a player will not be able to place all the new
+    military units desired. In this case they are simply not placed on
+    the mapboard. The number and types of military units provided
+    for each country are the maximum any one player is permitted
+    to have in play.
+    f. Only new Garrison units may be placed in fortified cities. Army
+    units must be placed in provinces. Fleet units may be placed only in
+    provinces that contain a port city.
+    g. The number of military units a player may place is in no way
+    connected with the number of cities controlled, as in the Basic
+    Game, but depends entirely on how many can be paid for.
+    h. Once the military units are paid for, they are paid for the entire
+year. No further ducats need be paid for the units for the rest of the
+year, but, also, no "refunds" of ducats can be made for units that
+may be eliminated or disbanded during the year.
+
+i. Once a player has placed all his military units on the mapboard,
+he should write the total number of ducats paid for them on the
+"Units X 3" line of the "Finances" sections of their Order Sheets.
+
+4.  SURPLUS INCOME: Subtract the number of ducats paid for
+military units from the total income, and write this figure on the
+"Surplus" line of the "Finances" section of the Order Sheet. This
+figure may be either a positive ("+") or negative ("-") number,
+depending on whether the "Total Income" was larger or smaller
+than the "Units X 3".
+    a. If the number of surplus ducats is positive, the player should
+    take Ducat units equal in value to the surplus and place them in his
+    Treasury.
+    b. If the number of surplus ducats is negative, the player must
+    take Ducat units equal in value to the surplus from his Treasury,
+    and pay them to make up the difference. A player may not have a
+    negative surplus if there are not enough Ducat units in the Treasury
+    to make up the difference.
+
+C. DETERMINING CONTROL: Control of a city, province, or
+home country is determined the same as in the Basic Game rules,
+with the following modifications:
+
+1.  If one player has a military unit in the city, while another player
+has a military unit in that city's province, the player in the city
+would receive the city's income, while the other player would
+receive the income of the province.
+
+2.  A besieged fortified city produces no income.
+
+3.  A province and ungarrisoned city containing a Famine unit (see
+Optional Rule III.B.) or a Rebellion unit does not produce any
+income. A fortified city with a Garrison unit in a province contain-
+ing a Famine or Rebellion unit will still produce income for the
+controlling player, although the province will produce no income.
+
+4.  When a player is eliminated from the game, all of his Assassina-
+tion and Ducat units are also removed from the game.
+
+VI. FINANCES-EXPENDITURES
+
+The rules in this section cover the various ways in which Ducats may
+be spent, how they are spent, how many must be spent, and the
+results of these expenditures.
+
+A. GENERAL RULES FOR WRITING EXPENDITURE ORDERS:
+Expenditure orders are noted on the Order Sheet during the Order
+Writing Phase, at the same time as orders are written for the military
+units.
+
+1.  Expenditures orders are written in the appropriate Campaign
+column on the lines labeled "Expenses" on the Order Sheets. There
+are only four lines in this section, and a player may make no more
+than four expenditure orders per Campaign, one order per line.
+
+2.  One of twelve possible expenditures orders can be written on
+each line. Each of these orders is expressed by a notation ("A"
+through "L") specifying the particular order. For easy reference,
+these orders are listed on the Expenses Table on the Game Tables
+Card. The order notations are always followed by a notation
+indicating the province, unit, or major power to which the order
+is directed, and the number of ducats to be spent.
+
+3.  As in orders for military units, no expenditure orders can be
+changed after the end of the Order Writing Phase. Incorrect orders
+must be followed, if possible, and invalid orders are ignored;
+although, in both cases, the ducat costs must still be paid, even if
+wasted.
+
+4.  There is no requirement for a player to make any expenditures
+during a Campaign; doing so is completely voluntary.
+
+B EXECUTION OF THE EXPENDITURE ORDERS: All written
+expenditure orders are actually carried out during the Ducat
+Expenditure Phase, with the exception of assassination orders,
+which are carried out during the Assassination Phase.
+
+1.  Order Sheets should be laid out in full view of the other players.
+No further notations may be made on the Order Sheets during the
+Ducat Expenditure, Assassination, or Order Execution and Con-
+flict Resolution Phases.
+
+2.  The expenditure orders should be carried out exactly as
+indicated by the Order Sheet notations, if at all possible.
+Invalid orders and those which are impossible to carry out
+are ignored, although the ducat cost must still be paid.
+
+3.  The expenditure orders are all considered to take place simul-
+taneously, within their proper Phases (since the Assassination
+Phase takes place after the Ducat Expenditure Phase, all other
+expenditure orders will be carried out before any assassination
+orders). Again, as with the military unit orders, the players should
+take turns reading their expenditure orders, in the same clockwise
+manner as the military unit orders are read.
+
+4.  ORDER EXECUTION PROCEDURE: The following procedure
+should be followed in executing expenditure orders:
+    a. As each player reads his expenditure orders, the number of
+    spent should be taken from the player's Treasury, and removed
+    from the game.
+    b. The orders should be read and carried out. Any players with
+    conflicting orders should say so, and any conflicts immediately
+    resolved.
+
+C. THE POSSIBLE EXPENDITURE ORDERS: Each written
+expenditure order gives specific instructions, and will cause a
+specific result, often requiring special rules.
+
+1.  FAMINE RELIEF (A): This is only used when the Optional
+Famine rules (Optional Rule III.B.) are used. This order is given to
+end the effects of famine in a province. The name of the province
+must also be noted. The cost for this order is three ducats. When
+this order is carried out, the Famine unit in that one province
+is removed from the mapboard.
+
+2.  PACIFY REBELLION (B): This order is given to end the effects
+of rebellion in a province. The name of the province must also be
+noted. The cost for this order is twelve ducats. When this order is
+carried out, the Rebellion unit in that one province is removed from
+the mapboard, and the province return's to its former owner's
+complete control.
+
+3.  COUNTER-BRIBE (C): This order is given to try to nullify a
+suspected bribe attempt. The name of the unit the counter-bribe
+affects must also be noted. A counter-bribe may be any number of
+ducats in units of three ducats (ie. three, six, nine, or twelve ducats,
+etc.).
+    a. If a unit has a bribe and a counter-bribe ordered for it during
+    the same Campaign, the number of ducats spent on the counter-
+    bribe is subtracted from the number of ducats spent on the
+    bribe. If the remaining number of bribe ducats are too few to
+    carry out the ordered bribe, it fails.
+    b. If several bribes are directed at the same unit during the same
+    Campaign, the number of counter-bribe ducats need only be
+    subtracted from the largest bribe. All smaller bribes are auto-
+    matically wasted and cannot be used.
+    c. Counter-bribes are only effective against bribes. They may not
+    be used against rebellion or assassination orders.
+    d. If a counter-bribe is ordered for another player's military unit,
+    be sure to include the major power notation. If a counter-bribe is
+ordered for an Autonomous Garrison unit, list the name of the
+province (since these units are not identified).
+
+4.  BRIBES: Expenditure orders noted as "D" through "I" are
+collectively called "bribes". Each of these bribes is directed at a
+specific enemy or Autonomous military unit in a province or sea,
+which must be listed in addition to the number of ducats spent.
+Successful bribe orders may cancel the military orders given to the
+same unit.
+    a. DISBAND AUTONOMOUS GARRISON (D): This order is
+    given to try to disband an Autonomous Garrison unit. The name of
+    the province containing the unit must also be noted. The minimum
+    cost for this order is six ducats. If successful, the bribe will cause
+    the Autonomous Garrison unit to be disbanded and removed from
+    the mapboard.
+    b. BUY AUTONOMOUS GARRISON (E): This order is given to
+    try to convert an Autonomous .Garrison unit into one of your own
+    Garrison units. The name of the province containing the unit must
+    also be noted, and the unit it is converted to must be noted. The
+    minimum cost for this order is nine ducats. If successful, the bribe
+    will cause the Autonomous Garrison unit to be converted into one
+    of your own Garrison units.
+    C. COMMITTED GARRISON TO AUTONOMOUS (F): This order
+    is given to try to convert a committed Garrison unit (one which is
+    controlled by another player) into an Autonomous Garrison unit.
+    The name of the province containing the unit must also be noted.
+    The minimum cost for this order is nine ducats. If successful, the
+    bribe will cause the committed Garrison unit to be converted into
+    an Autonomous Garrison unit
+    d. DISBAND COMMITTED GARRISON (G): This order is given
+    to try to disband a committed Garrison unit. The name of the pro-
+    vince containing the unit must also be noted. The minimum cost
+    for this order is twelve ducats. If successful, the bribe will cause
+    the Garrison unit to be disbanded and removed from the mapboard.
+    e. DISBAND ARMY OR FLEET (H): This order is given to try to
+    disband a Fleet or Army unit. The name of the province containing
+    the unit must also be noted. The minimum cost for this order is
+    twelve ducats. If successful, the bribe will cause the Fleet or Army
+    unit to be disbanded and removed from the mapboard.
+    f. BUY ARMY OR FLEET (1): This order is given to try to convert
+    an enemy Fleet or Army unit into one of your own Fleet or Army
+    units. The name of the province containing the unit must also be
+    noted, and the unit it is converted to must be noted. The minimum
+    cost for this order is eighteen ducats. If successful, the bribe will
+    cause the unit to be converted into one of your own units of the
+    same type (ie. A Fleet unit must be converted into a Fleet unit,
+    and an Army unit into an Army unit).
+    g. SPECIAL BRIBE RULES:
+        1) If several different bribes are ordered on the same unit, the
+        largest bribe is the only one that is considered-all smaller bribes
+        are ignored and wasted. If there is a tie as to which is the largest
+        bribe. all bribes to that unit fail and are wasted.
+        2) Bribes can be larger than the minimum costs listed, but all
+        increases must be in units of three ducats. Often, larger than
+        minimum bribes are used to offset suspected counter-bribes.
+        3) The minimum cost for all bribes on Garrison units (Autono-
+        mous and committed) in major cities is doubled.
+        4) A player may direct bribes only into provinces or seas that
+        are directly adjacent to one of that player's military units.
+        5) A player who orders a bribe to buy a military unit (orders
+        "E" or "I") may also write military orders to the unit it is
+        converted into on that same Campaign. Thus, if the bribe
+        succeeds, the military unit may be placed on the mapboard
+        immediately, and start carrying out military orders during the
+        Order Execution and Conflict Resolution Phase of the same
+        Campaign.
+        6) The size of the bribe must be large enough to carry out the
+        specified bribe order. Even if the amount of the bribe is large
+        enough to carry out another, cheaper, bribe, if there are not
+        enough ducats for the ordered bribe, it fails.
+
+5.  REBELLIONS: Expenditures orders "J" and "K" are concerned
+with rebellions. These orders may be used against any enemy-
+controlled province, even ones which contain a military unit.
+Rebellion units may not be placed in seas. If the province contains
+a fortified city (or fortress, when these are used), and no Garrison
+unit is in the city or fortress, the Rebellion unit may be placed in
+the city or fortress. Otherwise, it is placed in the province and kept
+there, even if the Garrison unit later leaves the city or is eliminated.
+    a. CONQUERED PROVINCE TO REBEL (J): This order is given
+    to start a rebellion in an enemy-controlled province that is not part
+    of his home country (ie, it has been conquered). The name of the
+    province must also be noted. The cost for this order is nine ducats.
+    When this order is carried out, a Rebellion unit is placed in the
+    province.
+    b. HOME PROVINCE TO REBEL (K): This order is given to start
+    a rebellion in an enemy-controlled province that is part of his home
+    country. The name of the province must also be noted. The cost
+    for this order is fifteen ducats. When this order is carried out, a
+    Rebellion unit is placed in the province.
+
+NOTE: When placing a Rebellion unit, also place a Control unit of
+the color of the player who controlled the province at the start of
+the rebellion to indicate who the rebellion is directed against.
+
+   c. SPECIAL RULES ON REBELLIONS: A province or city con-
+    taining a Rebellion unit is said to be in "rebellion", to have "rebel-
+    led", or to be "rebelling".
+        1) Rebellion units may never move, but always remain where
+        originally placed. They are never given any written orders. A
+        Rebellion unit remains on the mapboard until the rebellion is
+        pacified, put down, or liberated.
+        2) Rebellion units have no effects on movement. Military units may
+        move into, out of, or through (if being transported along a coast-
+        line) one rebelling province into another.
+        3) Income cannot be collected from a province and/or city contain-
+        ing a Rebellion unit, although a garrisoned city in a rebelling pro-
+        vince could still provide income.
+        4) Plague (see Optional Rule III.A.) does not effect Rebellion units.
+        5) A rebellion in a province or city may be pacified by using expen-
+        diture order "B" (Pacify rebellion; cost twelve ducats). When this is
+        done the Rebellion unit is removed from the mapboard, and the
+        place reverts to its former owner's control.
+        6) A rebellion may be put down in a province if a military unit of
+        the major power that formerly controlled the province enters or is
+        in the province and remains there with hold orders for a Campaign.
+        At the end of the Campaign at hold orders, if the Fleet, Army or
+        Garrison unit remains in the province, the Rebellion unit is removed
+        from the mapboard.
+        7) To put down a rebellion in a fortified city or fortress, the city
+        or fortress must be besieged in the normal manner. The Rebellion
+        unit is removed at the conclusion of the siege, the same as if it were
+        a Garrison unit.
+        8) To liberate a rebellion, a military unit of any major power other
+        than the one which formerly controlled the province must advance
+        into the rebelling province. The Rebellion unit, whether in the city
+        frotress, or province is immediately removed from the mapboard
+        when this is done.
+        9) Any player other than the one to which a rebellion is directed
+        against may use a Rebellion unit for support of an advance into the
+        rebelling province. This support is automatic, and need not be
+        written down. For this one purpose only, a Rebellion unit has a
+        strength of "one". However, if two or more players claim support
+        from one Rebellion unit, none may use it.
+        10) If two or more rebellion orders are directed against the same
+        province during one campaign, only one counts (the others are
+        wasted), and only one Rebellion unit is placed.
+        11) SPECIAL NOTE: No Rebellion unit may be placed in Venice if
+        there is a military unit already there, either in the city or in the
+        province.
+
+6.  ASSASSINATIONS (L): This order is given to attempt to
+"assassinate" another player. The notation for the major power that
+the intended victim controls must also be noted. The player order-
+ing an assassination must have an Assassination unit of the color of
+the major power that the intended victim controls in order to make
+the attempt. The minimum cost for an assassination attempt is
+twelve ducats. When this order is carried out, a die is rolled to deter-
+mine the success or failure of the attempt. Note that these orders
+are carried out during the Assassination Phase.
+    a. For every twelve ducats spent on the attempt, the player may
+    select one number on the die. For instance, if a player paid twenty-
+    four ducats, any two numbers on the die could be selected (for
+    instance, "2" and "6" might be selected). The exact numbers
+    selected can be announced when the attempt is made, just before
+    the die is rolled, they do not have be listed when the order is
+    written. No more than three numbers may be selected per attempt,
+    so that the maximum number of ducats spent on a single Assaaaina-
+    tion attempt is thirty-six.
+    b. When, during the Assassination Phase, the attempt is made, the
+    player must show the Assassination unit to his intended victim, then
+    remove it from play. Each Assassination unit may be used only
+    once per game. The numbers on the die are selected, and the die is
+    rolled. If the number rolled is not an announced number, the
+    Assassination attempt fails. If the number rolled is one of the
+    announced numbers, the Assassination attempt succeeds.
+    c. More than one player could make an Assassination attempt on
+    the same player during the same Campaign. Each would be handled
+    separately, with a separate die roll and use of an Assassination unit.
+    However, two or more successful assassinations on the same player
+    in the same Campaign will have no more effect than one successful
+    assassination.
+    d. If an assassination is successful, all the victim's military units
+    are paralyzed for that one Campaign. All of their orders are automa-
+    tically changed to hold orders, although they still may be supported
+    by other player's units. The victim's military units may not use their
+    hold orders to put down rebellions during this Campaign, and the
+    effects of siege are ignored on fortified cities or fortresses that these
+    units may be besieging. The victim may resume the normal writing
+    of orders on the next Campaign.
+    e. If an assassination is successful, any of the victim's Garrison
+    units that are being besieged will immediately be removed from the
+    mapboard.
+    f. For a successful assassination, it must also be determined how
+    many of the victim's provinces take advantage of the assassination
+    to rebel. The victim must consult the Assassination Rebellion Table
+    on the Game Tables Cards, and roll the die once for each controlled
+    province. The Table lists the types of provinces and the numbers
+    that must be rolled on the die for their rebellion. A Rebellion unit
+    is placed in each province where this takes place, and the normal
+    rebellion rules apply.
+    g. An assassinated player is not out of the game, but stays in the
+    game representing his own "successor" as ruler of the major power.
+    The effects of assassination merely show the often chaotic effects of
+    a sudden shift in power at the top.
+
+D. EXAMPLES OF EXPENDITURE ORDERS: Expenditure orders
+should be written in this manner: Order Notations-Province and/or
+Unit Notation or Major Power Notation (as needed) -Number of
+Ducats Spent. Some examples are given below:
+
+1.  A-Capua-3d: Orders for famine relief in Capua; three ducats
+spent.
+
+2.  B-Veron-12d: Orders to pacify rebellion in Verona; twelve
+ducats spent.
+
+3.  C-A1-3d: Order to counter-bribe Army unit No. 1; three
+ducats spent.
+
+4.  C-A4(FL)-6d: Orders to counter-bribe Florentine Army unit
+No. 4; six ducats spent.
+
+5.  C-Forno-3d: Orders to counter-bribe an Autonomous Garrison
+unit in Fornova; three ducats spent.
+6.  D-Bresc-6d: Orders to disband an Autonomous Garrison unit
+in Brescia; six ducats spent.
+
+7.  E-Perug-G3-9d: Orders to buy an autonomous Garrison unit
+in Perugia; convert it into Garrison unit No. 3; nine ducats spent.
+
+8.  F-Mantu-9d: Orders to convert the committed Garrison unit in
+Mantua into an Autonomous Garrison unit; nine ducats spent.
+
+9.  F-Naple-18d: Orders to convert the committed Garrison unit
+in Naples into an Autonomous Garrison unit; eighteen ducats spent
+(note that the minimum cost is eighteen ducats, instead of only nine
+ducats, since Naples is a major city).
+
+10.G-Romag-12d: Orders to disband the committed Garrison unit
+in Romagna; twelve ducats spent.
+
+11.H-LA-12d: Orders to disband the Fleet unit in Lower Adriatic;
+twelve ducats spents.
+
+12.I-Pisto-A7-21d: Orders to buy the Army unit in Pistoia; con-
+vert it into Army unit No. 7; twenty-one ducats spent.
+
+13.J-Genoa-9d: Orders to the conquered province of Genoa to
+rebel; nine ducats spent.
+
+14. K-Messi-15d: Orders to the home province of Messina to rebel;
+fifteen ducats spent.
+
+15.L-(N)-24d: Orders to assassinate the player controlling the
+major power of Naples; twenty-four ducats spent (enough to choose
+two numbers on the die).
+
+E. LOANS, GIFTS, ETC.: Ducats can be given away or loaned
+(possibly with interest) to other players at your discretion, by
+merely handing them the appropriate Ducat units. Players may give
+or sell Assassination units to other players. Repayment of loans, like
+keeping any other agreements in this game, must depend on the
+borrower's goodwill and integrity. Obviously, the Advanced Game
+rules open whole new vistas of topics for negotiations. Probably the
+ultimate possible treachery in the game is to borrow money from a
+player then turn around and use it for his assassination!
+
+OPTIONAL RULES
+
+I. INTRODUCTION TO THE OPTIONAL RULES
+
+This portion of the rules builds further on the rules found in the
+Advanced Game, and adds some further concepts to the rules. Use
+of these rules adds greater scope and realism to the game. The
+sections of the Optional Rules are separate, and most can be used
+either alone or in conjunction with the other sections. The indivi-
+dual players must decide for themselves which of the Optional
+Rules to use in a game. They may wish to try none of them, one
+of them, just some of them, or all of them; it is totally up to the
+players involved, what interests them, and the circumstances of the
+game.
+
+II. SEQUENCE OF PLAY WITH ALL OPTIONAL RULES
+
+This section is a modification of the Advanced Game rules, expand-
+ed to cover the use of all options. If some rules are not in use, the
+portions of the sequence pertinent to them can be ignored.
+
+A. FAMINE PHASE: This is only done during the Spring Campaign.
+Provinces struck by famine are determined, and Famine units placed
+in them.
+
+B. MILITARY UNIT ADJUSTMENT AND INCOME PHASE: This
+is the same as in the Advanced Game rules.
+money, and are highly susceptible to bribes, as their allegiance went
+to the highest bidder. Some military units of different composition
+did appear during this time, and the rules in this section cover these
+types.
+
+A. No major power may have more than one special military unit
+on the mapboard at the same time. The identification of any such
+military unit must be specified and made known to all players. The
+special unit may be a Fleet, Army, or Garrison unit.
+
+B. CITIZEN'S MILITIA: This type of force, composed of patriotic
+citizens, was the type envisioned by Machiavelli. Since they were
+not full-time soldiers, they were usually not as well-trained as
+mercenaries, but more highly-motivated and enthusiastic.
+
+1.  This type of unit costs six ducats, instead of the normal three.
+
+2.  This type of unit has the usual strength of "one" for conflicts.
+
+3.  This type of unit costs twice the normal amount to bribe.
+
+C. ELITE MERCENARIES: Some mercenary units were more
+effective and fought harder and better than other mercenary forces.
+The famous Swiss pikemen were mercenaries of this type.
+
+1.  This type of unit costs six ducats, instead of the normal three.
+
+2.  This type of unit has a doubled strength of "two" for conflicts.
+
+3.  This type of unit may be bribed for normal amounts.
+
+D. ELITE PROFESSIONALS: Toward the end of the period
+covered in the game, units of long-term professional citizen
+soldiers began to appear. The Spanish infantry, recruited from
+Spanish citizens to fight for Spain, and well-trained and equipped,
+were noted as the best soldiers in Europe. They provide the
+best example of this type.
+
+1.  This type of unit costs nine ducats, instead of the normal three.
+
+2.  This type of unit has a doubled strength of "two" for conflicts.
+
+3.  This type of unit costs twice the normal amount to bribe.
+
+V. OPTIONAL BRIBERY RULES
+
+In the Advanced Game bribery rules, bribes may only be directed
+into provinces or seas that are adjacent to the player's own military
+units. Here are two options on how this rule may be modified, if
+players wish.
+
+A. Using the first option, a player may also bribe units that re
+adjacent to some other player's military units, but not to his own,
+but only with the permission of that other player.
+
+1.  The player should negotiate for permission, then write the bribe
+order on the Order Sheet in the normal manner.
+
+2.  During the Ducat Expenditure Phase, the player reads the bribe
+order in the normal manner, and also states whose permission he has
+to make the bribe. The player who gave permission must then con-
+firm that this is so. Then the order is carried out normally. If the
+other player fails to confirm the permission, the order (and the
+ducat value spent) is wasted-remember, you cannot really trust
+anyone.
+
+B. Simply permit players to direct bribes into any provinces,
+whether they are adjacent to any military units, or not. Use of this
+option can produce some wild situations.
+
+VI. OPTIONAL ASSASSINATION UNIT SET UP
+
+A. This option may be used instead of the set up given in the
+Advanced Game rules (section III).
+
+B. As the game is being set up, each player takes a number of
+Assassination units of his color equal to the number of other players
+in the game. All these units are placed together, inverted so that
+the colors cannot be seen, and mixed up thoroughly. The players
+then take turns selecting one of these units at a time until all have
+been selected. Players may keep what colors they select a secret.
+What colors are drawn can often help determine a player's strategy.
+The Assassination units are used normally in the game.
+
+VII. OPTION WHEN PLAYER QUITS THE GAME
+
+If a player has to leave the game before it is finished, remove all
+of his military units from the mapboard. Then place an Autono-
+mous Garrsion unit in every fortified city and fortress (if used)
+that player controlled. Continue normal play after this is done.
+
+VIII. DISTANT PLAY RULES
+
+These rules outline a system to permit players to play a game with
+each other by phone or by mail, if they are unable to assemble for
+face-to-face play, or simply prefer to play at a distance. To use this
+system, all players must set up their own copy of the game, then
+either send their moves by mail, or read them over the phone.
+
+A. THE JUDGE: This option presumes (perhaps a bit too optimist-
+ically) that an extra person can be obtained who will not actually
+play in the game for any side, but will serve as "Judge", and run the
+game. All orders from all players must be sent or called to the Judge,
+who needs to have his own copy of the game set up, plus other
+notes that the Judge may require (ie. the number of ducats current-
+ly in the Treasury, notes regarding player agreements, loans, gifts,
+or the borrowing of ducats, plus any other information that may
+help the Judge in carrying out orders.)
+
+B. The game is played similarly to the face-to-face version, but
+all needed information must be funneled through the Judge.
+The Judge handles all dice rolling, and carries out all orders for
+the players, resolving conflicts and determining the directions
+of retreats. The Judge must then make a list of the locations
+of all units, including military, Famine, and Rebellion units,
+and send or read this list back to all players, so they may make
+proper adjustments to their own mapboards. If played by mail,
+the Order Sheets should be sent back with this list to write
+orders for the next Campaign.
+
+C. The Judge will wish to carry out the famine, plague, and
+variable income dice rolls and record the results prior to sending
+or calling back the unit placements in the appropriate Campaigns.
+
+D. The great advantage in Distant Play is that the players can
+communicate individually and secretly by phone or mail without
+the knowledge of other players. Players involved in these games
+should take full advantage of this in their negotiations.
+
+E. The Judge should set deadlines on when orders from all players
+must be received. Generally, every night or two is fine for games
+played by phone, but two to four weeks should be allowed for mail
+games to give players time to negotiate properly. Any player who
+does not get his orders in by the deadline, has automatically no
+expenditure orders, and only hold orders for all military units.
+
+F. STANDARD SET UP: This rule is unnecessary in a face-to-face
+game, but will help players determine exactly what military unit
+is set up in what province to start the game.
+
+1.  Set up military units so that their numbers are consecutive by
+type in the order they are listed in the scenario set ups. For
+instance, in scenario III.B., Naples would be set up with Army unit
+No. 1 in Bari, Fleet unit No. 1 in Naples, Army unit No. 2 in
+Messina, and Fleet unit No. 2 in Palermo.
+
+2.  If one player controls more than one major power, and is using
+one set of units for all of them, set up consecutively by type in
+the order in which the major powers are listed in the scenario set up.
+
+IX. LUCK
+
+The Basic Game contains no dice rolling, and, therefore, has no
+random luck element-the results are totally due to the interactions
+of the players. Dice rolling is introduced in the Advanced Game
+rules and Optional Rules, so that a degree of random luck is present
+in these versions. This option is for players who wish to eliminate
+the random luck element from the game.
+
+A. Do not use the Assassination rules. Use no Optional Rules that
+require the use of a die.
+
+B. For the variable income rolls in the Advanced Game rules,
+assume that everyone rolls a "3" for all variable income rolls during
+odd numbers years (ie. 1385), and assume that everyone rolls a "4"
+on even numbered years (ie. 1386).
+
+X. THE MONEY LENDERS
+
+The Renaissance period witnessed the rise of several fantastically
+wealthy and powerful international bankers and financiers. The
+impoverished Princes often went to these people for loans, and
+often found themselves in great difficulty when the time came to
+repay the loans!
+
+A. BORROWING DUCATS: During the Ducat Borrowing Phase,
+players may "borrow" ducats by taking the appropriate value in
+Ducat units, and adding them to their Treasuries. These loans should
+be written down on a piece of scratch paper or some stray space on
+the Order Sheet. Record the amount borrowed, the interest rate,
+and the date due.
+
+1.  The total number of ducats owed by any one major power may
+never exceed twenty-five at one time (not counting interest).
+
+2.  These borrowed ducats may be borrowed for a period of either
+one or two years. For instance, a one-year loan taken out in
+Summer, 1387 would have to be repaid, with interest, in Summer,
+1388. A two-year loan taken out in Fall, 1388 would have to be
+repaid, with interest, in Fall, 1390.
+
+3.  One-year loans are at 20% interest on the amount borrowed.
+Two-year loans are at 50% interest on the amount borrowed.
+When interest is figured, all fractions are rounded up for repay-
+ment.
+
+4.  Full amounts, including all interest, must be repaid, even if the
+repayment is made early.
+
+B. REPAYING LOANS-PENALTY: Loans plus the interest
+must be repaid by the Ducat Borrowing Phase of the due date
+Campaign. If not paid in full by this time, the major power
+unable to meet its debts will immediately suffer the same effects
+as if the player was assassinated. After this, the debt need not be
+repaid, but the major power may never again borrow ducats from
+the Money Lenders for the rest of the game.
+
+XI. RATINGS POINTS
+
+This rating is intended for players who play the game frequently. It
+enables players to compare their overall records with each other.
+Only games with four or more players that are finished are counted
+in this system.
+
+A. At the end of a game, all players count the number of cities they
+control to determine their order of finishing. They then check the
+Ratings Chart on the Game Tables Cards to determine how many
+ratings points they get. For instance, in a four-player game, the
+winner gets ten ratings points, the second place player gets seven
+ratings points, etc. In the case of ties, add the ratings points
+and divide by the number of tied players to get their ratings points.
+For instance, if, in a five-player game three players are tied for
+second place (which means they are also tied for third and fourth
+place), add the ratings points for second (8), third (6), and fourth
+(4), and divide by three. This means all three of the tied players
+would get six ratings points.
+
+B. These ratings points are accumulated from game to game. To
+find each player's "Skill Rating", divide the total accumulated
+points by the number of games played. For instance, the two
+players charted below have both participated in ten five-player
+games:
+
+                    PLAYER "A"
+PLACE           NO. OF TIMES            RATINGS POINTS
+-----           ------------            --------------
+First               2                       20
+Second             2                       16
+Third               1                       6
+Fourth              3                       12
+Fifth               2                       4
+                    ----                    ---
+                    10                      58
+Skill Rating 5.8
+
+                    PLAYER "B"
+PLACE            NO. OF TIMES            RATINGS POINTS
+-----            -----------             --------------
+First                   1                       10
+Second                 4                       32
+Third                   2                       12
+Fourth                  1                        4
+Fifth                    2                       4
+                      ----                    ---
+                      10                      62
+
+Skill Rating 6.2
+Note that although Player "A" won two games while Player "B"
+won only once, Player "B" is a slightly more skillful player, as
+shown by the two Skill Ratings.
+
+C. A player's Skill Rating can be further expressed by indicating the
+number of games played-ie. a rating of "32-5.7" indicates a player
+with a Skill Rating of "5.7" after thirty-two games played. To be a
+valid indication of overall skills for comparison, the number of
+games played by two players must be similar.
+
+D. The ratings points may be used to determine victory in games
+involving few players. Instead of one player running several major
+powers, but only using one set of unit counters, the player runs each
+of the major powers he controls with a separate set of unit counters.
+Each of the major powers remains separate, although they are
+obviously closely allied! The player should use a separate Order
+Sheet for each major power controlled. When the game ends, deter-
+mine the order of finishing for all the major powers. A player adds
+together the ratings points of the major powers he controls. The
+winner of the game is the player with the largest number of ratings
+points.
+
+SCENARIOS-HISTORICAL SUMMARY
+
+I. INTRODUCTION TO THE SCENARIOS
+
+The separate scenarios, each of which is a game in itself, all use this
+common set of rules. Each scenario provides the information needed
+to set up and play a game. There are four separate scenarios pro-
+vided, each covering different political alignments in various his-
+torical eras. The scenarios are further broken down into variants
+which allow for play by different numbers of players. Each scenario
+is linked to the next by a running historical commentary. The
+essential information given in each scenario is laid out as follows:
+
+DATE: This gives the date of the first Campaign in the scenario.
+
+SET UP: This lists the provinces that are controlled by each of the
+major powers (ie. the home countries) at the start of the game.
+Provinces that contain military units at the start of the game have
+the initial for the type of unit ("A"=Army unit. "F"=Fleet unit,
+and "G"=Garrison unit) listed next to the name of the province,
+in parenthesis.
+
+AUTONOMOUS GARRISONS: This lists the provinces that contain
+Autonomous Garrison units at the start of the game.
+
+SPECIAL RULES: This lists any special rules that apply only to
+that scenario. If the special rule is only needed for games using
+Advanced rules, the word "Advanced" will appear in parenthesis.
+
+VARIANTS: This tells how to align the major powers to allow for
+different numbers of players. When one player is controlling more
+than one major power, all the units used by that player should be
+the same color. In some cases, a Variant is not suitable for play
+using the Basic Game Victory Conditions; If so, it is noted with an
+asterisk (*).
+
+II. INDEX TO THE SCENARIOS
+
+This section of the rules is provided to aid players in locating a
+scenario variant suitable to the number of players available. It
+should be noted that the two player variants, which do not permit
+players to interact through negotiations, are provided more as
+"practice games" than as serious games.
+
+A. THE EXPANSION OF STATES: 1385-1425: Two, three and
+four-player variants.
+
+B. THE BALANCE OF POWER: 1454: Two through eight-player
+variants.
+
+C. THE STRUGGLE FOR DOMINANCE: 1499-1521: Three
+through six-player variants.
+
+D. THE SPANISH PERPONDERANCE: 1521-1529: Two through
+six-player variants.
+
+III. THE SCENARIOS
+
+A. THE EXPANSION OF STATES: 1385-1425: The period from
+approximately 1385 to 1425 saw two serious attempts, one by
+Milan, the other by Naples, to become mega-states and dominate the
+peninsula. While Milan and Naples tried to expand, the Florentines,
+realizing that victory by either would cost them their liberty, them-
+selves sought to expand in self-defense, and to organize opposition
+to Milan and Naples. Venice, which was at the height of its maritime
+prosperity, and which up to this time had purposely refrained from
+serious involvement on the mainland, grew alarmed at the Milanese
+expansion, and decided to acquire its own possessions to act as a
+buffer. The Papacy, discredited by the Avignon captivity and the
+Great Schism (which saw ignominious counterclaims by three
+rival Popes), was not a factor at this time. The various provinces
+and cities of the Papal States had reverted to complete autonomy,
+and were a tempting target for Neapolitan ambitions. Surrounded
+and separated by independent states, the four powers must expand
+to survive and triumph.
+
+1.  DATE: Spring, 1385.
+
+2.  SET UP:
+
+MILAN: Pavia (A), Milan (A), Cremona (A), Como, Bologna (A),
+and Genoa (F).
+
+VENICE: Dalmatia (F), Venice (G), and Ragusa (F).
+
+NAPLES: Bari (A), Aquila (A), Naples (F), Salerno (F), Otranto,
+and Capua.
+
+FLORENCE: Pistoia (A), Florence (A), and Pisa (F).
+
+3.  AUTONOMOUS GARRISONS: Placed on all fortified cities and
+fortresses not named as part of the major power's home countries.
+
+4.  SPECIAL RULES
+    a. France and Austria are neutral, so no units may enter the pro-
+    vinces of Avignon, Marseille, Provence, Swiss, Tyrolea, Austria,
+    Carinthia, or Hungary.
+    b. Milan, Florence, Venice, and Naples each have one die roll for
+    variable income (Advanced).
+    c. The player who controls Rome also gets one die roll for variable
+    income (Advanced).
+    d. The fortresses are used in this scenario.
+
+5.  VARIANTS:
+    a. TWO PLAYERS: Each player takes any two of the major powers
+    (*).
+    b.  THREE PLAYERS: One player takes Milan, one takes Naples,
+and one takes Venice and Florence.
+c.  FOUR PLAYERS: Each player takes one of the major powers.
+
+B. THE BALANCE OF POWER: 1454: About the year 1454, the
+five major Italian powers, having reached a rough parity in strength,
+sought to creat an anti-agression peace alliance among themselves.
+The geopolitical situations had advanced a great deal since 1400.
+Many independent states had been absorbed, and five great states
+now dominated the political scene: Venice, Milan, Florence, the
+Papal States, and Naples, Venice was now a major land power, as
+well as retaining much of her sea empire and mercantile wealth.
+Florence had expanded, and now was a sea power as well as a
+mercantile power. The Papacy had been restored to Rome, and,
+under such dynamic Popes as Martin V, reasserted its sovereignty
+over the Papal States. With the resources and contributions of the
+faithful all over Europe, the restored, renewed, but now thoroughly
+secular Papacy was a force to be reckoned with. Milan, having failed
+in its bid to dominate the peninsula was still, under Francesco
+Sforza, one of the most powerful centralized Italian States.
+Finally, Naples, after being unified once again with Sicily by
+Alfonso of Aragon, was now a major maritime and land power.
+A new complicating factor was the interest in Italy by outside
+powers such as France and Austria, but especially by the Ottoman
+Turks. The Turks, unified and expansionistic, fresh from victory at
+Constantinople, were ready to move against Venice in the Balkans
+or Naples in southern Italy.
+
+1.  DATE: Spring, 1454.
+
+2.  SET UP:
+
+MILAN: Pavia (A), Cremona (A), Como, Fornova, Piancenza, and
+Parma, Milan (A).
+
+VENICE: Padua (A), Verona (A), Venice (G), Dalmatia (F), Brescia,
+Bergamo, Vicenza, Treviso, Friuli, and Istria.
+
+FLORENCE: Arezzo (A), Florence (A), Pisa (F), and Pistoia.
+
+PAPACY: Bologna (A), Ancona (F), Perugia (A), Rome (A), Patri-
+mony, Spoleto, Urbino, and Romagna.
+
+NAPLES: Bari (A), Naples (F), Messina (A), Palermo (F), Otranto,
+Salerno, Aquila, and Capua.
+
+TURKS: Albania (A), Durazzo (F), Tunis (F), Herzegovina, and
+Bosnia.
+
+AUSTRIA: Hungary (A), Austria (A), Tyrolea (A), and Carinthia.
+
+FRANCE: Swiss (A), Avignon (A), Marseille (F), and Provence.
+
+3.  AUTONOMOUS GARRISONS: Place in Savoy, Montferrat,
+Saluzzo, Genoa, Trent, Ferrara, Mantua, Modena, Lucca, Piombino,
+Sienna, and Ragusa.
+
+4.  SPECIAL RULES:
+    a. The fortresses are not used in this scenario, and can be ignored.
+    b. The Papacy, Naples, Milan, France, Austria, and the Turks each
+    have one die roll for variable income (Advanced).
+    c. Florence and Venice each have two die rolls for variable income
+    (Advanced).
+d.  The player who controls Genoa also gets one die roll for variable
+income (Advanced).
+
+5.  VARIANTS:
+a.  TWO PLAYERS:
+    OPTION NO. 1: Each player takes any four of the major powers (*).
+    OPTION NO. 2: Drop the Turks, Austria, and France from the game
+    and make them neutral. One player takes Venice and Rome, the
+    other player takes Milan, Florence, and Naples (*).
+b.  THREE PLAYERS:
+    OPTION NO. 1: Drop Austria and France from the game and make
+    them neutral. Each player then takes any two of the remaining
+    major powers.
+    OPTION NO. 2: Add the province of Genoa, and treat as a major
+    power with one Garrison unit. Each player then takes any three
+    major powers.
+c. FOUR PLAYERS: Each player takes any two of the major
+powers.
+d.  FIVE PLAYERS: Drop the Turks, Austria, and France from the
+game and make them neutral. Each player then takes one of the
+remaining major powers.
+e.  SIX PLAYERS: Drop Austria and France from the game and
+make them neutral. Each player then takes one of the remaining
+major powers.
+f. SEVEN PLAYERS: Drop Austria from the game and make it
+neutral. Each player then takes one of the remaining major powers.
+g.  EIGHT PLAYERS: Each player takes one of the major powers.
+
+C. THE STRUGGLE FOR DOMINANCE: 1499-1521: This period
+covers the era from the invasion by Louis XII of France in 1499 to
+the betrayal of French-controlled Milan to Charles V of Austria in
+1521. This was a very confused era of almost continual warfare
+touched off by the French invasion, which led to the downfall of
+Ludovico il Moro, Duke of Milan, and the French possession of
+Milan for nineteen of the next twenty-one years. This period also
+saw increasing Spanish and Austrian involvement in Italian affairs.
+First the Austrians under Maximilian faced the French in Milan,
+then the Aragonese (Spain) under the cynical Ferdinand entered the
+affairs of Sicily and Naples, and finally the Emperor Charles V,
+ruler of both Spain and Austria, moved to expel the French from
+Milan. The different Italian states played a variety of roles during
+this period. Florence, embarrassed by internal difficulties, normally
+found itself allied with the French against the Papal States and
+Naples. Venice survived an attack by all the other states in 1509,
+only to see much of its mercantile empire swept away by the
+agressive Turks. The Papacy, hoping to remove French influence
+from the peninsula, restored the exile Medici as rulers of Florence
+and threw its weight into the blance in Spain's favor. Milan,
+occupied by France almost the whole time, played no independent
+role. This scenario has two parts-one showing the situation in 1499,
+and the othe showing the situation in 1513.
+
+PART ONE:
+
+1.  DATE: Spring, 1499.
+
+2.  SET UP:
+
+FRANCE: Avignon (A), Marseille (F), Provence, Milan (A), Genoa
+(F), Naples (A), Bari (A), and Saluzzo (A).
+
+AUSTRIA: Tyrolea (A), Austria (A), Hungary, Carinthia, Swiss (A),
+Sardinia (F), Palermo (F), and Messina (A).
+PAPACY: Bologna (A), Perugia (A), Rome (A), Ancona (F), Patri-
+mony, Tivoli, Spoleto, Urbino, and Romagna.
+
+FLORENCE: Arrezzo (A), Florence (A), Pisa (F), and Pistoia.
+
+VENICE: Treviso (A)' Padua (A), Venice (G), Dalmatia(F), Istria,
+Bergamo, Brescia, Verona, Vicenza, and Friuli.
+
+TURKS: Tunis (F), Albania (A), Durazzo (F), Herzegovina, and
+Bosnia.
+
+3.  AUTONOMOUS GARRISONS: Place in Savoy, Turin, Mont-
+ferrat, Pavia, Cremona, Trent, Mantua, Modena, Lucca, Piombino,
+Sienna, and Ragusa.
+
+4.  SPECIAL RULES:
+    a. The fortresses are not used in this scenario, and can be ignored.
+    b. Milan, Genoa, Naples, Bari, and Saluzzo are not considered to
+    be part of the French home country, and new military units may
+    not be placed there.
+    c. France, Florence, and Venice each have two die rolls for variable
+    income (Advanced).
+    d. Austria, the Papal States, and the Turks each have one die roll
+    for variable income (Advanced).
+    e. The player who controls Naples or Milan also gets one die roli
+    for variable income (Advanced).
+
+5.  VARIANTS:
+a.  THREE PLAYERS:
+    OPTION NO. 1: Each player takes any two of the major powers (*).
+    OPTION NO. 2: One player takes the Papacy and Austria; another
+    player takes France and the Turks; the third player takes Venice and
+    Florence (*).
+b.  FOUR PLAYERS: One player takes Florence and the Papacy;
+    another player takes Venice and the Turks, the other two players
+    take one of the remaining major powers each.
+c.  FIVE PLAYERS: Drop the Turks from the game and make them
+    neutral. Each player then takes one of the remaining major powers.
+d.  SIX PLAYERS: Each player takes one of the major powers.
+
+PART TWO: The situation in 1513 is very confused and interesting.
+The French had been thrown out of most of Italy, and Maximilian
+Sforza (represented by Milanese units) was allied with the Swiss
+and the D'Este family in Modena and Ferrara.
+
+1.  DATE: Spring, 1513.
+
+2.  SET UP:
+
+FRANCE: Avignon (Al, Marseille (F), Provence, Saluzzo (A), and
+Milan IG).
+
+TURKS: Durazzo (A), Albania (F), Tunis (F), Herzegovina. Bosnia,
+and Hungary (AJ.
+
+MILAN: Pavia (A), Cremona (A), Swiss (A), Modena (A), and
+Ferrara (A).
+
+AUSTRIA: Tyrolea (A), Austria (A), Carinthia, Palermo (F),
+Messina (A), Naples (F), Bari (A), Capua, Aquila, Salerno, Otranto,
+Sardinia (F), and Milan (A).
+
+PAPACY: Ancona (F), Perugia (A), Rome (A), Bologna (A), Patri-
+mony, Spoleto, Urbino, Romagna, and Tivoli.
+
+VENICE: Padua (A), Treviso (A), Venice (G), Dalmatia (F), Istria,
+Bergamo, Brescia, Verona, Vicenza, and Friuli.
+
+3.  AUTONOMOUS GARRISONS: Savoy, Turin, Montferrat,
+Genoa, Trent, Mantua, Lucca, Pisa, Florence, Arezzo, Piombino,
+Sienna, and Ragusa.
+
+4.  SPECIAL RULES:
+    a. The fortresses are not used in the scenario, and can be ignored.
+    b. Milan is not considered to be part of anybody's home country,
+    and new military units may not be placed there.
+    c. France,
+    the Turks, Milan, and the Papacy each have one die
+roll for variable income (Advanced).
+d. Austria and Venice each have two die rolls for variable income
+(Advanced).
+e. The player who controls Genoa or Florence also gets one die roll
+for variable income (Advanced).
+
+VARIANTS:
+a. FOUR PLAYERS: One player takes France and the Turks,
+another player takes Milan and the Papacy; the other two players
+take one of the remaining major powers each.
+b. FIVE PLAYERS: One player takes France and the Turks; the
+other players take one of the remaining major powers each.
+c. SIX PLAYERS: Each player takes one of the major powers.
+
+D. THE SPANISH PERPONDERANCE: 1521-1529: During the
+later stages of the Italian Wars, the power balance situtation was
+completely changed from earlier periods. The French had lost their
+hold on Milan and Genoa. Spain (linked with Naples) and Austria,
+both ruled by the Hapsburg Emperor Charles V, had gained Milan,
+and threatened to dominate both Northern and Southern Italy. As
+usual, the Italian states took various positions in the struggle.
+Venice was menaced by the Turks, and had to devote most of its
+attention to its Balkan empire. Florence allied with France to avoid
+becoming a vassal of Spain and the Papacy. The Turks were
+stronger, conquering Hungary, and threatening to overrun the
+Balkans and Southern Italy.
+
+DATE: Spring, 1521.
+
+SET UP:
+
+FRANCE: Swiss (A), Avignon (A), Marseille (F), Saluzzo (A), and
+Provence.
+
+AUSTRIA: Tyrolea (A), Austria (A), Carinthia, Carniola, Milan (A),
+Bari (A), Messina (A), Palermo (F), Naples (A), Capua, Aquila,
+Salerno, Otranto, and Sardinia (F).
+
+PAPACY: Bologna (A), Perugia (A), Rome (A), Ancona (F),
+Romagna, Urbino, Spoleto, Tivoli, and Patrimony.
+
+FLORENCE: Arezzo (A), Florence (A), Pisa (F), and Pistoia.
+
+VENICE: Padua (A), Treviso (A), Venice (F), Dalmatia (F),
+Bergamo, Brescia, Verona, Vicenza, Friuli, and Istria.
+
+TURKS: Albania (A), Durazzo (F), Tunis (F), Herzegovina, Bosnia,
+and Hungary (A).
+
+3.  AUTONOMOUS GARRISONS: Place in Savoy, Turin, Mont-
+ferrat, Genoa, Pavia, Cremona, Trent, Mantua, Ferrara, Modena,
+Lucca, Piombino, and Sienna.
+
+4.  SPECIAL RULES:
+
+a. The fortresses are not used in this scenario, and can be ignored.
+b. France, the Turks, Florence, the Papacy, and Venice each have
+one die roll for variable income (Advanced).
+c. Austria has two die rolls for variable income (Advanced).
+d. The player who controls Genoa also gets one die roll for variable
+income (Advanced).
+
+5.  VARIANTS:
+
+a. TWO PLAYERS: Drop Florence from the game, and replace its
+military units with Autonomous Garrison units. One player takes
+France and the Turks, and the other player takes Austria. Both
+players then take any one of the remaining two major powers.
+b. THREE PLAYERS: One player takes Austria; another player
+takes France, the Turks, and Florence; and the third player takes
+Venice and the Papacy.
+c. FOUR PLAYERS: One player takes Austria; another player
+takes France and the Turks; another player takes Venice and the
+Papacy; and the fourth player takes Florence, with the addition of
+Genoa, where a Florentine Fleet unit will replace the Autonomous
+Garrison unit (Note: Genoa is not part of the home country).
+d.. FIVE PLAYERS: One player takes France and Florence and the
+other players take any one of the remaining major powers.
+e. SIX PLAYERS: Each player takes one of the major powers.
+
+IV. DOING YOUR OWN SCENARIOS
+
+MACHIAVELLI is a very flexible game that easily lends itself to
+generating additional scenarios and variants. The scenarios given
+with the game are, in fact, only a small part of all the historical
+scenarios that could be set up. A little research and imagination
+could produce numerous additional scenarios, both historical, and
+purely fantastic. Players are therefore encouraged, as they gain
+experience with the game, to create their own reality, and
+experiment with some additional scenarios.
+
+V. NICCOLO MACHIAVELLI-A SHORT BIOGRAPHY
+
+Niccolo Machiavelli was born in Florence in 1469, and died there in
+1527. As a member of a moderately prominent family, Machiavelli
+was drawn at an early age into governmental service. From 1498 until
+1512, he served in the Chancellery of the Florentine Republic, rising
+to become second-in-command and secretary in charge of diplo-
+matic negotiations, and, in case of war, the supervision of military
+operations. As a diplomat, he travelled to most Italian courts and
+to France and Germany. As a military supervisor, he spent a great
+deal of time in military camps, closely observing the condottieri
+(mercenary soldiers) who dominated the military scene in early
+sixteenth century Italy. Having observed the treachery and incon-
+stancy of the mercenaries, Machiavelli pushed hard for the organiza-
+tion of a Florentine citizen's militia for the defense of the Republic.
+He was put in charge of developing this military force, but in 1512
+his citizen soldiers were swept from the field by the Imperial
+(Austrian) army. The Republic was overthrown, and the Medici
+family, in exile since 1494, were reinstated as rulers of Florence.
+Because he had organized the militia which opposed their return,
+and had been a loyal servant of the Republic, Machiavelli was less
+than popular with his new masters. He was dismissed from office,
+arrested, tortured, and eventually exiled from the city to a small
+estate outside Florence.
+Until 1513, Machiavelli's career had been no more, and in many
+cases, considerably less, remarkable than that of most of his contem-
+pory peers. In exile, however, embittered by his treatment, yet
+desperately wanting to rehabilitate his career, Machiavelli began the
+most productive, memorable, and creative period of his life. Bet-
+ween 1513 and 1523 he wrote the four great treatises on political
+thought for which he is principally known: *The Prince, The Dis-
+courses, The Art of War,* and *The Florentine History.* Of these *The
+Prince* is most famous, for in it Machiavelli developed a systematic
+theory of *raison d'etat* which shocked even his contemporaries.
+The problem he posed was simply how a Prince was to gain and
+hold power. Departing from the superficial and moralistic medieval
+manuals on statecraft, Machiavelli advanced the proposition that
+politics as a sphere of action was not subject to ordinary moral and
+ethical rules. To capture and maintain power, the Prince may use
+any methods, and is not bound by ordinary notions of right and
+wrong. The highest morality is the secure possession of power, and
+any means necessary to obtain that end if appropriate. The Prince
+therefore is allowed to, and can without qualms, lie, cheat, murder,
+oppress, assassinate, and terrorize his subjects and opponents in
+order to preserve his power and the stability of his state. This
+concept, that the sphere of politics is ethically distinct from other
+spheres of life, and that within the political sphere *raison d'Etat* is
+the highest morality; and that to approach this goal the end justifies
+any means, constitutes the central message of *The Prince,* and
+is the origin of the term Machiavellian.
+
+CREDITS
+
+HISTORICAL RESEARCH AND DESIGN: James B. Wood
+DEVELOPMENT AND RULES: S Craig Taylor, Jr.
+PRODUCTION COORDINATION: J. Stephen Peek
+GRAPHICS: Cathy Chastain, Kaye Catledge
+GRAPHIC DESIGN: Mike Williford, Graphics Unlimited
+PLAYTESTERS: Conrad DeBold, Charles Gilbreath, Ben Kocher,
+Bernard Matt, Evelyn Peek, Steve Peek, Phil Poulos, Carl Rauscher,
+Robert Watts.
+ALL QUESTIONS AND COMMENTS SHOULD BE ADDRESSED
+TO:
+
+BATTLELINE PUBLICATIONS
+A DIVISION OF HERITAGE MODELS, INC.
+9840 MONROE DRIVE, BUILDING 106
+DALLAS, TEXAS 75220
+
+To receive an answer, rules questions must be accompanied with a
+stamped, self-addressed envelope. Questions should be phrased so
+they can be answered with a "yes" or "no", or other very short
+answer.
+
+(Image Description:  Battleline Publications logo, a stylized drawing of soldiers in formation.)
+
+Copyright 1978, Battleline Publications
+
+Second Printing 1978.

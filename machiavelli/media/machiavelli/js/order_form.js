@@ -46,6 +46,28 @@ function updateOrderTypes() {
 				$code.val('');
 			}
 		}
+
+		// Get area info to determine if Besiege should be available
+		var unit_id = $("#id_unit").val();
+		$.getJSON(game_url + '/get_area_info/', {
+			unit_id: unit_id
+		}, function(data) {
+			// Hide Besiege option by default
+			$code.find('option[value="B"]').hide();
+			
+			// Only show Besiege if:
+			// 1. Area has a fortified city
+			// 2. For fleets, city must be a port
+			if (data.has_city && data.is_fortified && 
+				(unitText === 'Army' || (unitText === 'Fleet' && data.has_port))) {
+				$code.find('option[value="B"]').show();
+			}
+			
+			// If Besiege was selected but is now hidden, reset selection
+			if (!$code.find('option[value="B"]:visible').length && $code.val() === 'B') {
+				$code.val('');
+			}
+		});
 	}
 }
 
@@ -232,6 +254,11 @@ function toggle_subparams() {
 	// Update sub-destinations if supporting a move
 	if (code === '-' && unit && subunit && mainCode === 'S') {
 		console.log("Getting support destinations for unit:", unit, "supporting unit:", subunit);
+		
+		// Get the subunit type from the selected option text
+		var subunitText = $("#id_subunit option:selected").text().split(' ')[0];
+		console.log("Subunit type:", subunitText);
+		
 		// Get valid support destinations from backend
 		$.getJSON(game_url + '/get_valid_support_destinations/', {
 			unit_id: unit,
@@ -372,6 +399,10 @@ function processOrderJson(data) {
 			new_li += '</a>)</li>';
 			$(new_li).hide().appendTo("#sent_orders").fadeIn("slow");
 			addClickHandlers();
+			
+			// Reset the form
+			$("#id_unit").val('');
+			resetFormFields();
 		}
 	} else {
 		$('#emsg').text("Ajax error: no data received. ").fadeIn("slow");
