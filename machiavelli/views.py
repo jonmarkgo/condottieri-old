@@ -499,7 +499,7 @@ def play_finance_reinforcements(request, game, player):
 			can_buy = player.ducats / 3
 			can_place = player.get_areas_for_new_units(finances=True).count()
 			max_units = min(can_buy, can_place)
-			print "Max no of units is %s" % max_units
+			print("Max no of units is %s" % max_units)
 			ReinforceForm = forms.make_reinforce_form(player, finances=True,
 												special_units=game.configuration.special_units)
 			ReinforceFormSet = formset_factory(ReinforceForm,
@@ -581,7 +581,7 @@ def play_orders(request, game, player):
 										'new_order': new_order.explain()})
 				response_json = simplejson.dumps(response_dict, ensure_ascii=False)
 
-				return HttpResponse(response_json, mimetype='application/json')
+				return HttpResponse(response_json, mimetype='application/javascript')
 			## not ajax
 			else:
 				if order_form.is_valid():
@@ -610,7 +610,7 @@ def delete_order(request, slug='', order_id=''):
 		response_dict.update({'bad': 'true'})
 	if request.is_ajax():
 		response_json = simplejson.dumps(response_dict, ensure_ascii=False)
-		return HttpResponse(response_json, mimetype='application/json')
+		return HttpResponse(response_json, mimetype='application/javascript')
 		
 	return redirect(game)
 
@@ -639,6 +639,14 @@ def confirm_orders(request, slug=''):
 			logging.info(msg)
 		player.end_phase()
 		messages.success(request, _("You have successfully confirmed your actions."))
+		
+		# Check if this is the final player to confirm orders
+		# If so, directly trigger the check_turns command
+		remaining_players = game.player_set.filter(done=False).count()
+		if remaining_players == 0:
+			from django.core.management import call_command
+			call_command('check_turns')
+			
 	return redirect(game)		
 	
 def play_retreats(request, game, player):
@@ -660,10 +668,10 @@ def play_retreats(request, game, player):
 					area= f.cleaned_data['area']
 					unit = Unit.objects.get(id=unitid)
 					if isinstance(area, GameArea):
-						print "%s will retreat to %s" % (unit, area)
+						print("%s will retreat to %s" % (unit, area))
 						retreat = RetreatOrder(unit=unit, area=area)
 					else:
-						print "%s will disband" % unit
+						print("%s will disband" % unit)
 						retreat = RetreatOrder(unit=unit)
 					retreat.save()
 			player.end_phase()
@@ -1293,58 +1301,140 @@ def whisper_list(request, slug):
 							context_instance=RequestContext(request))
 
 @login_required
-def get_destinations(request, slug, unit_id):
+def get_valid_destinations(request, slug):
+	"""AJAX view to get valid destinations for a unit based on order type"""
+	game = get_object_or_404(Game, slug=slug)
+	unit_id = request.GET.get('unit_id')
+	order_type = request.GET.get('order_type')
+	
 	try:
-		print("Getting destinations for unit:", unit_id, "in game:", slug)
-		unit = get_object_or_404(Unit, id=unit_id)
-		player = get_object_or_404(Player, game__slug=slug, user=request.user)
+		unit = Unit.objects.get(id=unit_id)
+		# Verify unit belongs to this game
+		if unit.player.game != game:
+			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+		# Verify the user owns the unit or can give it orders
+		if request.user != unit.player.user:
+			if not game.configuration.finances:
+				return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+			# Check if user has bought the unit
+			if not Expense.objects.filter(player__user=request.user, type__in=(6,9), unit=unit).exists():
+				return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+	except Unit.DoesNotExist:
+		return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+
+	form = forms.make_order_form(unit.player)(unit.player)
+	destinations = []
+	
+	if order_type == '-':  # Advance
+		valid_areas = form.get_valid_destinations(unit, via_convoy=True)
+		for area in valid_areas:
+			if isinstance(area, tuple):  # Convoy destination
+				area, convoy = area
+				destinations.append({
+					'id': area.id,
+					'name': area.board_area.name,
+					'code': area.board_area.code,
+					'convoy_only': True
+				})
+			else:
+				destinations.append({
+					'id': area.id,
+					'name': area.board_area.name,
+					'code': area.board_area.code,
+					'convoy_only': False
+				})
+	elif order_type == 'C':  # Convoy - only return coastal territories
+		valid_areas = GameArea.objects.filter(
+			game=game,
+			board_area__is_coast=True  # Only coastal territories
+		).exclude(
+			board_area__is_sea=True  # Exclude sea territories
+		)
+		for area in valid_areas:
+			destinations.append({
+				'id': area.id,
+				'name': area.board_area.name,
+				'code': area.board_area.code,
+				'convoy_only': False
+			})
+			
+		# Get all army units on coastal territories
+		convoy_units = Unit.objects.filter(
+			player__game=game,
+			type='A',  # Only army units can be convoyed
+			area__board_area__is_coast=True  # Only from coastal territories
+		)
 		
-		if unit.type == 'A':  # Army
-			destinations = GameArea.objects.filter(
-				game=player.game,
-				board_area__borders=unit.area.board_area,
-				board_area__is_sea=False
-			).exclude(board_area__code='VEN')
-			print("Found", destinations.count(), "destinations for army")
-		elif unit.type == 'F':  # Fleet
-			destinations = GameArea.objects.filter(
-				game=player.game,
-				board_area__borders=unit.area.board_area
-			).filter(
-				Q(board_area__is_sea=True) |  # Sea areas
-				Q(board_area__is_coast=True)  # Coastal areas
-			)
-			print("Found", destinations.count(), "destinations for fleet")
-		else:  # Garrison
-			destinations = GameArea.objects.none()
-			print("No destinations for garrison")
+		# Return convoy_units as part of the JSON response
+		unit_data = [{
+			'id': unit.id,
+			'description': '%s %s' % (unit.type, unit.area.board_area.code)
+		} for unit in convoy_units]
 		
-		destinations = destinations.order_by('board_area__code')
-		destinations_list = [{'id': d.id, 'name': d.board_area.code + ' - ' + d.board_area.name} for d in destinations]
-		print("Returning destinations:", destinations_list)
-		
-		return HttpResponse(simplejson.dumps({'destinations': destinations_list}), mimetype='application/json')
-	except Exception as e:
-		print("Error in get_destinations:", str(e))
-		return HttpResponse(simplejson.dumps({'error': str(e)}), status=500, mimetype='application/json')
+		return HttpResponse(simplejson.dumps({
+			'destinations': destinations,
+			'convoy_units': unit_data
+		}), mimetype='application/json')
+
+	return HttpResponse(simplejson.dumps({'destinations': destinations}), mimetype='application/json')
 
 @login_required
-def get_conversion_types(request, slug, unit_id):
+def get_valid_support_destinations(request, slug):
+	"""AJAX view to get valid destinations for support orders"""
+	game = get_object_or_404(Game, slug=slug)
+	unit_id = request.GET.get('unit_id')
+	supported_unit_id = request.GET.get('supported_unit_id')
+	
 	try:
-		print("Getting conversion types for unit:", unit_id, "in game:", slug)
-		unit = get_object_or_404(Unit, id=unit_id)
-		player = get_object_or_404(Player, game__slug=slug, user=request.user)
-		
-		# Get valid conversion types based on current unit type
-		if unit.type == 'A':  # Army
-			types = [('F', unicode(_('Fleet'))), ('G', unicode(_('Garrison')))]
-		elif unit.type == 'F':  # Fleet
-			types = [('A', unicode(_('Army'))), ('G', unicode(_('Garrison')))]
-		else:  # Garrison
-			types = [('A', unicode(_('Army'))), ('F', unicode(_('Fleet')))]
-			
-		print("Returning conversion types:", types)
-		return HttpResponse(simplejson.dumps({'types': types}), mimetype='application/json')
-	except Exception as e:
-		print("Error in get_conversion_types:", str(e))
-		return HttpResponse(simplejson.dumps({'error': str(e)}), status=500, mimetype='application/json')
+		unit = Unit.objects.get(id=unit_id)
+		supported_unit = Unit.objects.get(id=supported_unit_id)
+		# Verify units belong to this game
+		if unit.player.game != game or supported_unit.player.game != game:
+			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+		# Verify the user owns the supporting unit
+		if request.user != unit.player.user:
+			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+	except (Unit.DoesNotExist, AttributeError):
+		return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+
+	form = forms.make_order_form(unit.player)(unit.player)
+	valid_areas = form.get_valid_support_destinations(unit, supported_unit)
+	
+	# If the supporting unit is a garrison, restrict to only its own territory
+	if unit.type == 'G':
+		valid_areas = [unit.area]
+	
+	destinations = [{
+		'id': area.id,
+		'name': area.board_area.name,
+		'code': area.board_area.code
+	} for area in valid_areas]
+
+	return HttpResponse(simplejson.dumps({'destinations': destinations}), mimetype='application/json')
+
+@login_required
+def get_area_info(request, slug):
+	"""AJAX view to get area information for a unit"""
+	game = get_object_or_404(Game, slug=slug)
+	unit_id = request.GET.get('unit_id')
+	
+	try:
+		unit = Unit.objects.get(id=unit_id)
+		# Verify unit belongs to this game
+		if unit.player.game != game:
+			return HttpResponse(simplejson.dumps({'has_city': False}), mimetype='application/json')
+		# Verify the user owns the unit or can give it orders
+		if request.user != unit.player.user:
+			if not game.configuration.finances:
+				return HttpResponse(simplejson.dumps({'has_city': False}), mimetype='application/json')
+			# Check if user has bought the unit
+			if not Expense.objects.filter(player__user=request.user, type__in=(6,9), unit=unit).exists():
+				return HttpResponse(simplejson.dumps({'has_city': False}), mimetype='application/json')
+	except Unit.DoesNotExist:
+		return HttpResponse(simplejson.dumps({'has_city': False}), mimetype='application/json')
+
+	area_info = {
+		'has_city': unit.area.board_area.has_city
+	}
+	
+	return HttpResponse(simplejson.dumps(area_info), mimetype='application/json')

@@ -107,22 +107,11 @@ def make_order_form(player):
 		units_qs = player.unit_set.select_related().all()
 	all_units = player.game.get_all_units()
 
-	# Get all possible destinations based on unit type and adjacency
-	all_areas = GameArea.objects.filter(game=player.game).filter(
-		Q(board_area__borders__in=player.unit_set.values_list('area__board_area', flat=True)) |  # Adjacent areas
-		Q(board_area__home__country=player.country,  # Areas in player's home country
-		  board_area__home__scenario=player.game.scenario,
-		  board_area__home__is_home=True)
-	).values('board_area').distinct().annotate(
-		id=models.Min('id')
-	).values_list('id', flat=True)
-	all_areas = GameArea.objects.filter(id__in=all_areas).order_by('board_area__code')
-	
 	class OrderForm(forms.ModelForm):
 		unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"))
 		code = forms.ChoiceField(choices=ORDER_CODES, label=_("Order"))
 		destination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
-		type = forms.ChoiceField(choices=UNIT_TYPES, label=_("Convert into"))
+		type = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
 		subunit = forms.ModelChoiceField(required=False, queryset=all_units, label=_("Unit"))
 		subcode = forms.ChoiceField(required=False, choices=ORDER_SUBCODES, label=_("Order"))
 		subdestination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
@@ -131,45 +120,80 @@ def make_order_form(player):
 		def __init__(self, player, **kwargs):
 			super(OrderForm, self).__init__(**kwargs)
 			self.instance.player = player
+			self.fields['destination'].queryset = GameArea.objects.filter(game=player.game)
+			self.fields['subdestination'].queryset = GameArea.objects.filter(game=player.game)
+
+		def get_valid_destinations(self, unit, via_convoy=False):
+			"""Returns valid destinations for a unit's advance order"""
+			if not unit:
+				return GameArea.objects.none()
 			
-			# Get the unit from either POST data or initial data
-			unit = None
-			if 'unit' in self.data:
-				try:
-					unit_id = int(self.data.get('unit'))
-					unit = Unit.objects.get(id=unit_id)
-				except (ValueError, TypeError):
-					pass
-			elif 'initial' in kwargs and 'unit' in kwargs['initial']:
-				unit = kwargs['initial']['unit']
-			elif self.instance.unit_id:  # If we have a unit_id from the model instance
-				unit = Unit.objects.get(id=self.instance.unit_id)
+			game = unit.player.game
+			is_fleet = (unit.type == 'F')
 			
-			# Set destinations based on unit type
-			if unit:
-				if unit.type == 'A':  # Army
-					destinations = GameArea.objects.filter(
-						game=player.game,
-						board_area__borders=unit.area.board_area,
-						board_area__is_sea=False
-					).exclude(board_area__code='VEN')
-					# For conversion, only show Fleet and Garrison options
-					self.fields['type'].choices = [('', '---'), ('F', _('Fleet')), ('G', _('Garrison'))]
-				elif unit.type == 'F':  # Fleet
-					destinations = GameArea.objects.filter(
-						game=player.game,
-						board_area__borders=unit.area.board_area
-					).filter(
-						Q(board_area__is_sea=True) |  # Sea areas
-						Q(board_area__is_coast=True)  # Coastal areas
-					)
-					# For conversion, only show Army and Garrison options
-					self.fields['type'].choices = [('', '---'), ('A', _('Army')), ('G', _('Garrison'))]
-				else:  # Garrison
-					destinations = GameArea.objects.none()
-					# For conversion, only show Army and Fleet options
-					self.fields['type'].choices = [('', '---'), ('A', _('Army')), ('F', _('Fleet'))]
-				self.fields['destination'].queryset = destinations.order_by('board_area__code')
+			# Get adjacent areas
+			adjacent = GameArea.objects.filter(
+				game=game,
+				board_area__borders=unit.area.board_area
+			)
+
+			# Filter based on unit type
+			if is_fleet:
+				# Fleets can only move to seas or coastal areas
+				adjacent = adjacent.filter(
+					Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+				)
+				# Check if areas are actually adjacent for fleets
+				adjacent = [a for a in adjacent if unit.area.board_area.is_adjacent(a.board_area, fleet=True)]
+			else:
+				# Armies cannot move to seas or Venice
+				adjacent = adjacent.exclude(
+					Q(board_area__is_sea=True) | Q(board_area__code='VEN')
+				)
+
+			# Only add convoy destinations if:
+			# 1. This is an army (not a fleet)
+			# 2. The army is on a coastal territory
+			# 3. via_convoy parameter is True
+			if via_convoy and not is_fleet and unit.area.board_area.is_coast:
+				# Add coastal areas reachable by convoy
+				coastal = GameArea.objects.filter(
+					game=game,
+					board_area__is_coast=True
+				).exclude(id__in=[a.id for a in adjacent])
+				adjacent = list(adjacent) + [(a, True) for a in coastal]
+
+			return adjacent
+
+		def get_valid_support_destinations(self, unit, supported_unit):
+			"""Returns valid destinations for support orders"""
+			if not unit or not supported_unit:
+				return GameArea.objects.none()
+
+			is_fleet = (unit.type == 'F')
+			supported_area = supported_unit.area
+			
+			# Get areas adjacent to the supporting unit
+			adjacent = GameArea.objects.filter(
+				game=unit.player.game,
+				board_area__borders=unit.area.board_area
+			)
+
+			# Filter based on supporting unit type
+			if is_fleet:
+				adjacent = adjacent.filter(
+					Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+				)
+				adjacent = [a for a in adjacent if unit.area.board_area.is_adjacent(a.board_area, fleet=True)]
+			else:
+				adjacent = adjacent.exclude(board_area__is_sea=True)
+
+			# Must include the supported unit's area and its valid destinations
+			supported_destinations = self.get_valid_destinations(supported_unit)
+			return adjacent.filter(
+				Q(id__in=[a.id for a in supported_destinations]) |
+				Q(id=supported_area.id)
+			)
 		
 		class Meta:
 			model = Order
@@ -211,9 +235,20 @@ def make_order_form(player):
 					raise forms.ValidationError(_("You must select a unit to convoy"))
 				if not subdestination:
 					raise forms.ValidationError(_("You must select a destination area to convoy the unit"))
+				## ensure subcode is set to advance for convoy orders
+				cleaned_data['subcode'] = '-'
+				## check if the unit to convoy is an army
+				if subunit.type != 'A':
+					raise forms.ValidationError(_("Only armies can be convoyed"))
 				## check if the unit is in a sea affected by a storm
 				if unit.area.storm == True:
 					raise forms.ValidationError(_("A fleet cannot convoy while affected by a storm"))
+				## check if the fleet is in a sea area
+				if not unit.area.board_area.is_sea:
+					raise forms.ValidationError(_("Only fleets in sea areas can convoy"))
+				## check if the unit to convoy is on a coastal territory
+				if not subunit.area.board_area.is_coast:
+					raise forms.ValidationError(_("Units can only be convoyed from coastal territories"))
 			if code == 'S':
 				if not subunit:
 					raise forms.ValidationError(_("You must select a unit to support"))
@@ -238,8 +273,9 @@ def make_order_form(player):
 			elif code == 'C':
 				cleaned_data.update({'destination': None,
 									'type': None,
-									'subcode': None,
 									'subtype': None})
+				# Always set subcode to advance for convoy orders
+				cleaned_data.update({'subcode': '-'})
 			else:
 				cleaned_data.update({'destination': None,
 									'type': None})
@@ -347,7 +383,7 @@ def make_ducats_list(ducats, f=3):
 		for i in range(1, items):
 			j = i * f
 			ducats_list += ((j,j),)
-		print ducats_list
+		print(ducats_list)
 		return ducats_list
 	else:
 		return ((0, 0),)
