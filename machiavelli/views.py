@@ -1428,10 +1428,42 @@ def get_valid_support_destinations(request, slug):
             if logging:
                 logging.info("Processing non-garrison support destinations")
             
-            form = forms.make_order_form(unit.player)(unit.player)
-            destinations = form.get_valid_support_destinations(unit, supported_unit)
+            # Get adjacent areas based on supporting unit type
+            destinations = GameArea.objects.filter(
+                game=game,
+                board_area__in=unit.area.board_area.borders.all()
+            )
+
+            # Filter based on supporting unit type
+            if unit.type == 'F':  # Fleet
+                destinations = destinations.filter(
+                    Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+                )
+                # Check if areas are actually adjacent for fleets
+                destinations = [d for d in destinations 
+                              if unit.area.board_area.is_adjacent(d.board_area, fleet=True)]
+                
+                # Filter based on supported unit type
+                if supported_unit.type == 'A':  # Army
+                    # Fleets can only support armies moving to coastal territories
+                    destinations = [d for d in destinations if d.board_area.is_coast]
+                elif supported_unit.type == 'F':  # Fleet
+                    # Fleets can only support fleets moving to seas or coasts
+                    destinations = [d for d in destinations 
+                                  if d.board_area.is_sea or d.board_area.is_coast]
+            else:  # Army
+                # Armies cannot support moves into seas
+                destinations = destinations.exclude(board_area__is_sea=True)
+                
+                # If supporting a fleet, only allow supporting into coastal areas
+                if supported_unit.type == 'F':
+                    destinations = destinations.filter(board_area__is_coast=True)
             
-            # When supporting an advance, exclude the supported unit's current location
+            # Convert back to queryset if needed
+            if not isinstance(destinations, models.QuerySet):
+                destinations = GameArea.objects.filter(id__in=[d.id for d in destinations])
+            
+            # Always exclude the supported unit's current location for advances
             destinations = destinations.exclude(id=supported_unit.area.id)
             
             if logging:
@@ -1513,6 +1545,42 @@ def get_supportable_units_query(game, unit, valid_areas=None):
             type='A',  # Must be an army
             area__board_area__is_coast=True  # Must be in a coastal territory
         )
+    # For fleets providing support
+    elif unit.type == 'F':
+        # Get adjacent areas that are valid for fleet support
+        valid_areas = GameArea.objects.filter(
+            game=game,
+            board_area__in=unit.area.board_area.borders.all()
+        ).filter(
+            Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+        )
+        # Check if areas are actually adjacent for fleets
+        valid_areas = [a for a in valid_areas 
+                      if unit.area.board_area.is_adjacent(a.board_area, fleet=True)]
+        
+        # Convert back to queryset
+        valid_areas = GameArea.objects.filter(id__in=[a.id for a in valid_areas])
+        
+        # A fleet can support:
+        # 1. Other fleets in adjacent sea spaces or coastal territories
+        # 2. Armies in adjacent coastal territories
+        # 3. Armies that could be convoyed to adjacent coastal territories
+        fleet_support = Q(area__in=valid_areas, type='F')  # Support for fleets
+        direct_army_support = Q(area__in=valid_areas.filter(board_area__is_coast=True), type='A')  # Direct army support
+        
+        # For convoyed armies:
+        # - Find all armies in coastal territories
+        # - That could potentially be convoyed to our adjacent coastal territories
+        convoy_army_support = Q(
+            type='A',  # Must be an army
+            area__board_area__is_coast=True,  # Must be in a coastal territory
+        )
+        
+        query &= (
+            fleet_support |  # Support for fleets in adjacent areas
+            direct_army_support |  # Support for armies in adjacent coastal areas
+            convoy_army_support  # Support for armies that could be convoyed
+        )
     # For armies supporting fleets, we need to include fleets in adjacent seas
     elif unit.type == 'A':
         # Get territories the army could support into
@@ -1533,8 +1601,8 @@ def get_supportable_units_query(game, unit, valid_areas=None):
             Q(area__in=fleet_areas, type='F')
         )
         query &= area_conditions
-    else:
-        # For fleets and garrisons, use normal adjacent area logic
+    else:  # Garrison
+        # For garrisons, use normal adjacent area logic
         area_conditions = Q(area=unit.area)
         if valid_areas is not None:
             area_conditions |= Q(area__in=valid_areas)
