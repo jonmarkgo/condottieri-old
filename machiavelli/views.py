@@ -1431,6 +1431,9 @@ def get_valid_support_destinations(request, slug):
             form = forms.make_order_form(unit.player)(unit.player)
             destinations = form.get_valid_support_destinations(unit, supported_unit)
             
+            # When supporting an advance, exclude the supported unit's current location
+            destinations = destinations.exclude(id=supported_unit.area.id)
+            
             if logging:
                 logging.info("Non-garrison destinations: %s" % destinations)
 
