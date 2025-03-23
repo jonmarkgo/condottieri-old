@@ -1365,71 +1365,85 @@ def get_valid_destinations(request, slug):
 
 @login_required
 def get_valid_support_destinations(request, slug):
-	"""AJAX view to get valid destinations for support orders"""
-	game = get_object_or_404(Game, slug=slug)
-	unit_id = request.GET.get('unit_id')
-	supported_unit_id = request.GET.get('supported_unit_id')
-	
-	if logging:
-		logging.info("get_valid_support_destinations called for game %s, unit %s, supported unit %s" % (
-			slug, unit_id, supported_unit_id))
-	
-	try:
-		unit = Unit.objects.get(id=unit_id)
-		supported_unit = Unit.objects.get(id=supported_unit_id)
-		
-		if logging:
-			logging.info("Supporting unit: %s type=%s in area=%s" % (unit, unit.type, unit.area))
-			logging.info("Supported unit: %s type=%s in area=%s" % (supported_unit, supported_unit.type, supported_unit.area))
-		
-		# Verify units belong to this game
-		if unit.player.game != game or supported_unit.player.game != game:
-			if logging:
-				logging.warning("Units do not belong to this game")
-			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
-		
-		# Verify the user owns the supporting unit
-		if request.user != unit.player.user:
-			if logging:
-				logging.warning("User %s does not own supporting unit" % request.user)
-			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
-	except (Unit.DoesNotExist, AttributeError):
-		if logging:
-			logging.warning("Unit %s or %s does not exist" % (unit_id, supported_unit_id))
-		return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+    """AJAX view to get valid destinations for support orders and convoy destinations"""
+    game = get_object_or_404(Game, slug=slug)
+    unit_id = request.GET.get('unit_id')
+    supported_unit_id = request.GET.get('supported_unit_id')
+    for_convoy = request.GET.get('for_convoy') == 'true'
+    
+    if logging:
+        logging.info("get_valid_support_destinations called for game %s, unit %s, supported unit %s, for_convoy=%s" % (
+            slug, unit_id, supported_unit_id, for_convoy))
+    
+    try:
+        unit = Unit.objects.get(id=unit_id)
+        supported_unit = Unit.objects.get(id=supported_unit_id)
+        
+        if logging:
+            logging.info("Supporting unit: %s type=%s in area=%s" % (unit, unit.type, unit.area))
+            logging.info("Supported unit: %s type=%s in area=%s" % (supported_unit, supported_unit.type, supported_unit.area))
+        
+        # Verify units belong to this game
+        if unit.player.game != game or supported_unit.player.game != game:
+            if logging:
+                logging.warning("Units do not belong to this game")
+            return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+        
+        # Verify the user owns the supporting unit
+        if request.user != unit.player.user:
+            if logging:
+                logging.warning("User %s does not own supporting unit" % request.user)
+            return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+    except (Unit.DoesNotExist, AttributeError):
+        if logging:
+            logging.warning("Unit %s or %s does not exist" % (unit_id, supported_unit_id))
+        return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
 
-	# For garrison units, only allow supporting into their own province
-	if unit.type == 'G':
-		if logging:
-			logging.info("Processing garrison support destinations")
-			logging.info("Garrison area: %s" % unit.area)
-		
-		# For garrisons, always include their own area as a valid support destination
-		destinations = [{
-			'id': unit.area.id,
-			'name': unit.area.board_area.name,
-			'code': unit.area.board_area.code
-		}]
-		
-		if logging:
-			logging.info("Garrison destinations: %s" % destinations)
-	else:
-		if logging:
-			logging.info("Processing non-garrison support destinations")
-		
-		form = forms.make_order_form(unit.player)(unit.player)
-		valid_areas = form.get_valid_support_destinations(unit, supported_unit)
-		
-		destinations = [{
-			'id': area.id,
-			'name': area.board_area.name,
-			'code': area.board_area.code
-		} for area in valid_areas]
-		
-		if logging:
-			logging.info("Non-garrison destinations: %s" % destinations)
+    if for_convoy:
+        # For convoy orders, only show coastal territories as destinations
+        destinations = GameArea.objects.filter(
+            game=game,
+            board_area__is_coast=True  # Must be a coastal territory
+        ).exclude(
+            id=supported_unit.area.id  # Exclude current location
+        )
+        
+        if logging:
+            logging.info("Found %d coastal destinations for convoy" % destinations.count())
+            for d in destinations:
+                logging.info("Convoy destination: %s" % d)
+    else:
+        # For garrison units, only allow supporting into their own province
+        if unit.type == 'G':
+            if logging:
+                logging.info("Processing garrison support destinations")
+                logging.info("Garrison area: %s" % unit.area)
+            
+            # For garrisons, always include their own area as a valid support destination
+            destinations = GameArea.objects.filter(id=unit.area.id)
+            
+            if logging:
+                logging.info("Garrison destinations: %s" % destinations)
+        else:
+            if logging:
+                logging.info("Processing non-garrison support destinations")
+            
+            form = forms.make_order_form(unit.player)(unit.player)
+            destinations = form.get_valid_support_destinations(unit, supported_unit)
+            
+            if logging:
+                logging.info("Non-garrison destinations: %s" % destinations)
 
-	return HttpResponse(simplejson.dumps({'destinations': destinations}), mimetype='application/json')
+    # Build response data
+    response_data = {
+        'destinations': [{
+            'id': area.id,
+            'name': area.board_area.name,
+            'code': area.board_area.code
+        } for area in destinations]
+    }
+
+    return HttpResponse(simplejson.dumps(response_data), mimetype='application/json')
 
 @login_required
 def get_area_info(request, slug):
@@ -1490,9 +1504,14 @@ def get_supportable_units_query(game, unit, valid_areas=None):
     """Helper function to build the query for finding supportable units"""
     query = Q(player__game=game)
     
+    # For convoy orders, we only want Army units in coastal territories
+    if unit.type == 'F' and unit.area.board_area.is_sea:
+        query &= Q(
+            type='A',  # Must be an army
+            area__board_area__is_coast=True  # Must be in a coastal territory
+        )
     # For armies supporting fleets, we need to include fleets in adjacent seas
-    # that could move into territories the army could support
-    if unit.type == 'A':
+    elif unit.type == 'A':
         # Get territories the army could support into
         supportable_areas = get_valid_adjacent_areas(game, unit.area, for_fleet=False)
         
@@ -1510,13 +1529,13 @@ def get_supportable_units_query(game, unit, valid_areas=None):
             Q(area__in=supportable_areas) |
             Q(area__in=fleet_areas, type='F')
         )
+        query &= area_conditions
     else:
         # For fleets and garrisons, use normal adjacent area logic
         area_conditions = Q(area=unit.area)
         if valid_areas is not None:
             area_conditions |= Q(area__in=valid_areas)
-    
-    query &= area_conditions
+        query &= area_conditions
     
     # Exclude self and garrisons (except when supporting into their own province)
     exclude_conditions = Q(id=unit.id)
@@ -1542,9 +1561,11 @@ def get_supportable_units(request, slug):
     """AJAX view to get valid units that can be supported by a unit"""
     game = get_object_or_404(Game, slug=slug)
     unit_id = request.GET.get('unit_id')
+    for_convoy = request.GET.get('for_convoy') == 'true'
     
     if logging:
-        logging.info("get_supportable_units called for game %s, unit %s" % (slug, unit_id))
+        logging.info("get_supportable_units called for game %s, unit %s, for_convoy=%s" % (
+            slug, unit_id, for_convoy))
     
     try:
         unit = Unit.objects.get(id=unit_id)
@@ -1568,20 +1589,30 @@ def get_supportable_units(request, slug):
             logging.warning("Unit %s does not exist" % unit_id)
         return HttpResponse(simplejson.dumps({'units': []}), mimetype='application/json')
 
-    # Get valid adjacent areas based on unit type
-    valid_areas = get_valid_adjacent_areas(game, unit.area, for_fleet=(unit.type == 'F'))
-    
-    # Get supportable units using shared logic
-    units = get_supportable_units_query(game, unit, valid_areas)
+    if for_convoy:
+        # For convoy orders, only show army units in coastal territories
+        units = Unit.objects.filter(
+            player__game=game,
+            type='A',  # Must be an army
+            area__board_area__is_coast=True  # Must be in a coastal territory
+        ).exclude(
+            id=unit.id  # Exclude self
+        ).select_related('area', 'area__board_area', 'player')
+    else:
+        # Get valid adjacent areas based on unit type
+        valid_areas = get_valid_adjacent_areas(game, unit.area, for_fleet=(unit.type == 'F'))
+        
+        # Get supportable units using shared logic
+        units = get_supportable_units_query(game, unit, valid_areas)
     
     if logging:
         logging.info("%s unit query: %s" % (
-            "Garrison" if unit.type == 'G' else "Non-garrison",
+            "Convoy" if for_convoy else "Support",
             units.query))
-        logging.info("Found %s potential units to support" % units.count())
+        logging.info("Found %s potential units" % units.count())
         for u in units:
-            logging.info("Found unit: %s type=%s in area=%s with order=%s" % (
-                u, u.type, u.area, u.get_order()))
+            logging.info("Found unit: %s type=%s in area=%s" % (
+                u, u.type, u.area))
     
     # Build response data
     supportable_units = []

@@ -260,10 +260,7 @@ def make_order_form(player):
 				if subcode == '-' and not subdestination:
 					raise forms.ValidationError(_("You must select a destination area for the supported unit"))
 				if subcode == '=':
-					if not subtype:
-						raise forms.ValidationError(_("You must select a unit type for the supported unit"))
-					if subtype == subunit.type:
-						raise forms.ValidationError(_("A unit must convert into a different type"))
+					raise forms.ValidationError(_("Units cannot support conversions"))
 
 			## set to None the fields that are not needed
 			if code in ['H', '-', '=', 'B']:

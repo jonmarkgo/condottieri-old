@@ -144,17 +144,54 @@ function toggle_params() {
 					$(this).show();
 				}
 			});
+
+			// Get valid units that can be convoyed
+			var unit = $("#id_unit").val();
+			console.log("Getting convoyable units for unit:", unit);
+			$.getJSON(game_url + '/get_supportable_units/', {
+				unit_id: unit,
+				for_convoy: true
+			}, function(data) {
+				console.log("Received convoyable units data:", data);
+				if (data && data.units) {
+					var $subunit = $("#id_subunit");
+					$subunit.empty();
+					$subunit.append($('<option>').val('').text('---'));
+					$.each(data.units, function(i, item) {
+						console.log("Processing unit:", item);
+						if (item && item.id && item.description) {
+							$subunit.append($('<option>').val(item.id).text(item.description));
+						}
+					});
+					console.log("Final subunit options:", $subunit.html());
+				} else {
+					console.warn("No valid units data received");
+				}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+				console.error("Failed to get convoyable units:", textStatus, errorThrown);
+				console.error("Response:", jqXHR.responseText);
+			});
 			break;
 		case 'S':
 			// Show subunit and subcode fields for support orders
 			$("#id_subunit").parent().fadeIn('slow');
 			$("#id_subcode").parent().fadeIn('slow');
 			
+			// For support orders, only show Hold and Advance options
+			var $subcode = $("#id_subcode");
+			$subcode.find('option').hide();
+			$subcode.find('option[value="H"]').show(); // Hold
+			$subcode.find('option[value="-"]').show(); // Advance
+			if ($subcode.val() && !['H','-'].includes($subcode.val())) {
+				$subcode.val('');
+			}
+
 			var unit = $("#id_unit").val();
 			console.log("Getting supportable units for unit:", unit);
 			// Get valid supportable units from backend
 			$.getJSON(game_url + '/get_supportable_units/', {
-				unit_id: unit
+				unit_id: unit,
+				for_convoy: false
 			}, function(data) {
 				console.log("Received supportable units data:", data);
 				if (data && data.units) {
@@ -176,19 +213,6 @@ function toggle_params() {
 				console.error("Response:", jqXHR.responseText);
 			});
 
-			// For garrison units, only show Hold and Advance options
-			if (unitText === 'Garrison') {
-				var $subcode = $("#id_subcode");
-				$subcode.find('option').hide();
-				$subcode.find('option[value="H"]').show(); // Hold
-				$subcode.find('option[value="-"]').show(); // Advance
-				if ($subcode.val() && !['H','-'].includes($subcode.val())) {
-					$subcode.val('');
-				}
-			} else {
-				// Show all subcode options for non-garrison support
-				$("#id_subcode option").show();
-			}
 			toggle_subparams();
 			break;
 	}
@@ -237,10 +261,37 @@ function toggle_subparams() {
 		});
 	}
 
-	// For convoy orders, always show subdestination and set subcode to advance
-	if (mainCode === 'C') {
+	// For convoy orders, show subdestination and get valid coastal destinations
+	if (mainCode === 'C' && unit && subunit) {
 		$("#id_subcode").val('-');
-		$("#id_subdestination").parent().fadeIn('slow');
+		console.log("Getting convoy destinations for unit:", unit, "convoying unit:", subunit);
+		$.getJSON(game_url + '/get_valid_support_destinations/', {
+			unit_id: unit,
+			supported_unit_id: subunit,
+			for_convoy: true
+		}, function(data) {
+			console.log("Got convoy destinations response:", data);
+			if (data && Array.isArray(data.destinations)) {
+				var $subdest = $("#id_subdestination");
+				$subdest.empty();
+				$subdest.append($('<option>').val('').text('---'));
+				$.each(data.destinations, function(i, item) {
+					console.log("Adding destination:", item);
+					var text = item.code + ' - ' + item.name;
+					$subdest.append($('<option>').val(item.id).text(text));
+				});
+				if (data.destinations.length > 0) {
+					$("#id_subdestination").parent().fadeIn('slow');
+				} else {
+					console.warn("No valid destinations received");
+				}
+			} else {
+				console.error("Invalid destinations data received:", data);
+			}
+		}).fail(function(jqXHR, textStatus, errorThrown) {
+			console.error("Failed to get convoy destinations:", textStatus, errorThrown);
+			console.error("Response:", jqXHR.responseText);
+		});
 	}
 	// For support orders, show based on subcode
 	else if (mainCode === 'S') {
@@ -249,9 +300,6 @@ function toggle_subparams() {
 				break;
 			case '-':
 				$("#id_subdestination").parent().fadeIn('slow');
-				break;
-			case '=':
-				$("#id_subtype").parent().fadeIn('slow');
 				break;
 		}
 	}
