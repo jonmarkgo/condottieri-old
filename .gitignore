@@ -21,3 +21,5 @@ doc/_*
 templates/ganalytics.html
 templates/hosting.html
 third_party/
+local_settings.py.bad
+local_settings.py.oldexample
