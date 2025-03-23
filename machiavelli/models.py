@@ -2547,18 +2547,12 @@ class Unit(models.Model):
 			return GameArea.objects.none()
 
 	def supportable_order(self):
-		supportable = "%s %s" % (self.type, self.area.board_area.code)
-		order = self.get_order()
-		if not order:
-			supportable += " H"
-		else:
-			if order.code in ('', 'H', 'S', 'C', 'B'): #unit is holding
-				supportable += " H"
-			elif order.code == '=':
-				supportable += " = %s" % order.type
-			elif order.code == '-':
-				supportable += " - %s" % order.destination.board_area.code
-		return supportable
+		"""Returns a description of the unit for the support order dropdown.
+		Only shows the unit's type and location, not its orders."""
+		return _("%(type)s in %(area)s") % {
+			'type': self.get_type_display(),
+			'area': self.area
+		}
 
 	def place(self):
 		self.placed = True

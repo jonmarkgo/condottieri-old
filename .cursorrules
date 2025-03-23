@@ -2,12 +2,12 @@
   "version": "1.0",
   "last_updated": "March 23, 2025 at 04:35 PM",
   "project": {
-    "name": "condo2",
+    "name": "condottieri (condo2)",
     "version": "1.0.0",
-    "language": "html",
-    "framework": "django",
+    "language": "python 2.7",
+    "framework": "django 1.11",
     "type": "application",
-    "description": "This Django project simulates a historical grand strategy game, enabling users to play as different countries, manage their resources, and engage in diplomacy and warfare. The application leverages a modular design with dedicated apps for core game mechanics, user profiles, in-game messaging, and common utilities, while signals facilitate communication between modules to maintain loose coupling and enhance maintainability. The project incorporates features such as clone detection, karma-based player management, and weighted scoring to provide a comprehensive and engaging gaming experience."
+    "description": "This Django project called Condottieri implements Machiavelli, a complex turn-based strategy game, focusing on diplomacy, warfare, and resource management in a historical setting. It features intricate game mechanics managed through numerous models and views, a messaging system for player interaction, and profile management with karma and scoring, all enhanced by custom middleware and management commands for maintenance and optimization. The project aims to provide a sophisticated gaming experience for strategy enthusiasts, emphasizing historical accuracy and engaging gameplay through a rich set of features and a well-defined application structure."
   },
   "ai_behavior": {
     {

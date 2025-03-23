@@ -23,12 +23,28 @@ function updateOrderTypes() {
 	// Reset order type dropdown
 	$code.find('option').show();
 	
-	// Hide convoy option if not a fleet
-	if ($unit.length && $unit.text().indexOf('Fleet') !== 0) {
-		$code.find('option[value="C"]').hide();
-		// If convoy was selected, reset it
-		if ($code.val() === 'C') {
-			$code.val('');
+	if ($unit.length) {
+		// Get unit type from text
+		var unitText = $unit.text().split(' ')[0];
+		
+		// If unit is a Garrison, only allow Hold, Support and Convert
+		if (unitText === 'Garrison') {
+			$code.find('option').hide();
+			$code.find('option[value="H"]').show(); // Hold
+			$code.find('option[value="S"]').show(); // Support
+			$code.find('option[value="="]').show(); // Convert
+			
+			// Reset to empty if current selection is not allowed
+			if (!['H','S','='].includes($code.val())) {
+				$code.val('');
+			}
+		}
+		// Hide convoy option if not a fleet
+		else if (unitText !== 'Fleet') {
+			$code.find('option[value="C"]').hide();
+			if ($code.val() === 'C') {
+				$code.val('');
+			}
 		}
 	}
 }
@@ -71,6 +87,7 @@ function updateConversionTypes() {
 function toggle_params() {
 	var code = $("#id_code").val();
 	var unit = $("#id_unit").val();
+	var unitText = $("#id_unit option:selected").text().split(' ')[0];
 
 	// Hide all optional fields first
 	$("#id_destination").parent().hide();
@@ -96,26 +113,6 @@ function toggle_params() {
 				}
 				$dest.append($('<option>').val(item.id).text(text));
 			});
-			// For convoy orders, also update subdestination with same options
-			if (code === 'C') {
-				var $subdest = $("#id_subdestination");
-				$subdest.empty();
-				$subdest.append($('<option>').val('').text('---'));
-				$.each(data.destinations, function(i, item) {
-					var text = item.code + ' - ' + item.name;
-					$subdest.append($('<option>').val(item.id).text(text));
-				});
-				
-				// Also update available subunits for convoy
-				if (data.convoy_units) {
-					var $subunit = $("#id_subunit");
-					$subunit.empty();
-					$subunit.append($('<option>').val('').text('---'));
-					$.each(data.convoy_units, function(i, item) {
-						$subunit.append($('<option>').val(item.id).text(item.description));
-					});
-				}
-			}
 		});
 	}
 
@@ -149,12 +146,49 @@ function toggle_params() {
 			});
 			break;
 		case 'S':
-			// Show all units again for support orders
-			$("#id_subunit option").show();
+			// Show subunit and subcode fields for support orders
 			$("#id_subunit").parent().fadeIn('slow');
 			$("#id_subcode").parent().fadeIn('slow');
-			// Show all subcode options for support
-			$("#id_subcode option").show();
+			
+			var unit = $("#id_unit").val();
+			console.log("Getting supportable units for unit:", unit);
+			// Get valid supportable units from backend
+			$.getJSON(game_url + '/get_supportable_units/', {
+				unit_id: unit
+			}, function(data) {
+				console.log("Received supportable units data:", data);
+				if (data && data.units) {
+					var $subunit = $("#id_subunit");
+					$subunit.empty();
+					$subunit.append($('<option>').val('').text('---'));
+					$.each(data.units, function(i, item) {
+						console.log("Processing unit:", item);
+						if (item && item.id && item.description) {
+							$subunit.append($('<option>').val(item.id).text(item.description));
+						}
+					});
+					console.log("Final subunit options:", $subunit.html());
+				} else {
+					console.warn("No valid units data received");
+				}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+				console.error("Failed to get supportable units:", textStatus, errorThrown);
+				console.error("Response:", jqXHR.responseText);
+			});
+
+			// For garrison units, only show Hold and Advance options
+			if (unitText === 'Garrison') {
+				var $subcode = $("#id_subcode");
+				$subcode.find('option').hide();
+				$subcode.find('option[value="H"]').show(); // Hold
+				$subcode.find('option[value="-"]').show(); // Advance
+				if ($subcode.val() && !['H','-'].includes($subcode.val())) {
+					$subcode.val('');
+				}
+			} else {
+				// Show all subcode options for non-garrison support
+				$("#id_subcode option").show();
+			}
 			toggle_subparams();
 			break;
 	}
@@ -165,25 +199,41 @@ function toggle_subparams() {
 	var unit = $("#id_unit").val();
 	var subunit = $("#id_subunit").val();
 	var mainCode = $("#id_code").val();
+	var unitText = $("#id_unit option:selected").text().split(' ')[0];
 
 	// Hide sub-destination and sub-type by default
 	$("#id_subdestination").parent().hide();
 	$("#id_subtype").parent().hide();
 
 	// Update sub-destinations if supporting a move
-	if (code == '-' && unit && subunit) {
+	if (code === '-' && unit && subunit && mainCode === 'S') {
+		console.log("Getting support destinations for unit:", unit, "supporting unit:", subunit);
+		// Get valid support destinations from backend
 		$.getJSON(game_url + '/get_valid_support_destinations/', {
 			unit_id: unit,
 			supported_unit_id: subunit
 		}, function(data) {
-			var $subdest = $("#id_subdestination");
-			$subdest.empty();
-			$subdest.append($('<option>').val('').text('---'));
-			$.each(data.destinations, function(i, item) {
-				var text = item.code + ' - ' + item.name;
-				$subdest.append($('<option>').val(item.id).text(text));
-			});
-			$("#id_subdestination").parent().fadeIn('slow');
+			console.log("Got support destinations response:", data);
+			if (data && Array.isArray(data.destinations)) {
+				var $subdest = $("#id_subdestination");
+				$subdest.empty();
+				$subdest.append($('<option>').val('').text('---'));
+				$.each(data.destinations, function(i, item) {
+					console.log("Adding destination:", item);
+					var text = item.code + ' - ' + item.name;
+					$subdest.append($('<option>').val(item.id).text(text));
+				});
+				if (data.destinations.length > 0) {
+					$("#id_subdestination").parent().fadeIn('slow');
+				} else {
+					console.warn("No valid destinations received");
+				}
+			} else {
+				console.error("Invalid destinations data received:", data);
+			}
+		}).fail(function(jqXHR, textStatus, errorThrown) {
+			console.error("Failed to get support destinations:", textStatus, errorThrown);
+			console.error("Response:", jqXHR.responseText);
 		});
 	}
 

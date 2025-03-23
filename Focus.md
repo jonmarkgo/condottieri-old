@@ -94,15 +94,15 @@ Key Requirements:
    ├─ 📄 exceptions.py (30 lines) - Python script containing project logic
    ├─ 📄 fields.py (43 lines) - Python script containing project logic
    ├─ 📄 finances.py (54 lines) - Python script containing project logic
-   ├─ 📄 forms.py (522 lines) - Python script containing project logic
+   ├─ 📄 forms.py (523 lines) - Python script containing project logic
    ├─ 📄 graphics.py (186 lines) - Python script containing project logic
    ├─ 📄 logging.py (59 lines) - Python script containing project logic
    ├─ 📄 middleware.py (71 lines) - Python script containing project logic
-   ├─ 📄 models.py (3426 lines) - Python script containing project logic
+   ├─ 📄 models.py (3420 lines) - Python script containing project logic
    ├─ 📄 signals.py (59 lines) - Python script containing project logic
    ├─ 📄 translate.py (102 lines) - Python script containing project logic
-   ├─ 📄 urls.py (49 lines) - Python script containing project logic
-   ├─ 📄 views.py (1409 lines) - Python script containing project logic
+   ├─ 📄 urls.py (51 lines) - Python script containing project logic
+   ├─ 📄 views.py (1570 lines) - Python script containing project logic
    ├─ 📁 management
    │  ├─ 📄 __init__.py (1 lines) - Python script containing project logic
    │  ├─ 📄 base.py (40 lines) - Python script containing project logic
@@ -268,7 +268,7 @@ Functions:
 - Meta
 - ProfileForm
 
-`machiavelli/forms.py` (522 lines)
+`machiavelli/forms.py` (523 lines)
 Functions:
 - AssassinationForm
 - BaseReinforceFormSet
@@ -377,7 +377,7 @@ Functions:
 - has_languages
 - overthrow
 
-`machiavelli/models.py` (3426 lines)
+`machiavelli/models.py` (3420 lines)
 Functions:
 - AFToken
 - Area
@@ -713,7 +713,7 @@ Functions:
 - profile_detail
 - profile_edit
 
-`machiavelli/views.py` (1409 lines)
+`machiavelli/views.py` (1570 lines)
 Functions:
 - assassination
 - base_context
@@ -725,6 +725,10 @@ Functions:
 - finished_games
 - forgive_excommunication
 - game_results
+- get_area_info
+- get_supportable_units
+- get_supportable_units_query
+- get_valid_adjacent_areas
 - get_valid_destinations
 - get_valid_support_destinations
 - give_money
@@ -764,9 +768,9 @@ Functions:
 - whisper_list
 
 # 📊 Project Overview
-**Files:** 80  |  **Lines:** 9,539
+**Files:** 80  |  **Lines:** 9,697
 
 ## 📁 File Distribution
-- .py: 80 files (9,539 lines)
+- .py: 80 files (9,697 lines)
 
-*Updated: March 23, 2025 at 04:36 PM*
+*Updated: March 23, 2025 at 05:31 PM*

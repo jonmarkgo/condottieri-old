@@ -170,6 +170,11 @@ def make_order_form(player):
 			if not unit or not supported_unit:
 				return GameArea.objects.none()
 
+			# For garrisons, only allow supporting into their own province
+			if unit.type == 'G':
+				return GameArea.objects.filter(id=unit.area.id)
+			
+			# For non-garrison units, use normal support rules
 			is_fleet = (unit.type == 'F')
 			supported_area = supported_unit.area
 			
