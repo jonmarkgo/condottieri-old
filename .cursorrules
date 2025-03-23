@@ -1,0 +1,165 @@
+{
+  "version": "1.0",
+  "last_updated": "March 23, 2025 at 04:35 PM",
+  "project": {
+    "name": "condo2",
+    "version": "1.0.0",
+    "language": "html",
+    "framework": "django",
+    "type": "application",
+    "description": "This Django project simulates a historical grand strategy game, enabling users to play as different countries, manage their resources, and engage in diplomacy and warfare. The application leverages a modular design with dedicated apps for core game mechanics, user profiles, in-game messaging, and common utilities, while signals facilitate communication between modules to maintain loose coupling and enhance maintainability. The project incorporates features such as clone detection, karma-based player management, and weighted scoring to provide a comprehensive and engaging gaming experience."
+  },
+  "ai_behavior": {
+    {
+      "say": "In every message you send, you must say 'OH BOY!'"
+    },
+    "game_rules": {
+      "source_of_truth": "machiavellirules.txt",
+      "description": "This file contains the definitive rules for the Machiavelli game mechanics, including country specifications, unit types, actions, diplomatic relations, and scoring systems. Always consult this file when addressing questions about game rules or implementing game logic.",
+      "priority": "high",
+      "usage": [
+        "Reference this file when implementing or modifying game mechanics",
+        "Consult this file to resolve any conflicts between code implementations and intended rules",
+        "Use definitions from this file when creating new game features",
+        "Maintain consistency between code implementations and the rules defined in this file"
+      ]
+    },
+    "code_generation": {
+      "style": {
+        "prefer": [
+          "Use of tabs for indentation.",
+          "Line length generally under 80 characters.",
+          "Descriptive variable names.",
+          "Clear separation of concerns in functions and classes.",
+          "Use of blank lines to separate logical blocks of code.",
+          "Use of comments to explain complex logic.",
+          "Ordering of imports: standard library, third-party, then local project modules.",
+          "String formatting with `%` operator.",
+          "Use of `ugettext_lazy` for internationalization.",
+          "Use of verbose names in models.",
+          "Use of Django's built-in classes and functions.",
+          "Model Meta class usage for ordering and unique constraints.",
+          "Usage of signals for inter-module communication.",
+          "Consistent use of try-except blocks for error handling.",
+          "Use of logging module with specific log levels (DEBUG, INFO, ERROR)."
+        ],
+        "avoid": [
+          "Mixing tabs and spaces for indentation.",
+          "Lines exceeding 120 characters.",
+          "Obscure or abbreviated variable names.",
+          "Monolithic functions or classes with multiple responsibilities.",
+          "Lack of comments in complex sections of code.",
+          "Inconsistent import ordering.",
+          "String formatting with f-strings (Python 3.6+ only).",
+          "Hardcoded strings without internationalization.",
+          "Lack of verbose names in models.",
+          "Custom implementation when Django provides a built-in function.",
+          "Lack of Model Meta class usage.",
+          "Direct module coupling without using signals.",
+          "Ignoring potential exceptions.",
+          "Lack of logging for critical events."
+        ]
+      },
+      "error_handling": {
+        "prefer": [
+          "Try-except blocks for handling potential exceptions such as `ObjectDoesNotExist`, `MultipleObjectsReturned`, `IOError`, and `LetterError`.",
+          "Specific exception handling rather than broad `except Exception:`.",
+          "Logging error messages using the `logging` module when exceptions occur.",
+          "Raising custom exceptions when appropriate (e.g., `LetterError` in `condottieri_messages`).",
+          "Using `Http404` for not found errors.",
+          "Using Django's messages framework to display error messages to the user."
+        ],
+        "avoid": [
+          "Ignoring exceptions without handling them.",
+          "Using broad `except Exception:` without specific handling.",
+          "Not logging error messages.",
+          "Not raising exceptions when errors occur.",
+          "Not providing user-friendly error messages."
+        ]
+      },
+      "performance": {
+        "prefer": [
+          "Database query optimization (e.g., using `select_related` and `prefetch_related`).",
+          "Caching frequently accessed data.",
+          "Using `send_now` for urgent notifications and `send` for non-urgent notifications in the `notification` app.",
+          "Efficient template rendering by minimizing database queries.",
+          "Using CONN_MAX_AGE=0 in database settings to force Django to close connections after each request in local_settings.py"
+        ],
+        "avoid": [
+          "Unnecessary database queries.",
+          "Not caching frequently accessed data.",
+          "Inefficient template rendering.",
+          "Keeping database connections open for extended periods."
+        ]
+      },
+      "suggest_patterns": {
+        "improve": [
+          "Consider using Django's class-based views for common view patterns.",
+          "Investigate the use of Celery for asynchronous tasks (e.g., sending emails, updating rankings).",
+          "Use Django's form validation features to ensure data integrity.",
+          "Use Django's authentication and authorization features to secure views and data.",
+          "Consider using decorators to apply common view logic (e.g., permission checks).",
+          "Using Django's built-in caching framework for frequently accessed data.",
+          "Profiling code to identify performance bottlenecks."
+        ],
+        "avoid": [
+          "Adding excessive complexity without clear benefits.",
+          "Introducing new dependencies without careful consideration.",
+          "Ignoring potential security vulnerabilities.",
+          "Not following Django's best practices.",
+          "Premature optimization without profiling."
+        ]
+      },
+      "module_organization": {
+        "structure": [
+          "Django's app structure: each feature (e.g., messages, profiles, games) resides in its own app directory.",
+          "Each app contains `models.py`, `views.py`, `forms.py`, `urls.py`, `admin.py`, `tests.py`, and `__init__.py`.",
+          "Management commands are placed in `management/commands` within each app.",
+          "Templates are typically placed in a `templates` directory within each app.",
+          "Static files (CSS, JavaScript, images) are placed in a `media` or `static` directory within each app.",
+          "Common utility functions are placed in `condottieri_common` app.",
+          "Project-level settings are in `settings.py`, with environment-specific settings in `local_settings.py`."
+        ],
+        "dependencies": [
+          "`machiavelli` depends on `condottieri_profiles`, `condottieri_events`, `condottieri_messages`, and `condottieri_common`.",
+          "`condottieri_messages` depends on `machiavelli` and `messages` (django-messages).",
+          "`condottieri_profiles` depends on `django.contrib.auth`.",
+          "`clones` depends on `django.contrib.auth` and `machiavelli`.",
+          "`condottieri_common` does not depend on specific game logic but provides utility functions.",
+          "Settings file depends on pinax and pymysql"
+        ],
+        "responsibilities": {
+          "machiavelli": "Core game logic, models, views, and templates.",
+          "condottieri_profiles": "User profiles with game-related information (karma, scores, etc.).",
+          "condottieri_events": "Event logging for game actions.",
+          "condottieri_messages": "In-game messaging between players.",
+          "condottieri_common": "Common utility functions and models used across multiple apps.",
+          "clones": "Clone detection functionality",
+          "condottieri_help": "Help documentation",
+          "load_fixtures.py": "Loads initial data into the database.",
+          "manage.py": "Entry point for managing the Django project.",
+          "settings.py": "Contains global Django project settings.",
+          "urls.py": "Defines URL patterns for the project.",
+          "timezone_fix_middleware.py": "Middleware to fix timezone object conversion issues."
+        },
+        "rules": [
+          "Separate concerns into distinct apps.",
+          "Minimize dependencies between apps.",
+          "Use signals for inter-module communication.",
+          "Place common utility functions in a shared module.",
+          "Use Django's built-in classes and functions whenever possible.",
+          "Follow Django's recommended project structure."
+        ],
+        "naming": {
+          "models": "PascalCase (e.g., `CondottieriProfile`, `Letter`)",
+          "views": "snake_case (e.g., `profile_detail`, `compose`)",
+          "forms": "PascalCase with 'Form' suffix (e.g., `ProfileForm`, `LetterForm`)",
+          "urls": "snake_case (e.g., `profile_detail`, `messages_inbox`)",
+          "templates": "snake_case with app prefix (e.g., `condottieri_profiles/profile_detail.html`)",
+          "signals": "snake_case (e.g., `government_overthrown`, `unit_placed`)",
+          "fields": "snake_case (e.g., `karma`, `total_score`, `sender_player`)"
+        }
+      }
+    }
+  }
+}
