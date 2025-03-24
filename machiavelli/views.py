@@ -456,7 +456,9 @@ def play_reinforcements(request, game, player):
 
 def play_finance_reinforcements(request, game, player):
 	context = base_context(request, game, player)
-	if player.done:
+	# Check if any players are not done
+	any_not_done = game.player_set.filter(done=False).exists()
+	if player.done and any_not_done:
 		context['to_place'] = player.unit_set.filter(placed=False)
 		context['to_disband'] = player.unit_set.filter(placed=True, paid=False)
 		context['to_keep'] = player.unit_set.filter(placed=True, paid=True)
@@ -478,20 +480,19 @@ def play_finance_reinforcements(request, game, player):
 			if request.method == 'POST':
 				form = UnitPaymentForm(request.POST)
 				if form.is_valid():
-					#cost = len(form.cleaned_data['units']) * 3
-					cost = 0
+					cost = sum(u.cost for u in form.cleaned_data['units'])
+					# We know we have enough ducats due to form validation
 					for u in form.cleaned_data['units']:
-						cost += u.cost
-					if cost <= player.ducats:
-						for u in form.cleaned_data['units']:
-							u.paid = True
-							u.save()
-						player.ducats = player.ducats - cost
-						step = 1
-						player.step = step
-						player.save()
-						messages.success(request, _("You have successfully paid your units."))
-						return HttpResponseRedirect(request.path)
+						u.paid = True
+						u.save()
+					player.ducats = player.ducats - cost
+					step = 1
+					player.step = step
+					player.save()
+					messages.success(request, _("You have successfully paid your units."))
+					return HttpResponseRedirect(request.path)
+				else:
+					messages.error(request, _("There was an error with your unit payment."))
 			else:
 				form = UnitPaymentForm()
 			context['form'] = form
@@ -1303,6 +1304,7 @@ def whisper_list(request, slug):
 
 @login_required
 def get_valid_destinations(request, slug):
+
 	"""AJAX view to get valid destinations for a unit based on order type"""
 	game = get_object_or_404(Game, slug=slug)
 	unit_id = request.GET.get('unit_id')
@@ -1326,17 +1328,33 @@ def get_valid_destinations(request, slug):
 	form = forms.make_order_form(unit.player)(unit.player)
 	destinations = []
 	
-	# Garrison units can only convert to Army (or Fleet if in port)
-	if unit.type == 'G' and order_type == '=':
+	if order_type == '=':  # Conversion
+		# For any unit type converting, they can only convert in their current location
+		valid_types = []
+		
 		# Check if unit is besieged
 		if unit.besieged:
 			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
+		
+		# Get valid conversion types based on unit type and area
+		if unit.type == 'G':
+			# Garrison can convert to Army always, and Fleet if in port
+			valid_types.append('A')
+			if unit.area.board_area.has_port:
+				valid_types.append('F')
+		else:
+			# Army/Fleet can convert to Garrison if in a city
+			if unit.area.board_area.has_city:
+				valid_types.append('G')
 			
-		# Get valid conversion types based on area
-		valid_types = ['A']  # Army always valid
-		if unit.area.board_area.is_port:
-			valid_types.append('F')  # Fleet valid in ports
+			# Army can convert to Fleet if in port
+			if unit.type == 'A' and unit.area.board_area.has_port:
+				valid_types.append('F')
 			
+			# Fleet can convert to Army if in coastal area
+			if unit.type == 'F' and unit.area.board_area.is_coast:
+				valid_types.append('A')
+		
 		destinations = [{
 			'id': unit.area.id,
 			'name': unit.area.board_area.name,
@@ -1366,6 +1384,7 @@ def get_valid_destinations(request, slug):
 
 @login_required
 def get_valid_support_destinations(request, slug):
+
     """AJAX view to get valid destinations for support orders and convoy destinations"""
     game = get_object_or_404(Game, slug=slug)
     unit_id = request.GET.get('unit_id')
@@ -1483,6 +1502,7 @@ def get_valid_support_destinations(request, slug):
 
 @login_required
 def get_area_info(request, slug):
+
 	"""AJAX view to get area information for a unit"""
 	game = get_object_or_404(Game, slug=slug)
 	unit_id = request.GET.get('unit_id')
@@ -1511,6 +1531,7 @@ def get_area_info(request, slug):
 	return HttpResponse(simplejson.dumps(area_info), mimetype='application/json')
 
 def get_valid_adjacent_areas(game, area, for_fleet=False):
+
     """Helper function to get valid adjacent areas that units could move from or support into"""
     # Get all areas that border this area's board area
     adjacent_areas = GameArea.objects.filter(
@@ -1539,7 +1560,7 @@ def get_valid_adjacent_areas(game, area, for_fleet=False):
     return adjacent_areas
 
 def get_supportable_units_query(game, unit, valid_areas=None):
-    """Helper function to build the query for finding supportable units"""
+    """Helper function to build the query for finding supportable units."""
     query = Q(player__game=game)
     
     # For convoy orders, we only want Army units in coastal territories
@@ -1549,13 +1570,13 @@ def get_supportable_units_query(game, unit, valid_areas=None):
             area__board_area__is_coast=True  # Must be in a coastal territory
         )
     # For fleets providing support
-    elif unit.type == 'F':
+    elif unit.type == 'F': #Fleet
         # Get adjacent areas that are valid for fleet support
         valid_areas = GameArea.objects.filter(
             game=game,
             board_area__in=unit.area.board_area.borders.all()
         ).filter(
-            Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+            Q(board_area__is_sea=True) | Q(board_area__is_coast=True) #Sea or Coast
         )
         # Check if areas are actually adjacent for fleets
         valid_areas = [a for a in valid_areas 
@@ -1564,30 +1585,26 @@ def get_supportable_units_query(game, unit, valid_areas=None):
         # Convert back to queryset
         valid_areas = GameArea.objects.filter(id__in=[a.id for a in valid_areas])
         
-        # A fleet can support:
-        # 1. Other fleets in adjacent sea spaces or coastal territories
-        # 2. Armies in adjacent coastal territories
-        # 3. Armies that could be convoyed to adjacent coastal territories
-        fleet_support = Q(area__in=valid_areas, type='F')  # Support for fleets
-        direct_army_support = Q(area__in=valid_areas.filter(board_area__is_coast=True), type='A')  # Direct army support
+        fleet_support = Q(area__in=valid_areas, type='F')
+        direct_army_support = Q(area__in=valid_areas.filter(board_area__is_coast=True), type='A')
         
-        # For convoyed armies:
-        # - Find all armies in coastal territories
-        # - That could potentially be convoyed to our adjacent coastal territories
+        #Armies that could be convoyed to adjacent coastal territories
         convoy_army_support = Q(
-            type='A',  # Must be an army
-            area__board_area__is_coast=True,  # Must be in a coastal territory
+            type='A',
+            area__board_area__is_coast=True,
         )
         
         query &= (
-            fleet_support |  # Support for fleets in adjacent areas
-            direct_army_support |  # Support for armies in adjacent coastal areas
-            convoy_army_support  # Support for armies that could be convoyed
+            fleet_support |
+            direct_army_support |
+            convoy_army_support
         )
+
     # For armies supporting fleets, we need to include fleets in adjacent seas
-    elif unit.type == 'A':
+    elif unit.type == 'A': #Army
         # Get territories the army could support into
         supportable_areas = get_valid_adjacent_areas(game, unit.area, for_fleet=False)
+
         
         # For fleets, we need to check if they can actually move to any of our supportable areas
         fleet_areas = []
@@ -1606,14 +1623,14 @@ def get_supportable_units_query(game, unit, valid_areas=None):
         fleet_areas = list(set(fleet_areas))
         
         # Include units in current area, supportable areas, and valid fleet areas
-        area_conditions = (
-            Q(area=unit.area) |  # Units in same area
-            Q(area__in=supportable_areas, type='A') |  # Armies in supportable areas
-            Q(area__in=fleet_areas, type='F')  # Fleets that can move to supportable areas
+        area_conditions = ( #Units in same area
+            Q(area=unit.area) |
+            Q(area__in=supportable_areas, type='A') | #Armies in supportable areas
+            Q(area__in=fleet_areas, type='F') #Fleets that can move to supportable areas
         )
         query &= area_conditions
-    else:  # Garrison
-        # For garrisons, use normal adjacent area logic
+
+    else:  # Garrison - For garrisons, use normal adjacent area logic
         area_conditions = Q(area=unit.area)
         if valid_areas is not None:
             area_conditions |= Q(area__in=valid_areas)
@@ -1621,7 +1638,7 @@ def get_supportable_units_query(game, unit, valid_areas=None):
     
     # Exclude self and garrisons (except when supporting into their own province)
     exclude_conditions = Q(id=unit.id)
-    if unit.type != 'G':  # Non-garrison units can't support garrisons except in their own province
+    if unit.type != 'G':
         if valid_areas:
             exclude_conditions |= Q(
                 type='G',
@@ -1640,6 +1657,7 @@ def get_supportable_units_query(game, unit, valid_areas=None):
 
 @login_required
 def get_supportable_units(request, slug):
+
     """AJAX view to get valid units that can be supported by a unit"""
     game = get_object_or_404(Game, slug=slug)
     unit_id = request.GET.get('unit_id')

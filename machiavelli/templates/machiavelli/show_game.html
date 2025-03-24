@@ -192,7 +192,23 @@
 <script type="text/javascript">
 	$(function() {
 		makeLayout();
+		// Check for map updates every 10 seconds
+		setInterval(checkMapUpdate, 10000);
 	});
+
+	var currentMapTimestamp = '{{ map }}';
+
+	function checkMapUpdate() {
+		$.get('{{ MEDIA_URL }}machiavelli/maps/{{ map }}', function() {
+			var newTimestamp = arguments[2].getResponseHeader('Last-Modified');
+			if (newTimestamp && newTimestamp !== currentMapTimestamp) {
+				currentMapTimestamp = newTimestamp;
+				// Force reload the map
+				var viewer = $('#map').iviewer('viewer');
+				viewer.loadImage(viewer.options.src + '&t=' + new Date().getTime());
+			}
+		});
+	}
 
 	function makeLayout() {
 		var MEDIA_URL = "{{ MEDIA_URL }}";
@@ -203,7 +219,6 @@
 			zoom_max: 100,
 			zoom_min: 10,
 			zoom_delta: 1.4,
-			//zoom_base:
 			update_on_resize: true
 		};
 

@@ -405,7 +405,7 @@ class Game(models.Model):
 	def get_map_url(self):
 		if self.slots > 0:  # If game is pending
 			return "scenario-%s.png" % self.scenario.pk
-		return "map-%s.png" % self.id
+		return "map-%s.png?t=%s" % (self.id, self.last_phase_change.strftime('%s') if self.last_phase_change else '0')
 	
 	def get_absolute_url(self):
 		return ('show-game', None, {'slug': self.slug})
@@ -733,6 +733,17 @@ class Game(models.Model):
 		"""
 		players = self.player_set.all()
 		msg = u"Checking phase change in game %s\n" % self.pk
+		
+		# Check if there are no units left for any player
+		if self.check_no_units():
+			msg += u"No players have any units left. Game over.\n"
+			if logging:
+				logging.info(msg)
+			self.make_map()
+			self.assign_scores()
+			self.game_over()
+			return True
+		
 		if self.time_is_exceeded():
 			msg += u"Time exceeded.\n"
 			self.force_phase_change()
@@ -2400,6 +2411,10 @@ class Player(models.Model):
 			if credit > 25:
 				credit = 25
 		return credit
+
+	def check_no_units(self):
+		""" Returns True if no players have any units left. """
+		return not Unit.objects.filter(player__game=self, player__user__isnull=False).exists()
 
 class Revolution(models.Model):
 	""" A Revolution instance means that ``government`` is not playing, and

@@ -72,35 +72,35 @@ function updateOrderTypes() {
 }
 
 function updateConversionTypes() {
-	var $unit = $("#id_unit option:selected");
-	var $type = $("#id_type");
+	var unit = $("#id_unit").val();
+	var code = $("#id_code").val();
 	
-	// Reset conversion type dropdown
-	$type.find('option').show();
-	
-	if ($unit.length) {
-		// Get current unit type from text (Army, Fleet, or Garrison)
-		var unitText = $unit.text().split(' ')[0];
-		// Hide current unit type from conversion options
-		$type.find('option').each(function() {
-			if ($(this).text() === unitText) {
-				$(this).hide();
-				// If this type was selected, reset it
-				if ($type.val() === $(this).val()) {
-					$type.val('');
-				}
-			}
-		});
-
-		// Hide garrison option if area has no city
-		$.getJSON(game_url + '/get_area_info/', {
-			unit_id: $("#id_unit").val()
+	if (unit && code === '=') {
+		$.getJSON(game_url + '/get_valid_destinations/', {
+			unit_id: unit,
+			order_type: code
 		}, function(data) {
-			if (!data.has_city) {
-				$type.find('option[value="G"]').hide();
-				if ($type.val() === 'G') {
-					$type.val('');
-				}
+			var $type = $("#id_type");
+			$type.empty();
+			$type.append($('<option>').val('').text('---'));
+			
+			if (data.destinations && data.destinations.length > 0) {
+				var validTypes = data.destinations[0].valid_types;
+				$.each(validTypes, function(i, type) {
+					var text = '';
+					switch(type) {
+						case 'A':
+							text = 'Army';
+							break;
+						case 'F':
+							text = 'Fleet';
+							break;
+						case 'G':
+							text = 'Garrison';
+							break;
+					}
+					$type.append($('<option>').val(type).text(text));
+				});
 			}
 		});
 	}

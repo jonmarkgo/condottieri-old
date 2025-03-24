@@ -257,6 +257,7 @@ def make_order_form(player):
 			if code == 'S':
 				if not subunit:
 					raise forms.ValidationError(_("You must select a unit to support"))
+
 				if subcode == '-' and not subdestination:
 					raise forms.ValidationError(_("You must select a destination area for the supported unit"))
 				if subcode == '=':
@@ -290,7 +291,7 @@ def make_order_form(player):
 		
 		def as_td(self):
 			"Returns this form rendered as HTML <td>s -- excluding the <tr></tr>."
-			tds = self._html_output(u'<td>%(errors)s %(field)s%(help_text)s</td>', u'<td style="width:10%%">%s</td>', '</td>', u' %s', False)
+			tds = self._html_output(u'<td>%(errors)s %(field)s%(help_text)s</td>', u'<td style="width:10%%">%s</td>', u'</td>', u' %s', False)
 			return unicode(tds)
 		
 	return OrderForm
@@ -365,6 +366,13 @@ def make_disband_form(player):
 					      label="Units to disband")
 	return DisbandForm
 
+class UnitPaymentCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
+	def build_attrs(self, attrs=None, **kwargs):
+		attrs = super(UnitPaymentCheckboxSelectMultiple, self).build_attrs(attrs, **kwargs)
+		if 'name' in attrs:
+			attrs['name'] = attrs['name'] + '[]'
+		return attrs
+
 class UnitPaymentMultipleChoiceField(forms.ModelMultipleChoiceField):
 	def label_from_instance(self, obj):
 		return obj.describe_with_cost()
@@ -373,8 +381,20 @@ def make_unit_payment_form(player):
 	class UnitPaymentForm(forms.Form):
 		units = UnitPaymentMultipleChoiceField(required=False,
 					      queryset=player.unit_set.filter(placed=True),
-						  widget=forms.CheckboxSelectMultiple,
+						  widget=UnitPaymentCheckboxSelectMultiple,
 					      label="")
+		
+		def clean(self):
+			cleaned_data = super(UnitPaymentForm, self).clean()
+			units = cleaned_data.get('units', [])
+			cost = sum(u.cost for u in units)
+			if cost > player.ducats:
+				raise forms.ValidationError(_("You don't have enough ducats. Need %(cost)s but only have %(has)s.") % {
+					'cost': cost,
+					'has': player.ducats
+				})
+			return cleaned_data
+			
 	return UnitPaymentForm
 
 def make_ducats_list(ducats, f=3):
