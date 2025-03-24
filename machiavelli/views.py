@@ -1304,7 +1304,6 @@ def whisper_list(request, slug):
 
 @login_required
 def get_valid_destinations(request, slug):
-
 	"""AJAX view to get valid destinations for a unit based on order type"""
 	game = get_object_or_404(Game, slug=slug)
 	unit_id = request.GET.get('unit_id')
@@ -1332,8 +1331,8 @@ def get_valid_destinations(request, slug):
 		# For any unit type converting, they can only convert in their current location
 		valid_types = []
 		
-		# Check if unit is besieged
-		if unit.besieged:
+		# Check if unit is besieged by looking for a besiege order
+		if Order.objects.filter(unit=unit, code='B').exists():
 			return HttpResponse(simplejson.dumps({'destinations': []}), mimetype='application/json')
 		
 		# Get valid conversion types based on unit type and area

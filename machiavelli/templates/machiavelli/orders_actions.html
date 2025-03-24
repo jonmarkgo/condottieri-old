@@ -138,6 +138,7 @@ orders. If you want a unit to do nothing, select the "Hold" option for it.
 <script>
 	var game_url = "{% url show-game game.slug %}";
 	var delete_text = "{% trans "Delete" %}";
+	var game_slug = "{{ game.slug }}";
 </script>
 	{{ order_form.media }}
 {% endif %}

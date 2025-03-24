@@ -24,11 +24,12 @@ function updateOrderTypes() {
 	$code.find('option').show();
 	
 	if ($unit.length) {
-		// Get unit type from text
-		var unitText = $unit.text().split(' ')[0];
+		var unitText = $unit.text();
+		// Extract unit type from the text (e.g. "Army in BOL - Bologna")
+		var unitType = unitText.split(' in ')[0];
 		
 		// If unit is a Garrison, only allow Hold, Support and Convert
-		if (unitText === 'Garrison') {
+		if (unitType === 'Garrison') {
 			$code.find('option').hide();
 			$code.find('option[value="H"]').show(); // Hold
 			$code.find('option[value="S"]').show(); // Support
@@ -40,7 +41,7 @@ function updateOrderTypes() {
 			}
 		}
 		// Hide convoy option if not a fleet
-		else if (unitText !== 'Fleet') {
+		else if (unitType !== 'Fleet') {
 			$code.find('option[value="C"]').hide();
 			if ($code.val() === 'C') {
 				$code.val('');
@@ -59,7 +60,7 @@ function updateOrderTypes() {
 			// 1. Area has a fortified city
 			// 2. For fleets, city must be a port
 			if (data.has_city && data.is_fortified && 
-				(unitText === 'Army' || (unitText === 'Fleet' && data.has_port))) {
+				(unitType === 'Army' || (unitType === 'Fleet' && data.has_port))) {
 				$code.find('option[value="B"]').show();
 			}
 			
@@ -76,7 +77,7 @@ function updateConversionTypes() {
 	var code = $("#id_code").val();
 	
 	if (unit && code === '=') {
-		$.getJSON(game_url + '/get_valid_destinations/', {
+		$.getJSON('/machiavelli/game/' + game_slug + '/get_valid_destinations/', {
 			unit_id: unit,
 			order_type: code
 		}, function(data) {
@@ -86,22 +87,43 @@ function updateConversionTypes() {
 			
 			if (data.destinations && data.destinations.length > 0) {
 				var validTypes = data.destinations[0].valid_types;
-				$.each(validTypes, function(i, type) {
-					var text = '';
-					switch(type) {
-						case 'A':
-							text = 'Army';
-							break;
-						case 'F':
-							text = 'Fleet';
-							break;
-						case 'G':
-							text = 'Garrison';
-							break;
-					}
-					$type.append($('<option>').val(type).text(text));
-				});
+				if (validTypes && validTypes.length > 0) {
+					$.each(validTypes, function(i, type) {
+						var text = '';
+						switch(type) {
+							case 'A':
+								text = 'Army';
+								break;
+							case 'F':
+								text = 'Fleet';
+								break;
+							case 'G':
+								text = 'Garrison';
+								break;
+						}
+						$type.append($('<option>').val(type).text(text));
+					});
+					$type.parent().fadeIn('slow');
+				} else {
+					// No valid conversion types available
+					$type.append($('<option>').val('').text('No valid conversions available'));
+					$type.prop('disabled', true);
+					$type.parent().fadeIn('slow');
+				}
+			} else {
+				// No destinations available
+				$type.append($('<option>').val('').text('No valid conversions available'));
+				$type.prop('disabled', true);
+				$type.parent().fadeIn('slow');
 			}
+		}).fail(function(jqXHR, textStatus, errorThrown) {
+			console.error("Failed to get valid destinations:", textStatus, errorThrown);
+			console.error("Response:", jqXHR.responseText);
+			var $type = $("#id_type");
+			$type.empty();
+			$type.append($('<option>').val('').text('Error loading conversion types'));
+			$type.prop('disabled', true);
+			$type.parent().fadeIn('slow');
 		});
 	}
 }
@@ -109,7 +131,9 @@ function updateConversionTypes() {
 function toggle_params() {
 	var code = $("#id_code").val();
 	var unit = $("#id_unit").val();
-	var unitText = $("#id_unit option:selected").text().split(' ')[0];
+	// Extract unit type from the text (e.g. "Army in BOL - Bologna")
+	var unitText = $("#id_unit option:selected").text();
+	var unitType = unitText.split(' in ')[0];
 
 	// Hide all optional fields first
 	$("#id_destination").parent().hide();
@@ -121,7 +145,7 @@ function toggle_params() {
 
 	// Update destinations based on selected unit and order type
 	if (unit) {
-		$.getJSON(game_url + '/get_valid_destinations/', {
+		$.getJSON('/machiavelli/game/' + game_slug + '/get_valid_destinations/', {
 			unit_id: unit,
 			order_type: code
 		}, function(data) {
@@ -245,7 +269,9 @@ function toggle_subparams() {
 	var unit = $("#id_unit").val();
 	var subunit = $("#id_subunit").val();
 	var mainCode = $("#id_code").val();
-	var unitText = $("#id_unit option:selected").text().split(' ')[0];
+	// Extract unit type from the text (e.g. "Army in BOL - Bologna")
+	var unitText = $("#id_unit option:selected").text();
+	var unitType = unitText.split(' in ')[0];
 
 	// Hide sub-destination and sub-type by default
 	$("#id_subdestination").parent().hide();
