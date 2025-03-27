@@ -1,3 +1,4 @@
+{# machiavelli/templates/machiavelli/reinforcements_actions.html #}
 {% extends 'machiavelli/show_game.html' %}
 
 {% load i18n %}
@@ -7,6 +8,7 @@
 <h2>{% trans "Military Adjustment" %}</h2>
 {% if done %}
 
+{# Display summary of actions taken #}
 {% if to_place %}
 <p>{% blocktrans %}This year you will place the following new units on the mapboard:{% endblocktrans %}</p>
 <ul>
@@ -34,40 +36,35 @@
 </ul>
 {% endif %}
 
-<p>{% blocktrans %}At least one player has not yet adjusted his units. You have to wait until all
-players have done it or the time limit is reached.{% endblocktrans %}</p>
+<p>{% blocktrans %}You have completed your adjustments. Waiting for other players.{% endblocktrans %}</p>
 
-{% else %}
+{% else %} {# Player not done #}
 
-<p>{% blocktrans count cities_qty as counter %}You have currently {{ cities_qty }} city
-{% plural %}You have currently {{ cities_qty }} cities
-{% endblocktrans %}
+<p>{% blocktrans count cities_qty as counter %}You have currently {{ cities_qty }} city{% plural %}You have currently {{ cities_qty }} cities{% endblocktrans %}
+{% blocktrans count cur_units as counter %} and {{ cur_units }} unit.{% plural %} and {{ cur_units }} units.{% endblocktrans %}</p>
 
-{% blocktrans count cur_units as counter %} and {{ cur_units }} unit.
-{% plural %} and {{ cur_units }} units.
-{% endblocktrans %}</p>
-
-<form action="{% url show-game game.slug %}" method="post">
+{# Use {% url %} tag #}
+<form action="{% url 'show-game' game.slug %}" method="post">
 {% csrf_token %}
 
-{% if reinforce_form %}
-<p>{% blocktrans count units_to_place as counter %} You have to place <b>{{ units_to_place }}</b> unit in the map.
-{% plural %} You have to place <b>{{ units_to_place }}</b> units in the map.
-{% endblocktrans %}</p>
+{% if reinforce_formset %} {# Check if formset exists (for units_to_place > 0) #}
+<p>{% blocktrans count units_to_place as counter %} You have to place <b>{{ units_to_place }}</b> unit in the map.{% plural %} You have to place <b>{{ units_to_place }}</b> units in the map.{% endblocktrans %}</p>
 <p>{% blocktrans %} Remember the following restrictions when placing units:{% endblocktrans %}</p>
 <ul>
-<li>{% blocktrans %}Any unit: Only in cities with your flag <b>and</b> under your control.{% endblocktrans %}</li>
+<li>{% blocktrans %}Any unit: Only in controlled home city provinces (original or fully conquered).{% endblocktrans %}</li> {# Updated rule #}
 <li>{% blocktrans %}Fleets: Only in port cities.{% endblocktrans %}</li>
-<li>{% blocktrans %}Garrisons: Only in fortified cities.{% endblocktrans %}</li>
-<li>{% blocktrans %}You cannot place more than one unit in the same area.{% endblocktrans %}</li>
+<li>{% blocktrans %}Garrisons: Only in fortified cities/fortresses.{% endblocktrans %}</li>
+<li>{% blocktrans %}You cannot place more than one unit in the same area (city + province count as one area for this).{% endblocktrans %}</li> {# Clarified rule #}
 </ul>
 <div class="action_form">
-<p>{{ reinforce_form.non_form_errors }}</p>
-{{ reinforce_form.management_form }}
+{# Display formset errors #}
+{% if reinforce_formset.non_form_errors %}
+    <div class="errorlist">{{ reinforce_formset.non_form_errors }}</div>
+{% endif %}
+{{ reinforce_formset.management_form }}
 
-{# Taken from http://djangosnippets.org/snippets/1442/ #}
 <table style="width: 40%; min-width: 30em;">
-{% for form in reinforce_form.forms %}
+{% for form in reinforce_formset %}
 	{% if forloop.first %}
 	<thead><tr>
 		{% for field in form.visible_fields %}
@@ -75,7 +72,7 @@ players have done it or the time limit is reached.{% endblocktrans %}</p>
 		{% endfor %}
 	</tr></thead>
 	{% endif %}
-	<tr>
+	<tr class="{% cycle 'row1' 'row2' %}"> {# Add alternating row styles #}
 	{% for field in form.visible_fields %}
 		<td>
 		{% if forloop.first %}
@@ -83,7 +80,7 @@ players have done it or the time limit is reached.{% endblocktrans %}</p>
 			{{ hidden }}
 			{% endfor %}
 		{% endif %}
-			{{ field.errors.as_ul }}
+			{% if field.errors %}<div class="errorlist">{{ field.errors }}</div>{% endif %} {# Display field errors #}
 			{{ field }}
 		</td>
 	{% endfor %}
@@ -91,25 +88,34 @@ players have done it or the time limit is reached.{% endblocktrans %}</p>
 {% endfor %}
 </table>
 
-
 <p><input type="submit" value="{% trans "Reinforce" %}" /></p>
 </div>
+{% endif %} {# End reinforce_formset check #}
+
+{% if disband_form %} {# Check if disband_form exists (for units_to_place < 0) #}
+<p>{% blocktrans count units_to_disband as counter %} You must select exactly {{ units_to_disband }} unit to be disbanded.{% plural %} You must select exactly {{ units_to_disband }} units to be disbanded. Use Ctrl key (or Cmd on Mac) to select more than one unit.{% endblocktrans %}</p> {# Added Cmd key info #}
+
+{% if disband_form.non_field_errors %}
+    <div class="errorlist">{{ disband_form.non_field_errors }}</div>
 {% endif %}
-
-{% if disband_form %}
-<p>{% blocktrans count units_to_disband as counter %} You must select exactly {{ units_to_disband }} unit to be disbanded.
-{% plural %} You must select exactly {{ units_to_disband }} units to be disbanded. Use Ctrl key to select more than one unit.
-{% endblocktrans %}</p>
-
-<p>{{ disband_form.non_form_errors }}</p>
 <dl>
 <dt>{{ disband_form.units.label }}:</dt>
-<dd>{{ disband_form.units }}</dd>
+<dd>
+    {% if disband_form.units.errors %}<div class="errorlist">{{ disband_form.units.errors }}</div>{% endif %}
+    {{ disband_form.units }}
+</dd>
 </dl>
 <p><input type="submit" value="{% trans "Disband!" %}"/></p>
+{% endif %} {# End disband_form check #}
+
+{% if units_to_place == 0 and not done %}
+    {# This case should be handled by redirect in view, but add a message just in case #}
+    <p>{% trans "No unit adjustments needed this turn." %}</p>
+    {# Maybe add a button to confirm end of phase if view doesn't redirect #}
+    {# <p><input type="submit" name="confirm_no_action" value="{% trans "Confirm No Action" %}" /></p> #}
 {% endif %}
 
 </form>
-{% endif %}
+{% endif %} {# End player not done check #}
 </div>
 {% endblock %}
