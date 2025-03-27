@@ -305,48 +305,59 @@ actually played in GameArea objects.
     def get_coast_list(self):
         """Returns a list of valid coast identifiers for this area."""
         if self.coast_names:
+            # Ensure consistent case (lowercase)
             return [c.strip().lower() for c in self.coast_names.split(',')]
         return []
 
     def has_multiple_coasts(self):
         """Checks if the area has more than one defined coast."""
         return bool(self.coast_names and ',' in self.coast_names)
-
+	
     def is_adjacent(self, target_area, fleet=False, source_unit_coast=None, target_order_coast=None):
-        """ Checks adjacency, considering coasts for fleets and special rules. """
-        # Basic border check - assumes borders are defined correctly in fixture/DB
-        # Use .exists() for efficiency if just checking existence
+        """
+        Checks adjacency between self and target_area.
+        Considers unit type (fleet=True for fleets), coasts, and special rules.
+        """
+        # 1. Basic physical border check (most efficient first check)
+        # Assumes self.borders correctly defines ALL physical adjacencies.
         if not self.borders.filter(pk=target_area.pk).exists():
             return False
 
-        # --- Army Adjacency (Non-Fleet) ---
+        # 2. Army Adjacency (Non-Fleet)
         if not fleet:
-            # Rule VII.B.1.d: Armies cannot enter seas
+            # Rule VII.B.1.d (Machiavelli): Armies cannot enter seas
             if target_area.is_sea: return False
-            # Rule VII.D.6: Armies cannot enter Venice (province/city combo)
+            # Rule VII.D.6 (Machiavelli): Armies cannot enter Venice (province/city combo)
             if target_area.code == 'VEN': return False
-            # Otherwise, if they border, they are adjacent for armies
+            # Diplomacy Rule (p.8): Armies cannot enter water provinces. (Covered by is_sea check)
+            # Otherwise, if they border physically, they are adjacent for armies.
             return True
 
-        # --- Fleet Adjacency ---
-        # Use the specific coast-aware check if either area is multi-coast
-        # and a relevant coast is specified for the check.
+        # 3. Fleet Adjacency
+        # Normalize provided coasts
+        source_unit_coast = source_unit_coast.lower() if source_unit_coast else None
+        target_order_coast = target_order_coast.lower() if target_order_coast else None
+
+        # Use the specific coast-aware check if needed
         if self.has_multiple_coasts() and source_unit_coast:
             # Check adjacency FROM a specific coast of SELF
+            # Also ensure target is valid for a fleet (Sea or Coastal)
+            if not target_area.is_sea and not target_area.is_coast: return False
             return self.is_coast_adjacent(source_unit_coast, target_area)
         elif target_area.has_multiple_coasts() and target_order_coast:
             # Check adjacency TO a specific coast of TARGET
+            # Also ensure self is valid for a fleet (Sea or Coastal)
+            if not self.is_sea and not self.is_coast: return False
             # This is equivalent to checking from the target's perspective
             return target_area.is_coast_adjacent(target_order_coast, self)
         else:
-            # Neither area is multi-coast OR no specific coast is relevant for this check
-            # Perform standard fleet adjacency checks (Sea<->Sea, Sea<->Coast, Coast<->Coast)
+            # --- Standard Fleet Adjacency (No specific multi-coast involved in the check) ---
             source_is_sea = self.is_sea
             target_is_sea = target_area.is_sea
             source_is_coast = self.is_coast
             target_is_coast = target_area.is_coast
 
-            # Rule VII.B.1.e: Fleet movement possibilities
+            # Rule VII.B.1.e (Machiavelli) / Diplomacy (p.4): Fleet movement possibilities
             valid_combination = False
             if source_is_sea and target_is_sea: valid_combination = True
             elif source_is_sea and target_is_coast: valid_combination = True
@@ -356,11 +367,19 @@ actually played in GameArea objects.
             if not valid_combination:
                 return False
 
-            # --- Specific Non-Adjacency Rules ---
-            # Rule VII.D.9: No movement ETS <-> Capua
+            # --- Specific Non-Adjacency / Strait Rules (Handled here or in pathfinding) ---
+            # Rule VII.D.9 (Machiavelli): No movement ETS <-> Capua
             if (self.code == 'ETS' and target_area.code == 'CAP') or \
                (target_area.code == 'ETS' and self.code == 'CAP'):
                 return False
+
+            # Diplomacy Rule (p.8): BAL <-> SKA is NOT direct. Requires move to DEN/SWE first.
+            # This rule affects pathfinding more than direct adjacency. DEN/SWE *are* adjacent to BAL/SKA.
+            # We don't block the adjacency here, but pathfinding (like find_convoy_line) should enforce it.
+            # if {self.code, target_area.code} == {'BAL', 'SKA'}: return False # Incorrect - they border DEN/SWE
+
+            # Kiel/Constantinople (p.8): Act as single coast. Standard adjacency works.
+            # Denmark/Sweden (p.8): Act as single coast. Standard adjacency works.
 
             # If physical border exists and type combination is valid, assume adjacent
             return True
@@ -368,71 +387,91 @@ actually played in GameArea objects.
 
     def is_coast_adjacent(self, coast_code, target_area):
         """
-        Helper: Checks if a specific coast ('nc' or 'sc') of this multi-coast area
+        Helper: Checks if a specific coast ('nc', 'sc', 'ec') of this multi-coast area
         is considered adjacent to the target_area for fleet movement/support,
-        based on Machiavelli rules VII.D.3 and VII.D.4.
+        based on Machiavelli rules (VII.D.3/4) and Diplomacy rules (p.8).
 
         Args:
-            coast_code (str): The coast identifier ('nc' or 'sc') of 'self'.
+            coast_code (str): The coast identifier (e.g., 'nc', 'sc', 'ec') of 'self'.
             target_area (Area): The Area object being checked for adjacency.
 
         Returns:
             bool: True if adjacent via the specified coast, False otherwise.
         """
-        if not self.has_multiple_coasts() or not coast_code:
-            # If self is not multi-coast or no specific coast provided,
-            # fall back to standard physical border check.
-            # Use .exists() for efficiency.
+        # Ensure self is actually multi-coast and a valid coast was provided
+        if not self.has_multiple_coasts() or not coast_code or coast_code not in self.get_coast_list():
+            # Fall back to standard physical border check if not multi-coast or invalid coast given
+            # logger.debug(f"Falling back to standard border check for {self.code} coast '{coast_code}' -> {target_area.code}")
             return self.borders.filter(pk=target_area.pk).exists()
 
-        coast_code = coast_code.lower() # Ensure lowercase comparison
         target_code = target_area.code
 
-        # --- Rule VII.D.4: Provence (PRO) ---
+        # --- Rule VII.D.4 (Machiavelli): Provence (PRO) ---
         if self.code == 'PRO':
             if coast_code == 'nc':
-                # North Coast borders Spain (SPA) and Gulf of Lions (GOL) - Sea Access
-                # Assumes SPA is coastal and borders PRO via this coast.
+                # North Coast borders Spain (SPA) and Gulf of Lions (GOL)
                 allowed_codes = ['SPA', 'GOL']
                 return target_code in allowed_codes
             elif coast_code == 'sc':
                 # South Coast borders Gulf of Lions (GOL), Marseille (MAR), Piedmont (PIE)
-                # Assumes MAR is coastal, PIE is landlocked but adjacent via coast.
-                allowed_codes = ['GOL', 'MAR', 'PIE']
+                # Fleet cannot move to landlocked PIE.
+                allowed_codes = ['GOL', 'MAR']
                 return target_code in allowed_codes
-            else:
-                # Invalid coast code for Provence
-                return False
+            else: return False # Invalid coast for PRO
 
-        # --- Rule VII.D.3: Croatia (CRO) ---
+        # --- Rule VII.D.3 (Machiavelli): Croatia (CRO) ---
         elif self.code == 'CRO':
             if coast_code == 'nc':
-                # North Coast has direct access ONLY to Upper Adriatic (UA) - Sea Access
-                # Also borders inland Carinthia/Carniola (CAR) - Land Access
-                allowed_codes = ['UA', 'CAR'] # Adjust CAR if needed based on your map codes
+                # North Coast borders Upper Adriatic (UA) and Carinthia (CAR)
+                # Fleet cannot move to landlocked CAR.
+                allowed_codes = ['UA']
                 return target_code in allowed_codes
             elif coast_code == 'sc':
-                # South Coast has NO direct sea access. Fleet access is via DAL/IST.
-                # Borders inland Bosnia (BOS) and coastal Dalmatia (DAL), Istria (IST) - Land Access Only
-                allowed_codes = ['DAL', 'IST', 'BOS'] # Adjust BOS if needed
+                # South Coast borders Dalmatia (DAL), Istria (IST), Bosnia (BOS)
+                # Fleet cannot move to landlocked BOS. Fleet access to ADR is via DAL/IST.
+                allowed_codes = ['DAL', 'IST']
                 return target_code in allowed_codes
-            else:
-                # Invalid coast code for Croatia
-                return False
+            else: return False # Invalid coast for CRO
 
-        # --- Add other multi-coast areas if necessary ---
-        # elif self.code == 'OTHER_MULTI_COAST_AREA':
-        #     if coast_code == '...':
-        #         allowed_codes = [...]
-        #         return target_code in allowed_codes
-        #     ...
+        # --- Diplomacy Rule (p.8): Spain (SPA) ---
+        elif self.code == 'SPA':
+            if coast_code == 'nc':
+                # North Coast borders Gascony (GAS), Portugal (POR), Mid-Atlantic Ocean (MAO)
+                allowed_codes = ['GAS', 'POR', 'MAO']
+                return target_code in allowed_codes
+            elif coast_code == 'sc':
+                # South Coast borders Portugal (POR), Marseilles (MAR), Gulf of Lyon (GOL), Western Med (WME), Mid-Atlantic Ocean (MAO)
+                allowed_codes = ['POR', 'MAR', 'GOL', 'WME', 'MAO']
+                return target_code in allowed_codes
+            else: return False # Invalid coast for SPA
 
+        # --- Diplomacy Rule (p.8): St. Petersburg (STP) ---
+        elif self.code == 'STP':
+            if coast_code == 'nc':
+                # North Coast borders Norway (NWY), Barents Sea (BAR)
+                allowed_codes = ['NWY', 'BAR']
+                return target_code in allowed_codes
+            elif coast_code == 'sc':
+                # South Coast borders Finland (FIN), Livonia (LVN), Gulf of Bothnia (BOT), Baltic Sea (BAL)
+                allowed_codes = ['FIN', 'LVN', 'BOT', 'BAL']
+                return target_code in allowed_codes
+            else: return False # Invalid coast for STP
+
+        # --- Diplomacy Rule (p.8): Bulgaria (BUL) ---
+        elif self.code == 'BUL':
+            if coast_code == 'ec':
+                # East Coast borders Constantinople (CON), Rumania (RUM), Black Sea (BLA)
+                allowed_codes = ['CON', 'RUM', 'BLA']
+                return target_code in allowed_codes
+            elif coast_code == 'sc':
+                # South Coast borders Constantinople (CON), Greece (GRE), Aegean Sea (AEG)
+                allowed_codes = ['CON', 'GRE', 'AEG']
+                return target_code in allowed_codes
+            else: return False # Invalid coast for BUL
+
+        # --- Fallback for Unhandled Multi-Coast Areas ---
         else:
-            # This area is marked as multi-coast (has_multiple_coasts() is True)
-            # but has no specific logic defined here. Log a warning.
-            if logging:
-                logging.warning(f"Adjacency check for undefined multi-coast area '{self.code}' coast '{coast_code}' to '{target_code}' requested. Falling back to standard border check.")
-            # Fallback to standard border check for unhandled multi-coast areas.
+            logger.warning(f"Adjacency check for unhandled multi-coast area '{self.code}' coast '{coast_code}' to '{target_code}'. Falling back to standard border check.")
             return self.borders.filter(pk=target_area.pk).exists()
 
     def accepts_type(self, type):
