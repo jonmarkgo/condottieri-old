@@ -1,0 +1,385 @@
+# machiavelli/fixtures/diplomacy_map.yaml
+# Fixture for the Standard Diplomacy Map (1901)
+# Use with DATC tests. Uses NEW PKs for Countries (11+) and Areas (101+).
+# NOTE: Scenario PK is 100.
+
+# --- Countries (NEW PKs 11-17) ---
+- model: machiavelli.country
+  pk: 11 # Was 1
+  fields: {name: Austria, css_class: austria_dip, static_name: austria} # Use distinct css_class if needed
+- model: machiavelli.country
+  pk: 12 # Was 2
+  fields: {name: England, css_class: england_dip, static_name: england}
+- model: machiavelli.country
+  pk: 13 # Was 3
+  fields: {name: France, css_class: france_dip, static_name: france}
+- model: machiavelli.country
+  pk: 14 # Was 4
+  fields: {name: Germany, css_class: germany_dip, static_name: germany}
+- model: machiavelli.country
+  pk: 15 # Was 5
+  fields: {name: Italy, css_class: italy_dip, static_name: italy}
+- model: machiavelli.country
+  pk: 16 # Was 6
+  fields: {name: Russia, css_class: russia_dip, static_name: russia}
+- model: machiavelli.country
+  pk: 17 # Was 7
+  fields: {name: Turkey, css_class: turkey_dip, static_name: turkey}
+
+# --- Scenario ---
+- model: machiavelli.scenario
+  pk: 100
+  fields:
+    name: StandardDip
+    title: Standard Diplomacy
+    start_year: 1901
+    number_of_players: 7
+    enabled: true # Enable for testing
+
+# --- Areas (PKs 101+) ---
+# Waters (PKs 101-119)
+- model: machiavelli.area
+  pk: 101
+  fields: {name: North Atlantic Ocean, code: NAO, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [102, 103, 104, 129, 160]} # NRG, IRI, ENG, LVP, CLY, MID
+- model: machiavelli.area
+  pk: 102
+  fields: {name: Norwegian Sea, code: NRG, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [101, 105, 106, 125, 147, 160]} # NAO, BAR, NTH, EDI, NWY, CLY
+- model: machiavelli.area
+  pk: 103
+  fields: {name: Irish Sea, code: IRI, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [101, 104, 124, 131, 160]} # NAO, ENG, LVP, WAL, MID
+- model: machiavelli.area
+  pk: 104
+  fields: {name: English Channel, code: ENG, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [103, 106, 111, 123, 128, 131, 136, 142]} # IRI, NTH, MID, LON, BRE, WAL, PIC, BEL
+- model: machiavelli.area
+  pk: 105
+  fields: {name: Barents Sea, code: BAR, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [102, 138, 147]} # NRG, STP/nc, NWY
+- model: machiavelli.area
+  pk: 106
+  fields: {name: North Sea, code: NTH, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [102, 104, 107, 108, 123, 125, 132, 144, 146, 147]} # NRG, ENG, HEL, SKA, LON, EDI, YOR, DEN, HOL, NWY
+- model: machiavelli.area
+  pk: 107
+  fields: {name: Helgoland Bight, code: HEL, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [106, 131, 144, 146]} # NTH, KIE, DEN, HOL
+- model: machiavelli.area
+  pk: 108
+  fields: {name: Skagerrak, code: SKA, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [106, 144, 147, 152]} # NTH, DEN, NWY, SWE
+- model: machiavelli.area
+  pk: 109
+  fields: {name: Baltic Sea, code: BAL, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [110, 129, 131, 144, 152, 157, 158, 164]} # BOT, BER, KIE, DEN, SWE, PRU, LVN, STP/sc
+- model: machiavelli.area
+  pk: 110
+  fields: {name: Gulf of Bothnia, code: BOT, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [109, 138, 152, 158, 161]} # BAL, STP/sc, SWE, LVN, FIN
+- model: machiavelli.area
+  pk: 111
+  fields: {name: Mid-Atlantic Ocean, code: MID, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [101, 103, 104, 112, 128, 151, 154, 163]} # NAO, IRI, ENG, WES, BRE, SPA/nc/sc, POR, GAS, NAF
+- model: machiavelli.area
+  pk: 112
+  fields: {name: Western Mediterranean, code: WES, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [111, 113, 114, 151, 153, 154]} # MID, GOL, TYN, SPA/sc, TUN, NAF
+- model: machiavelli.area
+  pk: 113
+  fields: {name: Gulf of Lyon, code: GOL, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [112, 114, 127, 151, 167, 172]} # WES, TYN, MAR, SPA/sc, PIE, TUS
+- model: machiavelli.area
+  pk: 114
+  fields: {name: Tyrrhenian Sea, code: TYN, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [112, 113, 115, 132, 134, 172]} # WES, GOL, ION, ROM, NAP, TUS, SICILY(implied)
+- model: machiavelli.area
+  pk: 115
+  fields: {name: Ionian Sea, code: ION, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [114, 116, 119, 134, 141, 145, 153, 155, 156]} # TYN, AEG, ADR, NAP, SMY, GRE, TUN, ALB, APU, SICILY(implied)
+- model: machiavelli.area
+  pk: 116
+  fields: {name: Aegean Sea, code: AEG, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [115, 117, 118, 140, 141, 143, 145]} # ION, EAS, BLA, CON, SMY, BUL/sc, GRE
+- model: machiavelli.area
+  pk: 117
+  fields: {name: Eastern Mediterranean, code: EAS, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [116, 141, 171]} # AEG, SMY, SYR
+- model: machiavelli.area
+  pk: 118
+  fields: {name: Black Sea, code: BLA, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [116, 136, 139, 140, 143, 149, 157]} # AEG, SEV, ANK, CON, BUL/ec, RUM, ARM
+- model: machiavelli.area
+  pk: 119
+  fields: {name: Adriatic Sea, code: ADR, is_sea: true, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [115, 122, 133, 155, 156]} # ION, TRI, VEN, ALB, APU
+
+# Land Areas - Great Powers Home SCs (PKs 120-141)
+- model: machiavelli.area
+  pk: 120 # Austria
+  fields: {name: Vienna, code: VIE, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [121, 122, 158, 162, 173]} # BUD, TRI, BOH, GAL, TYR
+- model: machiavelli.area
+  pk: 121 # Austria
+  fields: {name: Budapest, code: BUD, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [120, 122, 149, 150, 162]} # VIE, TRI, RUM, SER, GAL
+- model: machiavelli.area
+  pk: 122 # Austria
+  fields: {name: Trieste, code: TRI, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [119, 120, 121, 133, 150, 155, 173]} # ADR, VIE, BUD, VEN, SER, ALB, TYR
+- model: machiavelli.area
+  pk: 123 # England
+  fields: {name: London, code: LON, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [104, 106, 131, 176]} # ENG, NTH, WAL, YOR
+- model: machiavelli.area
+  pk: 124 # England
+  fields: {name: Liverpool, code: LVP, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [101, 103, 131, 160, 176]} # NAO, IRI, WAL, CLY, YOR
+- model: machiavelli.area
+  pk: 125 # England
+  fields: {name: Edinburgh, code: EDI, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [102, 106, 160, 176]} # NRG, NTH, CLY, YOR
+- model: machiavelli.area
+  pk: 126 # France
+  fields: {name: Paris, code: PAR, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [128, 159, 163, 166]} # BRE, BUR, GAS, PIC
+- model: machiavelli.area
+  pk: 127 # France
+  fields: {name: Marseilles, code: MAR, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [113, 151, 159, 163, 167]} # GOL, SPA/sc, BUR, GAS, PIE
+- model: machiavelli.area
+  pk: 128 # France
+  fields: {name: Brest, code: BRE, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [104, 111, 126, 163, 166]} # ENG, MID, PAR, GAS, PIC
+- model: machiavelli.area
+  pk: 129 # Germany
+  fields: {name: Berlin, code: BER, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [109, 130, 131, 168, 170]} # BAL, MUN, KIE, PRU, SIL
+- model: machiavelli.area
+  pk: 130 # Germany
+  fields: {name: Munich, code: MUN, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [129, 158, 159, 169, 170, 173]} # BER, BOH, BUR, RUH, SIL, TYR
+- model: machiavelli.area
+  pk: 131 # Germany
+  fields: {name: Kiel, code: KIE, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [107, 109, 129, 144, 146, 169]} # HEL, BAL, BER, DEN, HOL, RUH
+- model: machiavelli.area
+  pk: 132 # Italy
+  fields: {name: Rome, code: ROM, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [114, 133, 134, 156, 172]} # TYN, VEN, NAP, APU, TUS
+- model: machiavelli.area
+  pk: 133 # Italy
+  fields: {name: Venice, code: VEN, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [119, 132, 156, 167, 172, 173]} # ADR, ROM, APU, PIE, TUS, TYR
+- model: machiavelli.area
+  pk: 134 # Italy
+  fields: {name: Naples, code: NAP, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [114, 115, 132, 156]} # TYN, ION, ROM, APU
+- model: machiavelli.area
+  pk: 135 # Russia
+  fields: {name: Moscow, code: MOS, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [136, 137, 138, 164, 174]} # SEV, WAR, STP, LVN, UKR
+- model: machiavelli.area
+  pk: 136 # Russia
+  fields: {name: Sevastopol, code: SEV, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [118, 135, 149, 157, 174]} # BLA, MOS, RUM, ARM, UKR
+- model: machiavelli.area
+  pk: 137 # Russia
+  fields: {name: Warsaw, code: WAR, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [135, 162, 164, 168, 170, 174]} # MOS, GAL, LVN, PRU, SIL, UKR
+- model: machiavelli.area
+  pk: 138 # Russia
+  fields: {name: St. Petersburg, code: STP, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [105, 109, 110, 135, 147, 161, 164]} # BAR(nc), BAL(sc), BOT(sc), MOS, NWY(nc), FIN(sc), LVN
+- model: machiavelli.area
+  pk: 139 # Turkey
+  fields: {name: Ankara, code: ANK, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [118, 140, 157, 170]} # BLA, CON, ARM, SMY
+- model: machiavelli.area
+  pk: 140 # Turkey
+  fields: {name: Constantinople, code: CON, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [116, 118, 139, 141, 143]} # AEG, BLA, ANK, SMY, BUL/ec/sc
+- model: machiavelli.area
+  pk: 141 # Turkey
+  fields: {name: Smyrna, code: SMY, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [115, 116, 117, 139, 140, 157, 171]} # ION, AEG, EAS, ANK, CON, ARM, SYR
+
+# Land Areas - Other SCs (PKs 142-154)
+- model: machiavelli.area
+  pk: 142 # Belgium (SC)
+  fields: {name: Belgium, code: BEL, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [104, 106, 146, 159, 166, 169]} # ENG, NTH, HOL, BUR, PIC, RUH
+- model: machiavelli.area
+  pk: 143 # Bulgaria (SC)
+  fields: {name: Bulgaria, code: BUL, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [116, 118, 140, 145, 149, 150]} # AEG(sc), BLA(ec), CON, GRE, RUM, SER
+- model: machiavelli.area
+  pk: 144 # Denmark (SC)
+  fields: {name: Denmark, code: DEN, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [106, 107, 108, 109, 131, 152]} # NTH, HEL, SKA, BAL, KIE, SWE
+- model: machiavelli.area
+  pk: 145 # Greece (SC)
+  fields: {name: Greece, code: GRE, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [115, 116, 143, 150, 155]} # ION, AEG, BUL/sc, SER, ALB
+- model: machiavelli.area
+  pk: 146 # Holland (SC)
+  fields: {name: Holland, code: HOL, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [106, 107, 131, 142, 169]} # NTH, HEL, KIE, BEL, RUH
+- model: machiavelli.area
+  pk: 147 # Norway (SC)
+  fields: {name: Norway, code: NWY, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [102, 105, 106, 108, 138, 152, 161]} # NRG, BAR, NTH, SKA, STP/nc, SWE, FIN
+- model: machiavelli.area
+  pk: 148 # Portugal (SC)
+  fields: {name: Portugal, code: POR, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [111, 151]} # MID, SPA/nc/sc
+- model: machiavelli.area
+  pk: 149 # Rumania (SC)
+  fields: {name: Rumania, code: RUM, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [118, 121, 136, 143, 150, 162, 174]} # BLA, BUD, SEV, BUL/ec, SER, GAL, UKR
+- model: machiavelli.area
+  pk: 150 # Serbia (SC)
+  fields: {name: Serbia, code: SER, is_sea: false, is_coast: false, has_city: true, is_fortified: true, has_port: false, borders: [121, 122, 143, 145, 149, 155]} # BUD, TRI, BUL, GRE, RUM, ALB
+- model: machiavelli.area
+  pk: 151 # Spain (SC)
+  fields: {name: Spain, code: SPA, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [111, 112, 113, 127, 148, 163]} # MID(nc/sc), WES(sc), GOL(sc), MAR, POR, GAS
+- model: machiavelli.area
+  pk: 152 # Sweden (SC)
+  fields: {name: Sweden, code: SWE, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [108, 109, 110, 144, 147, 161]} # SKA, BAL, BOT, DEN, NWY, FIN
+- model: machiavelli.area
+  pk: 153 # Tunis (SC)
+  fields: {name: Tunis, code: TUN, is_sea: false, is_coast: true, has_city: true, is_fortified: true, has_port: true, borders: [112, 115, 154]} # WES, ION, NAF
+- model: machiavelli.area
+  pk: 154 # North Africa (Neutral)
+  fields: {name: North Africa, code: NAF, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [111, 112, 153]} # MID, WES, TUN
+
+# Land Areas - Non-SCs (PKs 155-176)
+- model: machiavelli.area
+  pk: 155 # Albania
+  fields: {name: Albania, code: ALB, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [115, 119, 122, 145, 150]} # ION, ADR, TRI, GRE, SER
+- model: machiavelli.area
+  pk: 156 # Apulia
+  fields: {name: Apulia, code: APU, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [115, 119, 132, 133, 134]} # ION, ADR, ROM, VEN, NAP
+- model: machiavelli.area
+  pk: 157 # Armenia
+  fields: {name: Armenia, code: ARM, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [118, 136, 139, 141, 171]} # BLA, SEV, ANK, SMY, SYR
+- model: machiavelli.area
+  pk: 158 # Bohemia
+  fields: {name: Bohemia, code: BOH, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [120, 130, 162, 170, 173]} # VIE, MUN, GAL, SIL, TYR
+- model: machiavelli.area
+  pk: 159 # Burgundy
+  fields: {name: Burgundy, code: BUR, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [126, 127, 130, 142, 163, 166, 169]} # PAR, MAR, MUN, BEL, GAS, PIC, RUH
+- model: machiavelli.area
+  pk: 160 # Clyde
+  fields: {name: Clyde, code: CLY, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [101, 102, 124, 125]} # NAO, NRG, LVP, EDI
+- model: machiavelli.area
+  pk: 161 # Finland
+  fields: {name: Finland, code: FIN, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [110, 138, 147, 152]} # BOT, STP/sc, NWY, SWE
+- model: machiavelli.area
+  pk: 162 # Galicia
+  fields: {name: Galicia, code: GAL, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [120, 121, 137, 149, 158, 170, 174]} # VIE, BUD, WAR, RUM, BOH, SIL, UKR
+- model: machiavelli.area
+  pk: 163 # Gascony
+  fields: {name: Gascony, code: GAS, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [111, 126, 127, 128, 151, 159]} # MID, PAR, MAR, BRE, SPA/nc, BUR
+- model: machiavelli.area
+  pk: 164 # Livonia
+  fields: {name: Livonia, code: LVN, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [109, 110, 135, 137, 138, 168]} # BAL, BOT, MOS, WAR, STP/sc, PRU
+- model: machiavelli.area
+  pk: 166 # Picardy
+  fields: {name: Picardy, code: PIC, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [104, 126, 128, 142, 159]} # ENG, PAR, BRE, BEL, BUR
+- model: machiavelli.area
+  pk: 167 # Piedmont
+  fields: {name: Piedmont, code: PIE, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [113, 127, 133, 172, 173]} # GOL, MAR, VEN, TUS, TYR
+- model: machiavelli.area
+  pk: 168 # Prussia
+  fields: {name: Prussia, code: PRU, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [109, 129, 137, 164, 170]} # BAL, BER, WAR, LVN, SIL
+- model: machiavelli.area
+  pk: 169 # Ruhr
+  fields: {name: Ruhr, code: RUH, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [130, 131, 142, 146, 159]} # MUN, KIE, BEL, HOL, BUR
+- model: machiavelli.area
+  pk: 170 # Silesia
+  fields: {name: Silesia, code: SIL, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [129, 130, 137, 158, 162, 168]} # BER, MUN, WAR, BOH, GAL, PRU
+- model: machiavelli.area
+  pk: 171 # Syria
+  fields: {name: Syria, code: SYR, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [117, 141, 157]} # EAS, SMY, ARM
+- model: machiavelli.area
+  pk: 172 # Tuscany
+  fields: {name: Tuscany, code: TUS, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [113, 114, 132, 133, 167]} # GOL, TYN, ROM, VEN, PIE
+- model: machiavelli.area
+  pk: 173 # Tyrolia
+  fields: {name: Tyrolia, code: TYR, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [120, 122, 130, 133, 158, 167]} # VIE, TRI, MUN, VEN, BOH, PIE
+- model: machiavelli.area
+  pk: 174 # Ukraine
+  fields: {name: Ukraine, code: UKR, is_sea: false, is_coast: false, has_city: false, is_fortified: false, has_port: false, borders: [135, 136, 137, 149, 162]} # MOS, SEV, WAR, RUM, GAL
+- model: machiavelli.area
+  pk: 175 # Wales
+  fields: {name: Wales, code: WAL, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [103, 104, 123, 124, 176]} # IRI, ENG, LON, LVP, YOR
+- model: machiavelli.area
+  pk: 176 # Yorkshire
+  fields: {name: Yorkshire, code: YOR, is_sea: false, is_coast: true, has_city: false, is_fortified: false, has_port: false, borders: [106, 123, 124, 125, 175]} # NTH, LON, LVP, EDI, WAL
+
+# --- Home Supply Centers (Scenario 100) --- Using NEW Country PKs (11-17)
+# Austria (PK 11)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 11, area: 120, is_home: true} # VIE
+- model: machiavelli.home
+  fields: {scenario: 100, country: 11, area: 121, is_home: true} # BUD
+- model: machiavelli.home
+  fields: {scenario: 100, country: 11, area: 122, is_home: true} # TRI
+# England (PK 12)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 12, area: 123, is_home: true} # LON
+- model: machiavelli.home
+  fields: {scenario: 100, country: 12, area: 124, is_home: true} # LVP
+- model: machiavelli.home
+  fields: {scenario: 100, country: 12, area: 125, is_home: true} # EDI
+# France (PK 13)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 13, area: 126, is_home: true} # PAR
+- model: machiavelli.home
+  fields: {scenario: 100, country: 13, area: 127, is_home: true} # MAR
+- model: machiavelli.home
+  fields: {scenario: 100, country: 13, area: 128, is_home: true} # BRE
+# Germany (PK 14)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 14, area: 129, is_home: true} # BER
+- model: machiavelli.home
+  fields: {scenario: 100, country: 14, area: 130, is_home: true} # MUN
+- model: machiavelli.home
+  fields: {scenario: 100, country: 14, area: 131, is_home: true} # KIE
+# Italy (PK 15)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 15, area: 132, is_home: true} # ROM
+- model: machiavelli.home
+  fields: {scenario: 100, country: 15, area: 133, is_home: true} # VEN
+- model: machiavelli.home
+  fields: {scenario: 100, country: 15, area: 134, is_home: true} # NAP
+# Russia (PK 16)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 16, area: 135, is_home: true} # MOS
+- model: machiavelli.home
+  fields: {scenario: 100, country: 16, area: 136, is_home: true} # SEV
+- model: machiavelli.home
+  fields: {scenario: 100, country: 16, area: 137, is_home: true} # WAR
+- model: machiavelli.home
+  fields: {scenario: 100, country: 16, area: 138, is_home: true} # STP
+# Turkey (PK 17)
+- model: machiavelli.home
+  fields: {scenario: 100, country: 17, area: 139, is_home: true} # ANK
+- model: machiavelli.home
+  fields: {scenario: 100, country: 17, area: 140, is_home: true} # CON
+- model: machiavelli.home
+  fields: {scenario: 100, country: 17, area: 141, is_home: true} # SMY
+
+# --- Initial Setup (Scenario 100, Year 1901) --- Using NEW Country PKs (11-17)
+# Austria (PK 11)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 11, area: 120, unit_type: A} # VIE
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 11, area: 121, unit_type: A} # BUD
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 11, area: 122, unit_type: F} # TRI
+# England (PK 12)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 12, area: 123, unit_type: F} # LON
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 12, area: 124, unit_type: A} # LVP
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 12, area: 125, unit_type: F} # EDI
+# France (PK 13)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 13, area: 126, unit_type: A} # PAR
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 13, area: 127, unit_type: A} # MAR
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 13, area: 128, unit_type: F} # BRE
+# Germany (PK 14)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 14, area: 129, unit_type: A} # BER
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 14, area: 130, unit_type: A} # MUN
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 14, area: 131, unit_type: F} # KIE
+# Italy (PK 15)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 15, area: 132, unit_type: A} # ROM
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 15, area: 133, unit_type: A} # VEN
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 15, area: 134, unit_type: F} # NAP
+# Russia (PK 16)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 16, area: 135, unit_type: A} # MOS
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 16, area: 136, unit_type: F} # SEV
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 16, area: 137, unit_type: A} # WAR
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 16, area: 138, unit_type: F} # STP (SC)
+# Turkey (PK 17)
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 17, area: 139, unit_type: F} # ANK
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 17, area: 140, unit_type: A} # CON
+- model: machiavelli.setup
+  fields: {scenario: 100, country: 17, area: 141, unit_type: A} # SMY
+
+# --- Add any necessary default Treasury entries if Finance rules might be tested ---
+# Example (assuming Finance tests use Scenario 100 and new Country PKs)
+# - model: machiavelli.treasury
+#   fields: {scenario: 100, country: 11, ducats: 0, double: false}
+# - model: machiavelli.treasury
+#   fields: {scenario: 100, country: 12, ducats: 0, double: false}
+# ... etc for countries 13-17 ...

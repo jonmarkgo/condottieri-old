@@ -1817,6 +1817,26 @@ class Game(models.Model):
 		    info += "No retreats required this turn.\n"
 		return info
 
+# Example in models.py Game class
+def adjudicate_movement_phase(self):
+    """Runs only the core adjudication logic for movement orders."""
+    # Ensure orders are marked confirmed if needed by logic
+    # Order.objects.filter(unit__player__game=self).update(confirmed=True) # Or assume they are confirmed
+
+    info = u"Adjudicating Movement Phase for DATC:\n"
+    # Call the sequence of filtering and resolution steps
+    # Make sure these methods operate correctly in isolation
+    info += self.resolve_auto_garrisons() # Step 1
+    info += self.filter_supports()        # Step 2
+    info += self.filter_convoys()         # Step 3
+    info += self.filter_unreachable_attacks() # Step 4
+    info += self.resolve_conflicts()      # Step 5 (Sets must_retreat)
+    info += self.resolve_sieges()         # Step 6
+    info += self.announce_retreats()      # Step 7 (Logs who must retreat)
+
+    # DO NOT delete orders here if _get_actual_poststate needs them
+    # DO NOT change game phase/season/year
+    if logging: logging.debug(f"DATC Adjudication Log Game {self.id}:\n{info}") # Use debug level
 
 	def preprocess_orders(self):
 		"""
