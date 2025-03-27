@@ -1,4 +1,3 @@
-# machiavelli/forms.py
 import django.forms as forms
 from django.core.cache import cache
 from django.forms.formsets import BaseFormSet
@@ -11,14 +10,14 @@ from django.db import models
 
 from machiavelli.models import * # Import all models
 
-# Define Victory Condition types based on rules
+# --- Constants (VICTORY_TYPES, etc. remain the same) ---
 VICTORY_TYPES = (
 	('basic', _('Basic Game (12 cities, incl. home + 6 conquered)')),
 	('advanced_18', _('Advanced Game <= 4 players (18 cities, incl. 1 conquered home)')),
 	('advanced_15', _('Advanced Game >= 5 players (15 cities, incl. 1 conquered home)')),
 	('ultimate', _('Ultimate Victory (23 cities, incl. 2 conquered homes)')),
-	# ('custom', _('Custom (Set number manually)')), # Optional: for custom games
 )
+
 
 class GameForm(forms.ModelForm):
 	scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
@@ -123,64 +122,268 @@ class UnitForm(forms.ModelForm):
 
 # Get order codes from the model definition
 ORDER_CODES_FROM_MODEL = Order._meta.get_field('code').choices
+# Define Coast Choices dynamically? For now, use model choices.
+COAST_CHOICES = Unit._meta.get_field('coast').choices # Get choices like (('nc', 'NC'), ...)
+BLANK_COAST_CHOICE = (('', '---'),) # Add a blank option
 
 def make_order_form(player):
-	if player.game.configuration.finances:
-		## units bought by this player
-		bought_ids = Expense.objects.filter(player=player, type__in=(6,9)).values_list('unit', flat=True)
-		units_qs = Unit.objects.filter(Q(player=player) | Q(id__in=bought_ids))
-	else:
-		units_qs = player.unit_set.select_related().all()
-	all_units = player.game.get_all_units()
+    # ... (unit queryset logic remains the same) ...
+    if player.game.configuration.finances:
+        bought_ids = Expense.objects.filter(player=player, type__in=(6,9)).values_list('unit', flat=True)
+        units_qs = Unit.objects.filter(Q(player=player) | Q(id__in=bought_ids)).select_related('area__board_area', 'player__country')
+    else:
+        units_qs = player.unit_set.select_related('area__board_area', 'player__country').all()
+    all_units = player.game.get_all_units().select_related('area__board_area', 'player__country')
 
-	class OrderForm(forms.ModelForm):
-		unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"))
-		code = forms.ChoiceField(choices=ORDER_CODES_FROM_MODEL, label=_("Order")) # Use codes from model
-		destination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
-		type = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
-		subunit = forms.ModelChoiceField(required=False, queryset=all_units, label=_("Unit"))
-		subcode = forms.ChoiceField(required=False, choices=ORDER_SUBCODES, label=_("Order"))
-		subdestination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
-		subtype = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
 
-		def __init__(self, player, **kwargs):
-			super(OrderForm, self).__init__(**kwargs)
-			self.instance.player = player
-			# Set querysets dynamically based on game
-			game_areas = GameArea.objects.filter(game=player.game)
-			self.fields['destination'].queryset = game_areas
-			self.fields['subdestination'].queryset = game_areas
-			self.fields['subunit'].queryset = Unit.objects.filter(player__game=player.game) # All units in game
+    class OrderForm(forms.ModelForm):
+        unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"))
+        code = forms.ChoiceField(choices=ORDER_CODES_FROM_MODEL, label=_("Order"))
+        destination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
+        # New Coast Field for Destination
+        destination_coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Dest. Coast"))
+
+        type = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
+        subunit = forms.ModelChoiceField(required=False, queryset=all_units, label=_("Unit"))
+        subcode = forms.ChoiceField(required=False, choices=ORDER_SUBCODES, label=_("Order"))
+        subdestination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
+        # New Coast Field for Sub-Destination
+        subdestination_coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("SubDest. Coast"))
+
+        subtype = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
+
+        def __init__(self, player, **kwargs):
+            super(OrderForm, self).__init__(**kwargs)
+            self.instance.player = player
+            game_areas = GameArea.objects.filter(game=player.game).select_related('board_area') # Optimize
+            self.fields['destination'].queryset = game_areas
+            self.fields['subdestination'].queryset = game_areas
+            self.fields['subunit'].queryset = Unit.objects.filter(player__game=player.game).select_related('area__board_area', 'player__country') # Optimize
 
 		# get_valid_destinations and get_valid_support_destinations remain complex
 		# and rely heavily on model logic. Ensure they check siege_stage where needed.
 		# Keeping them as is for now, assuming model logic is primary driver.
 
-		# ... (get_valid_destinations, get_valid_support_destinations methods) ...
+# machiavelli/views.py
+
+# ... (imports and other views) ...
+
+@login_required
+def get_valid_destinations(request, slug):
+    """
+    AJAX view to get valid destinations for a unit based on order type ('-' or '=').
+    For '-', includes direct moves and potential convoy moves, plus valid coasts.
+    For '=', includes the current area and valid conversion types.
+    """
+    game = get_object_or_404(Game, slug=slug)
+    unit_id = request.GET.get('unit_id')
+    order_type = request.GET.get('order_type')
+
+    response_data = {'destinations': []} # Default empty
+
+    try:
+        # Select related area and board_area for efficiency
+        unit = Unit.objects.select_related('area__board_area', 'player').get(id=unit_id, player__game=game)
+        player = Player.objects.get(user=request.user, game=game) # Ensure request user is in game
+
+        # --- Permission Check ---
+        can_order = (unit.player == player)
+        # Add finance check if implementing bribe-ordering
+        # if not can_order and game.configuration.finances:
+        #     can_order = Expense.objects.filter(player=player, type__in=(6, 9), unit=unit, confirmed=True).exists() # Example check
+
+        if not can_order:
+             if logging: logging.warning(f"User {request.user} cannot order unit {unit_id}")
+             return JsonResponse(response_data)
+
+        # --- Process Order Type ---
+        destinations_list = [] # Use a temporary list
+
+        if order_type == '-': # Advance
+            # 1. Check Preconditions
+            if unit.siege_stage > 0:
+                if logging: logging.info(f"Unit {unit_id} cannot advance, siege_stage > 0")
+                return JsonResponse(response_data) # Cannot advance if besieging
+
+            # 2. Find Directly Adjacent Valid Destinations
+            valid_direct_moves = []
+            bordering_areas = unit.area.board_area.borders.all() # Get Area objects
+            bordering_game_areas = GameArea.objects.filter(
+                game=game,
+                board_area__in=bordering_areas
+            ).select_related('board_area') # Get relevant GameAreas efficiently
+
+            for dest_ga in bordering_game_areas:
+                # Check adjacency using the unit's current coast
+                if unit.area.board_area.is_adjacent(
+                    dest_ga.board_area,
+                    fleet=(unit.type == 'F'),
+                    source_unit_coast=unit.coast # Pass current coast
+                ) and dest_ga.board_area.accepts_type(unit.type):
+                    valid_direct_moves.append(dest_ga)
+                    destinations_list.append({
+                        'id': dest_ga.id,
+                        'name': dest_ga.board_area.name,
+                        'code': dest_ga.board_area.code,
+                        'coasts': dest_ga.board_area.get_coast_list(), # Add coasts info
+                        'convoy_only': False
+                    })
+
+            # 3. Find Potential Convoy Destinations (Army on Coast only)
+            if unit.type == 'A' and unit.area.board_area.is_coast:
+                # Get IDs of areas already found as direct moves
+                direct_move_ids = [ga.id for ga in valid_direct_moves]
+                # Find all coastal areas in the game, excluding current area and direct moves
+                potential_convoy_gareas = GameArea.objects.filter(
+                    game=game,
+                    board_area__is_coast=True
+                ).exclude(
+                    id__in=direct_move_ids + [unit.area.id] # Exclude current and direct
+                ).select_related('board_area')
+
+                for dest_ga in potential_convoy_gareas:
+                    # No complex path check here, just offer all other coastal as options
+                    destinations_list.append({
+                        'id': dest_ga.id,
+                        'name': dest_ga.board_area.name,
+                        'code': dest_ga.board_area.code,
+                        'coasts': dest_ga.board_area.get_coast_list(), # Add coasts info
+                        'convoy_only': True
+                    })
+
+            response_data['destinations'] = destinations_list # Assign the final list
+
+        elif order_type == '=': # Conversion
+            valid_types = []
+            # 1. Check Preconditions
+            # Use siege_stage and exclude self
+            if unit.type == 'G' and Unit.objects.filter(area=unit.area, siege_stage__gt=0).exclude(id=unit.id).exists():
+                 if logging: logging.info(f"Unit {unit_id} cannot convert, garrison besieged")
+                 return JsonResponse(response_data) # Besieged garrison cannot convert
+
+            # 2. Determine Valid Conversion Types
+            if unit.area.board_area.is_fortified:
+                if unit.type == 'G':
+                    valid_types.append('A')
+                    if unit.area.board_area.has_port: valid_types.append('F')
+                else: # A or F converting to G
+                    # Check if city is empty of *other* Garrisons
+                    if not Unit.objects.filter(area=unit.area, type='G').exclude(id=unit.id).exists():
+                         # Fleet needs port to convert to G? Assume yes.
+                         if unit.type == 'A' or (unit.type == 'F' and unit.area.board_area.has_port):
+                              valid_types.append('G')
+
+            # 3. Build Response
+            if valid_types:
+                 # Response for conversion is slightly different: includes valid_types
+                 destinations_list = [{
+                     'id': unit.area.id,
+                     'name': unit.area.board_area.name,
+                     'code': unit.area.board_area.code,
+                     'valid_types': valid_types,
+                     'coasts': [] # Coasts not relevant for conversion target itself
+                 }]
+            response_data['destinations'] = destinations_list # Assign the final list
+
+        # --- Handle other order types (L, 0, B, S, C) ---
+        # These generally don't need a primary destination list from this view.
+        # Support ('S') and Convoy ('C') destinations are handled by get_valid_support_destinations.
+        # Lift Siege ('L'), Disband ('0'), Besiege ('B') don't target another area.
+        else:
+            if logging: logging.info(f"Order type '{order_type}' does not require destinations from this view.")
+            # response_data remains {'destinations': []}
+
+    except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
+        if logging: logging.error(f"Error in get_valid_destinations: {e}")
+        pass # Return default empty list on error
+
+    return JsonResponse(response_data)
+	
+		def get_valid_support_destinations(self, unit, supported_unit):
+			"""Returns valid destinations for support orders"""
+			if not unit or not supported_unit:
+				return GameArea.objects.none()
+
+			# For garrisons, only allow supporting into their own province
+			if unit.type == 'G':
+				return GameArea.objects.filter(id=unit.area.id)
+			
+			# For non-garrison units, use normal support rules
+			is_fleet = (unit.type == 'F')
+			supported_area = supported_unit.area
+			
+			# Get areas adjacent to the supporting unit
+			adjacent = GameArea.objects.filter(
+				game=unit.player.game,
+				board_area__borders=unit.area.board_area
+			)
+
+			# Filter based on supporting unit type
+			if is_fleet:
+				adjacent = adjacent.filter(
+					Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+				)
+				adjacent = [a for a in adjacent if unit.area.board_area.is_adjacent(a.board_area, fleet=True)]
+			else:
+				adjacent = adjacent.exclude(board_area__is_sea=True)
+
+			# Must include the supported unit's area and its valid destinations
+			supported_destinations = self.get_valid_destinations(supported_unit)
+			return adjacent.filter(
+				Q(id__in=[a.id for a in supported_destinations]) |
+				Q(id=supported_area.id)
+			)
 		# Minor adjustments might be needed in AJAX views calling these if rules changed significantly
 
-		class Meta:
-			model = Order
-			fields = ('unit', 'code', 'destination', 'type',
-					'subunit', 'subcode', 'subdestination', 'subtype')
+        class Meta:
+            model = Order
+            # Add new coast fields
+            fields = ('unit', 'code', 'destination', 'destination_coast', 'type',
+                      'subunit', 'subcode', 'subdestination', 'subdestination_coast', 'subtype')
 
-		class Media:
-			js = ("/site_media/static/machiavelli/js/order_form.js",
-				  "/site_media/static/machiavelli/js/jquery.form.js")
+        class Media:
+            # JS file needs updates to handle showing/hiding/populating coast fields
+            js = ("/site_media/static/machiavelli/js/order_form.js", # Needs update!
+                  "/site_media/static/machiavelli/js/jquery.form.js")
 
-		def clean(self):
-			cleaned_data = super(OrderForm, self).clean() # Use super().clean()
-			unit = cleaned_data.get('unit')
-			code = cleaned_data.get('code')
-			destination = cleaned_data.get('destination')
-			type_ = cleaned_data.get('type') # Renamed to avoid conflict with builtin type
-			subunit = cleaned_data.get('subunit')
-			subcode = cleaned_data.get('subcode')
-			subdestination = cleaned_data.get('subdestination')
-			subtype = cleaned_data.get('subtype')
+        def clean(self):
+            cleaned_data = super(OrderForm, self).clean()
+            unit = cleaned_data.get('unit')
+            code = cleaned_data.get('code')
+            destination = cleaned_data.get('destination')
+            destination_coast = cleaned_data.get('destination_coast')
+            type_ = cleaned_data.get('type')
+            subunit = cleaned_data.get('subunit')
+            subcode = cleaned_data.get('subcode')
+            subdestination = cleaned_data.get('subdestination')
+            subdestination_coast = cleaned_data.get('subdestination_coast')
+            subtype = cleaned_data.get('subtype')
 
-			if not unit: # If unit wasn't selected or is invalid
-			    return cleaned_data # Stop further validation
+            if not unit: return cleaned_data
+
+            # --- Coast Validation ---
+            dest_requires_coast = False
+            subdest_requires_coast = False
+
+            if code == '-' and destination and unit.type == 'F' and destination.board_area.has_multiple_coasts():
+                dest_requires_coast = True
+            elif code == 'C' and subdestination and subdestination.board_area.has_multiple_coasts():
+                 # Convoy destination always needs coast if multi-coast
+                 subdest_requires_coast = True
+            elif code == 'S' and subcode == '-' and subdestination and subdestination.board_area.has_multiple_coasts():
+                 # Support move needs coast if target area is multi-coast
+                 # (Technically depends on supported unit type, but require for simplicity, JS can refine)
+                 subdest_requires_coast = True
+
+            if dest_requires_coast and not destination_coast:
+                self.add_error('destination_coast', _("Must specify coast for this destination."))
+            elif not dest_requires_coast:
+                 cleaned_data['destination_coast'] = None # Clear if not needed
+
+            if subdest_requires_coast and not subdestination_coast:
+                 self.add_error('subdestination_coast', _("Must specify coast for this support/convoy destination."))
+            elif not subdest_requires_coast:
+                 cleaned_data['subdestination_coast'] = None # Clear if not needed
 
 			## check if unit has already an order from the same player
 			# Use self.instance.pk to exclude current order if editing
@@ -229,39 +432,45 @@ def make_order_form(player):
 			if error_msg:
 			    raise forms.ValidationError(error_msg)
 
-			# Use Order.is_possible for final rule check
-			# Create a temporary order instance to check
-			temp_order_data = cleaned_data.copy()
-			temp_order_data['player'] = player # Ensure player is set
-			temp_order = Order(**{k: v for k, v in temp_order_data.items() if hasattr(Order, k)}) # Map cleaned data to Order fields
-			if not temp_order.is_possible():
-			     raise forms.ValidationError(_("This order is not possible according to the rules (check unit type, location, target, siege status, etc.)."))
+            # Use Order.is_possible for final rule check (now includes coast checks)
+            temp_order_data = cleaned_data.copy()
+            temp_order_data['player'] = player
+            # Ensure only valid fields are passed to Order constructor
+            valid_order_fields = {f.name for f in Order._meta.get_fields()}
+            temp_order = Order(**{k: v for k, v in temp_order_data.items() if k in valid_order_fields})
+            if not temp_order.is_possible():
+                 # Provide a more generic error, as specific reason is hard to pinpoint here
+                 raise forms.ValidationError(_("This order (including coast selection) is not possible according to the rules."))
 
 
-			## set to None the fields that are not needed based on the primary code
-			if code in ['H', 'B', 'L', '0']:
-				cleaned_data.update({'destination': None, 'type': None, 'subunit': None,
-									'subcode': None, 'subdestination': None, 'subtype': None})
-			elif code == '-':
-				cleaned_data.update({'type': None, 'subunit': None, 'subcode': None,
-									 'subdestination': None, 'subtype': None})
-			elif code == '=':
-				cleaned_data.update({'destination': None, 'subunit': None, 'subcode': None,
-									 'subdestination': None, 'subtype': None})
-			elif code == 'C':
-				# Keep subunit, subdestination. Force subcode to '-'
-				cleaned_data.update({'destination': None, 'type': None, 'subcode': '-', 'subtype': None})
-			elif code == 'S':
-				# Keep subunit, subcode. Keep subdestination/subtype based on subcode.
-				cleaned_data.update({'destination': None, 'type': None})
-				if subcode in ['H', 'B']: # Support Hold/Besiege
-					cleaned_data.update({'subdestination': None, 'subtype': None})
-				elif subcode == '-': # Support Advance
-					cleaned_data.update({'subtype': None})
-				# elif subcode == '=': # Support Conversion (Currently disallowed by validation)
-				# 	cleaned_data.update({'subdestination': None})
+            # Clear fields based on primary code
+            if code in ['H', 'B', 'L', '0']:
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None, 'subunit': None,
+                                     'subcode': None, 'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+            elif code == '-':
+                cleaned_data.update({'type': None, 'subunit': None, 'subcode': None,
+                                     'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+                # Keep destination, destination_coast
+            elif code == '=':
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'subunit': None, 'subcode': None,
+                                     'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+                # Keep type
+            elif code == 'C':
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None, 'subcode': '-', 'subtype': None})
+                # Keep subunit, subdestination, subdestination_coast (force subcode='-')
+            elif code == 'S':
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None})
+                # Keep subunit, subcode
+                if subcode in ['H', 'B']:
+                    cleaned_data.update({'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+                elif subcode == '-':
+                    cleaned_data.update({'subtype': None})
+                    # Keep subdestination, subdestination_coast
+                # elif subcode == '=': # Support Conversion (Currently disallowed)
+                #     cleaned_data.update({'subdestination': None, 'subdestination_coast': None})
+                #     # Keep subtype
 
-			return cleaned_data
+            return cleaned_data
 
 		def as_td(self):
 			"Returns this form rendered as HTML <td>s -- excluding the <tr></tr>."
@@ -276,10 +485,30 @@ def make_retreat_form(u):
 
 	class RetreatForm(forms.Form):
 		unitid = forms.IntegerField(widget=forms.HiddenInput, initial=u.id)
-		area = forms.ModelChoiceField(required=False, # False allows disbanding
+		area = forms.ModelChoiceField(required=False,
 							queryset=possible_retreats,
-							empty_label='Disband unit', # Label for choosing None
-							label=unicode(u)) # Use unicode for label
+							empty_label='Disband unit',
+							label=unicode(u))
+		# New Coast Field for Retreat
+		coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Retreat Coast"))
+
+		def clean(self):
+		    cleaned_data = super().clean()
+		    area = cleaned_data.get('area')
+		    coast = cleaned_data.get('coast')
+		    unit = Unit.objects.get(pk=cleaned_data.get('unitid')) # Get the unit
+
+		    if area and unit.type == 'F' and area.board_area.has_multiple_coasts():
+		        if not coast:
+		            self.add_error('coast', _("Must specify coast when retreating a fleet to this area."))
+		        elif coast not in area.board_area.get_coast_list():
+		             self.add_error('coast', _("Invalid coast selected for this area."))
+		    elif coast:
+		        # Clear coast if area is not multi-coastal or unit is not a fleet
+		        cleaned_data['coast'] = None
+
+		    return cleaned_data
+
 
 	return RetreatForm
 
@@ -290,46 +519,50 @@ def make_reinforce_form(player, finances=False, special_units=False):
 	else:
 		unit_types = UNIT_TYPES
 		noarea_label = None
-	area_qs = player.get_areas_for_new_units(finances) # Uses updated model method
+    area_qs = player.get_areas_for_new_units(finances).select_related('board_area') # Optimize
 
-	class ReinforceForm(forms.Form):
-		type = forms.ChoiceField(required=True, choices=unit_types)
-		area = forms.ModelChoiceField(required=True,
-					      queryset=area_qs,
-					      empty_label=noarea_label)
-		if special_units and not player.has_special_unit():
-			## special units are available for the player
-			unit_class = forms.ModelChoiceField(required=False,
-											queryset=player.country.special_units.all(),
-											empty_label=_("Regular (3d)")) # Cost depends on finances
+    class ReinforceForm(forms.Form):
+        type = forms.ChoiceField(required=True, choices=unit_types)
+        area = forms.ModelChoiceField(required=True,
+                              queryset=area_qs,
+                              empty_label=noarea_label)
+        # New Coast Field for Build
+        coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Build Coast"))
 
-		def clean(self):
-			cleaned_data = super(ReinforceForm, self).clean() # Use super().clean()
-			type_ = cleaned_data.get('type')
-			area = cleaned_data.get('area')
+        if special_units and not player.has_special_unit():
+            unit_class = forms.ModelChoiceField(required=False,
+                                            queryset=player.country.special_units.all(),
+                                            empty_label=_("Regular (3d)"))
 
-			if not type_ or not area: # Check if fields are present
-			    return cleaned_data
+        def clean(self):
+            cleaned_data = super(ReinforceForm, self).clean()
+            type_ = cleaned_data.get('type')
+            area = cleaned_data.get('area')
+            coast = cleaned_data.get('coast')
 
-			# Check if the selected area allows the selected unit type based on rules
-			# This duplicates checks in get_areas_for_new_units, but confirms selection
-			if type_ == 'G' and not area.board_area.is_fortified:
-			    raise forms.ValidationError(_('Garrisons can only be placed in fortified cities/fortresses.'))
-			if type_ == 'F' and not area.board_area.has_port:
-			     raise forms.ValidationError(_('Fleets can only be placed in port cities.'))
-			if type_ == 'A' and (area.board_area.is_sea or area.board_area.code == 'VEN'):
-			     raise forms.ValidationError(_('Armies cannot be placed in seas or Venice.'))
+            if not type_ or not area: return cleaned_data
 
-			# Check if the specific slot (city/province) is available - More complex
-			# Requires knowing if user intends city or province placement
-			# Simplification: Assume valid if area appeared in the queryset from get_areas_for_new_units
+            # --- Existing validation ---
+            if type_ == 'G' and not area.board_area.is_fortified:
+                raise forms.ValidationError(_('Garrisons can only be placed in fortified cities/fortresses.'))
+            if type_ == 'F' and not area.board_area.has_port:
+                 raise forms.ValidationError(_('Fleets can only be placed in port cities.'))
+            if type_ == 'A' and (area.board_area.is_sea or area.board_area.code == 'VEN'):
+                 raise forms.ValidationError(_('Armies cannot be placed in seas or Venice.'))
 
-			# Original check (less precise):
-			# if not type in area.possible_reinforcements():
-			# 	raise forms.ValidationError(_('This unit cannot be placed in this area'))
-			return cleaned_data
+            # --- Coast Validation for Build ---
+            if type_ == 'F' and area.board_area.has_multiple_coasts():
+                if not coast:
+                    self.add_error('coast', _("Must specify coast when building a fleet in this area."))
+                elif coast not in area.board_area.get_coast_list():
+                    self.add_error('coast', _("Invalid coast selected for this area."))
+            elif coast:
+                # Clear coast if not building a fleet or area is not multi-coastal
+                cleaned_data['coast'] = None
 
-	return ReinforceForm
+            return cleaned_data
+
+    return ReinforceForm
 
 class BaseReinforceFormSet(BaseFormSet):
 	def clean(self):
