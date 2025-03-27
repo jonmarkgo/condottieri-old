@@ -1963,6 +1963,7 @@ class Game(models.Model):
 		            area.player = None
 		            area.save()
 		    # If len(players_present) == 0, control remains with the last controller (area.player)
+		if logging: logging.info(info)
 
 	##---------------------
 	## logging methods
