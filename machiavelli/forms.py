@@ -7,92 +7,112 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
-
-from machiavelli.models import * # Import all models
-
-# --- Constants (VICTORY_TYPES, etc. remain the same) ---
-VICTORY_TYPES = (
-	('basic', _('Basic Game (12 cities, incl. home + 6 conquered)')),
-	('advanced_18', _('Advanced Game <= 4 players (18 cities, incl. 1 conquered home)')),
-	('advanced_15', _('Advanced Game >= 5 players (15 cities, incl. 1 conquered home)')),
-	('ultimate', _('Ultimate Victory (23 cities, incl. 2 conquered homes)')),
-)
-
+from .models import VICTORY_TYPES # Import from models
 
 class GameForm(forms.ModelForm):
-	scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
-									empty_label=None,
-									cache_choices=True,
-									label=_("Scenario"))
-	time_limit = forms.ChoiceField(choices=TIME_LIMITS, label=_("Time limit"))
-	# Changed from cities_to_win to victory_condition_type
-	victory_condition_type = forms.ChoiceField(choices=VICTORY_TYPES, label=_("Victory Condition"), initial='basic')
-	# cities_to_win = forms.ChoiceField(choices=CITIES_TO_WIN, label=_("How to win")) # Removed direct number choice
-	visible = forms.BooleanField(required=False, label=_("Visible players?"))
+    scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
+                                    empty_label=None,
+                                    cache_choices=True,
+                                    label=_("Scenario"))
+    time_limit = forms.ChoiceField(choices=TIME_LIMITS, label=_("Time limit"))
+    # Use victory_condition_type field with choices from VICTORY_TYPES
+    victory_condition_type = forms.ChoiceField(choices=VICTORY_TYPES, label=_("Victory Condition"), initial='basic')
+    # cities_to_win = forms.ChoiceField(choices=CITIES_TO_WIN, label=_("How to win")) # REMOVED
+    visible = forms.BooleanField(required=False, label=_("Visible players?"))
 
-	def __init__(self, user, **kwargs):
-		super(GameForm, self).__init__(**kwargs)
-		self.instance.created_by = user
+    def __init__(self, user, **kwargs):
+        super(GameForm, self).__init__(**kwargs)
+        self.instance.created_by = user
+        # Dynamically adjust victory condition choices based on scenario players?
+        # Example: Remove advanced_18 if scenario players >= 5
+        # scenario_id = self.initial.get('scenario') or (self.instance and self.instance.scenario_id)
+        # if scenario_id:
+        #     try:
+        #         scenario = Scenario.objects.get(pk=scenario_id)
+        #         num_players = scenario.get_slots()
+        #         current_choices = list(self.fields['victory_condition_type'].choices)
+        #         if num_players >= 5:
+        #             current_choices = [c for c in current_choices if c[0] != 'advanced_18']
+        #         else: # num_players <= 4
+        #             current_choices = [c for c in current_choices if c[0] != 'advanced_15']
+        #         self.fields['victory_condition_type'].choices = current_choices
+        #     except Scenario.DoesNotExist:
+        #         pass # Keep default choices if scenario not found
 
-	def clean(self):
-		cleaned_data = super(GameForm, self).clean() # Use super().clean()
-		if not cleaned_data.get('slug') or len(cleaned_data['slug']) < 4:
-			msg = _("Slug is too short")
-			self._errors['slug'] = self.error_class([msg]) # Attach error to field
-			# raise forms.ValidationError(msg) # Avoid raising here, collect errors
-		if self.instance.created_by: # Ensure user exists
-			profile = self.instance.created_by.get_profile()
-			if profile:
-				karma = profile.karma
-				if karma < settings.KARMA_TO_JOIN:
-					msg = _("You don't have enough karma to create a game.")
-					raise forms.ValidationError(msg) # Raise for game-wide validation failure
-				if int(cleaned_data.get('time_limit', 0)) in FAST_LIMITS:
-					if karma < settings.KARMA_TO_FAST:
-						msg = _("You don't have enough karma for a fast game.")
-						self._errors['time_limit'] = self.error_class([msg])
-				if cleaned_data.get('private'):
-					if karma < settings.KARMA_TO_PRIVATE:
-						msg = _("You don't have enough karma to create a private game.")
-						self._errors['private'] = self.error_class([msg])
-			else:
-				# Handle case where profile doesn't exist? Or assume it always does.
-				pass
-		else:
-			# Handle case where user is not set (shouldn't happen with __init__)
-			pass
+    def clean(self):
+        cleaned_data = super(GameForm, self).clean()
+        # ... (slug validation) ...
+        if not cleaned_data.get('slug') or len(cleaned_data['slug']) < 4:
+            msg = _("Slug is too short")
+            self.add_error('slug', msg) # Use add_error
 
-		# Set cities_to_win based on type and player count (will be done in model save)
-		# cleaned_data['cities_to_win'] = ... # Removed from here
+        # ... (karma validation - unchanged) ...
+        if self.instance.created_by:
+            profile = self.instance.created_by.get_profile()
+            if profile:
+                karma = profile.karma
+                if karma < settings.KARMA_TO_JOIN:
+                    raise forms.ValidationError(_("You don't have enough karma to create a game."))
+                if int(cleaned_data.get('time_limit', 0)) in FAST_LIMITS:
+                    if karma < settings.KARMA_TO_FAST:
+                        self.add_error('time_limit', _("You don't have enough karma for a fast game."))
+                if cleaned_data.get('private'):
+                    if karma < settings.KARMA_TO_PRIVATE:
+                        self.add_error('private', _("You don't have enough karma to create a private game."))
+            else: # Handle profile missing case
+                 raise forms.ValidationError(_("User profile not found."))
+        else: # Should not happen
+             raise forms.ValidationError(_("Game creator not set."))
 
-		return cleaned_data
 
-	class Meta:
-		model = Game
-		fields = ('slug',
-				'scenario',
-				'time_limit',
-				'victory_condition_type', # Changed field name
-				'visible',
-				'private',
-				'comment',)
+        # Validate victory condition choice against player count
+        scenario = cleaned_data.get('scenario')
+        vic_type = cleaned_data.get('victory_condition_type')
+        if scenario and vic_type:
+             num_players = scenario.get_slots()
+             if vic_type == 'advanced_18' and num_players >= 5:
+                  self.add_error('victory_condition_type', _("Advanced (18 cities) requires 4 or fewer players."))
+             elif vic_type == 'advanced_15' and num_players <= 4:
+                  self.add_error('victory_condition_type', _("Advanced (15 cities) requires 5 or more players."))
+
+        # cities_to_win is set in model save, no need to clean here.
+
+        return cleaned_data
+
+    class Meta:
+        model = Game
+        fields = ('slug',
+                'scenario',
+                'time_limit',
+                'victory_condition_type', # Use the type field
+                'visible',
+                'private',
+                'comment',)
 
 class ConfigurationForm(forms.ModelForm):
-	def clean(self):
-		cleaned_data = super(ConfigurationForm, self).clean() # Use super().clean()
-		if cleaned_data.get('unbalanced_loans'):
-			cleaned_data['lenders'] = True # Lenders required for unbalanced loans
-		if cleaned_data.get('assassinations') or cleaned_data.get('lenders') or cleaned_data.get('special_units') or cleaned_data.get('bribes'):
-			# Ensure finances are enabled if any finance-dependent rule is on
-			cleaned_data['finances'] = True
-		return cleaned_data
+    def clean(self):
+        cleaned_data = super(ConfigurationForm, self).clean()
+        # Optional Rule X requires Finances
+        if cleaned_data.get('lenders') or cleaned_data.get('unbalanced_loans'):
+            cleaned_data['finances'] = True
+        # Optional Rule IV requires Finances
+        if cleaned_data.get('special_units'):
+            cleaned_data['finances'] = True
+        # Advanced Rule VI requires Finances
+        if cleaned_data.get('assassinations') or cleaned_data.get('bribes'):
+            cleaned_data['finances'] = True
+        # Optional Rule III (Disasters) don't strictly require finances, but Famine Relief does
+        # No automatic enabling needed here.
 
-	class Meta:
-		model = Configuration
-		exclude = ('game',) # Exclude game FK, it's set automatically
-		# Removed 'bribes', 'strategic' from exclude if they should be configurable
-		# exclude = ('bribes', 'strategic')
+        return cleaned_data
 
+    class Meta:
+        model = Configuration
+        # Exclude game FK, it's set automatically in Game.save()
+        exclude = ('game',)
+        # Ensure all boolean flags are included unless they should never be user-settable
+        # fields = '__all__' # Or list all fields explicitly if exclude isn't sufficient
+		
 class InvitationForm(forms.Form):
 	user_list = forms.CharField(required=True,
 								label=_("User list, comma separated"))
@@ -119,7 +139,7 @@ class UnitForm(forms.ModelForm):
 	class Meta:
 		model = Unit
 		fields = ('type', 'area')
-
+from collections import defaultdict # Add defaultdict
 # Get order codes from the model definition
 ORDER_CODES_FROM_MODEL = Order._meta.get_field('code').choices
 # Define Coast Choices dynamically? For now, use model choices.
@@ -127,46 +147,209 @@ COAST_CHOICES = Unit._meta.get_field('coast').choices # Get choices like (('nc',
 BLANK_COAST_CHOICE = (('', '---'),) # Add a blank option
 
 def make_order_form(player):
-    # ... (unit queryset logic remains the same) ...
-    if player.game.configuration.finances:
-        bought_ids = Expense.objects.filter(player=player, type__in=(6,9)).values_list('unit', flat=True)
-        units_qs = Unit.objects.filter(Q(player=player) | Q(id__in=bought_ids)).select_related('area__board_area', 'player__country')
-    else:
-        units_qs = player.unit_set.select_related('area__board_area', 'player__country').all()
-    all_units = player.game.get_all_units().select_related('area__board_area', 'player__country')
+    game = player.game # Get game object
+    # Determine units the player can order
+    units_qs = Unit.objects.none() # Start with empty queryset
+    if player.user: # Ensure player is not autonomous
+        # Base: Units owned by the player
+        q_owned = Q(player=player)
+        # Advanced: Include units bought via bribe this turn (requires tracking)
+        # Simplification: Assume only owned units can be ordered via this form for now.
+        # Bribe logic might need separate handling or flag on unit.
+        # if game.configuration.finances:
+        #    bought_ids = Expense.objects.filter(player=player, type__in=(6, 10), confirmed=False).values_list('unit', flat=True) # Unconfirmed buys?
+        #    q_owned |= Q(id__in=bought_ids)
 
+        units_qs = Unit.objects.filter(q_owned) \
+                        .select_related('area__board_area', 'player__country') \
+                        .order_by('type', 'area__board_area__code') # Consistent ordering
+
+    # All units in the game (for subunit selection)
+    all_units_qs = Unit.objects.filter(player__game=game) \
+                        .select_related('area__board_area', 'player__country') \
+                        .order_by('player__country__name', 'type', 'area__board_area__code')
 
     class OrderForm(forms.ModelForm):
-        unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"))
-        code = forms.ChoiceField(choices=ORDER_CODES_FROM_MODEL, label=_("Order"))
+        unit = forms.ModelChoiceField(queryset=units_qs, label=_("Unit"), required=True)
+        code = forms.ChoiceField(choices=ORDER_CODES_FROM_MODEL, label=_("Order"), required=True)
+        # Destination for Advance (-), Support Move (S -)
         destination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
-        # New Coast Field for Destination
+        # Coast for Destination (if applicable)
         destination_coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Dest. Coast"))
 
+        # Type for Conversion (=)
         type = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
-        subunit = forms.ModelChoiceField(required=False, queryset=all_units, label=_("Unit"))
-        subcode = forms.ChoiceField(required=False, choices=ORDER_SUBCODES, label=_("Order"))
-        subdestination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Destination"))
-        # New Coast Field for Sub-Destination
-        subdestination_coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("SubDest. Coast"))
 
-        subtype = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Convert into"))
+        # Subunit for Support (S), Convoy (C)
+        subunit = forms.ModelChoiceField(required=False, queryset=all_units_qs, label=_("Target Unit"))
+        # Subcode for Support (S)
+        subcode = forms.ChoiceField(required=False, choices=ORDER_SUBCODES, label=_("Target Order"))
+        # Subdestination for Support Move (S -), Convoy (C -)
+        subdestination = forms.ModelChoiceField(required=False, queryset=GameArea.objects.none(), label=_("Target Dest."))
+        # Coast for Subdestination (if applicable)
+        subdestination_coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Target Dest. Coast"))
+
+        # Subtype for Support Conversion (S =) - Currently disallowed by rules check
+        subtype = forms.ChoiceField(required=False, choices=UNIT_TYPES, label=_("Target Type"))
 
         def __init__(self, player, **kwargs):
             super(OrderForm, self).__init__(**kwargs)
-            self.instance.player = player
+            self.instance.player = player # Set player instance for saving
             game_areas = GameArea.objects.filter(game=player.game).select_related('board_area') # Optimize
             self.fields['destination'].queryset = game_areas
             self.fields['subdestination'].queryset = game_areas
-            self.fields['subunit'].queryset = Unit.objects.filter(player__game=player.game).select_related('area__board_area', 'player__country') # Optimize
+            # Queryset for subunit already set above
 
-		# get_valid_destinations and get_valid_support_destinations remain complex
-		# and rely heavily on model logic. Ensure they check siege_stage where needed.
-		# Keeping them as is for now, assuming model logic is primary driver.
+        class Meta:
+            model = Order
+            # Include new coast fields
+            fields = ('unit', 'code', 'destination', 'destination_coast', 'type',
+                      'subunit', 'subcode', 'subdestination', 'subdestination_coast', 'subtype')
 
-# machiavelli/views.py
+        class Media:
+            # JS file needs updates to handle showing/hiding/populating coast fields
+            js = (settings.STATIC_URL + "machiavelli/js/jquery.form.js", # Use STATIC_URL
+                  settings.STATIC_URL + "machiavelli/js/order_form.js",) # Needs update!
 
-# ... (imports and other views) ...
+        def clean(self):
+            cleaned_data = super(OrderForm, self).clean()
+            unit = cleaned_data.get('unit')
+            code = cleaned_data.get('code')
+            destination = cleaned_data.get('destination')
+            destination_coast = cleaned_data.get('destination_coast')
+            type_ = cleaned_data.get('type')
+            subunit = cleaned_data.get('subunit')
+            subcode = cleaned_data.get('subcode')
+            subdestination = cleaned_data.get('subdestination')
+            subdestination_coast = cleaned_data.get('subdestination_coast')
+            subtype = cleaned_data.get('subtype')
+
+            if not unit: return cleaned_data # Stop if unit not selected
+
+            # --- Basic Field Requirements by Order Code ---
+            error_msg = None
+            if code == '-': # Advance
+                if not destination: error_msg = _("Advance requires a destination area.")
+            elif code == '=': # Conversion
+                if not type_: error_msg = _("Conversion requires a target unit type.")
+            elif code == 'C': # Convoy
+                if not subunit: error_msg = _("Convoy requires a target unit (Army).")
+                elif subunit.type != 'A': error_msg = _("Only armies can be convoyed.")
+                elif not subdestination: error_msg = _("Convoy requires a destination area for the army.")
+                cleaned_data['subcode'] = '-' # Force subcode for convoy
+            elif code == 'S': # Support
+                if not subunit: error_msg = _("Support requires a target unit.")
+                if not subcode: subcode = 'H'; cleaned_data['subcode'] = 'H' # Default to Support Hold
+                if subcode == '-' and not subdestination: error_msg = _("Support Move requires a destination area.")
+                # if subcode == '=' and not subtype: error_msg = _("Support Conversion requires a target type.") # If supporting conversion
+            elif code == 'B': # Besiege
+                 pass # No extra fields needed
+            elif code == 'L': # Lift Siege
+                 pass # No extra fields needed
+            elif code == '0': # Disband
+                 pass # No extra fields needed
+            elif code == 'H': # Hold
+                 pass # No extra fields needed
+            else:
+                 error_msg = _("Invalid order code selected.")
+
+            if error_msg:
+                # Use add_error for field-specific or non-field errors
+                # Guess the most relevant field or use None for non-field
+                field_key = None
+                if code in ['-', 'C', 'S'] and 'destination' in error_msg.lower(): field_key = 'destination' if code == '-' else 'subdestination'
+                elif code in ['=', 'S'] and 'type' in error_msg.lower(): field_key = 'type' if code == '=' else 'subtype'
+                elif code in ['C', 'S'] and 'unit' in error_msg.lower(): field_key = 'subunit'
+                self.add_error(field_key, error_msg)
+                return cleaned_data # Stop further validation if basic fields missing
+
+            # --- Coast Validation ---
+            dest_requires_coast = False
+            subdest_requires_coast = False
+
+            # Check Destination Coast
+            if destination and destination.board_area.has_multiple_coasts():
+                 # Fleet advancing to multi-coast OR Army being convoyed to multi-coast
+                 if (code == '-' and unit.type == 'F') or code == 'C':
+                     dest_requires_coast = True
+
+            if dest_requires_coast and not destination_coast:
+                 self.add_error('destination_coast', _("Must specify coast for this destination."))
+            elif not dest_requires_coast and destination_coast:
+                 # Clear coast if specified but not needed/allowed
+                 cleaned_data['destination_coast'] = None
+
+            # Check Subdestination Coast (for Support Move / Convoy)
+            if subdestination and subdestination.board_area.has_multiple_coasts():
+                 # Convoying army to multi-coast OR Supporting fleet move to multi-coast
+                 if code == 'C' or (code == 'S' and subcode == '-' and subunit and subunit.type == 'F'):
+                      subdest_requires_coast = True
+
+            if subdest_requires_coast and not subdestination_coast:
+                 self.add_error('subdestination_coast', _("Must specify coast for this support/convoy destination."))
+            elif not subdest_requires_coast and subdestination_coast:
+                 # Clear coast if specified but not needed/allowed
+                 cleaned_data['subdestination_coast'] = None
+
+
+            # --- Final Rule Check using Order.is_possible() ---
+            # Create a temporary Order instance with cleaned data to test possibility
+            temp_order_data = cleaned_data.copy()
+            temp_order_data['player'] = player # Ensure player is set
+            # Ensure only valid fields are passed to Order constructor
+            valid_order_fields = {f.name for f in Order._meta.get_fields()}
+            init_kwargs = {k: v for k, v in temp_order_data.items() if k in valid_order_fields and v is not None}
+
+            try:
+                 # Check if unit already has a confirmed order from this player
+                 # Allow replacing unconfirmed orders
+                 existing_order = Order.objects.filter(unit=unit, player=player, confirmed=True).first()
+                 if existing_order and (not self.instance or self.instance.pk != existing_order.pk):
+                      raise forms.ValidationError(_("This unit already has a confirmed order from you."))
+
+                 # Create temporary order for validation
+                 temp_order = Order(**init_kwargs)
+                 if not temp_order.is_possible():
+                      # Provide a more generic error, as specific reason is hard to pinpoint here
+                      # is_possible() should ideally log the specific failure reason
+                      raise forms.ValidationError(_("This order (including coast selection) is not possible according to the rules."))
+            except Exception as e:
+                 # Catch potential errors during temp order creation or validation
+                 self.add_error(None, f"Validation Error: {e}")
+                 return cleaned_data
+
+
+            # --- Clear Unused Fields ---
+            # Clear fields based on primary code to ensure clean data saving
+            if code in ['H', 'B', 'L', '0']:
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None, 'subunit': None,
+                                     'subcode': None, 'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+            elif code == '-':
+                cleaned_data.update({'type': None, 'subunit': None, 'subcode': None,
+                                     'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+                # Keep destination, destination_coast
+            elif code == '=':
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'subunit': None, 'subcode': None,
+                                     'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+                # Keep type
+            elif code == 'C':
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None, 'subcode': '-', 'subtype': None})
+                # Keep subunit, subdestination, subdestination_coast (force subcode='-')
+            elif code == 'S':
+                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None})
+                # Keep subunit, subcode
+                if subcode in ['H', 'B']: # Assuming support besiege is like support hold
+                    cleaned_data.update({'subdestination': None, 'subdestination_coast': None, 'subtype': None})
+                elif subcode == '-':
+                    cleaned_data.update({'subtype': None})
+                    # Keep subdestination, subdestination_coast
+                # elif subcode == '=': # Support Conversion (Currently disallowed by is_possible)
+                #     cleaned_data.update({'subdestination': None, 'subdestination_coast': None})
+                #     # Keep subtype
+
+            return cleaned_data
+
+    return OrderForm
 
 @login_required
 def get_valid_destinations(request, slug):
@@ -481,84 +664,138 @@ def get_valid_destinations(request, slug):
 	return OrderForm
 
 def make_retreat_form(u):
-	possible_retreats = u.get_possible_retreats() # Uses updated model method
+    # Get possible retreat areas using updated model method (includes current area for conversion)
+    possible_retreats = u.get_possible_retreats().select_related('board_area') # Optimize
 
-	class RetreatForm(forms.Form):
-		unitid = forms.IntegerField(widget=forms.HiddenInput, initial=u.id)
-		area = forms.ModelChoiceField(required=False,
-							queryset=possible_retreats,
-							empty_label='Disband unit',
-							label=unicode(u))
-		# New Coast Field for Retreat
-		coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Retreat Coast"))
+    class RetreatForm(forms.Form):
+        unitid = forms.IntegerField(widget=forms.HiddenInput, initial=u.id)
+        area = forms.ModelChoiceField(required=False, # Allow disbanding
+                            queryset=possible_retreats,
+                            empty_label=_('Disband unit'), # Use empty_label for disband option
+                            label=unicode(u)) # Label with unit description
+        # New Coast Field for Retreat
+        coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Retreat Coast"))
 
-		def clean(self):
-		    cleaned_data = super().clean()
-		    area = cleaned_data.get('area')
-		    coast = cleaned_data.get('coast')
-		    unit = Unit.objects.get(pk=cleaned_data.get('unitid')) # Get the unit
+        def clean(self):
+            cleaned_data = super(RetreatForm, self).clean()
+            area = cleaned_data.get('area')
+            coast = cleaned_data.get('coast')
+            unit = Unit.objects.select_related('area__board_area').get(pk=cleaned_data.get('unitid')) # Get the unit
 
-		    if area and unit.type == 'F' and area.board_area.has_multiple_coasts():
-		        if not coast:
-		            self.add_error('coast', _("Must specify coast when retreating a fleet to this area."))
-		        elif coast not in area.board_area.get_coast_list():
-		             self.add_error('coast', _("Invalid coast selected for this area."))
-		    elif coast:
-		        # Clear coast if area is not multi-coastal or unit is not a fleet
-		        cleaned_data['coast'] = None
+            if area: # If retreating to an area (not disbanding)
+                 # Check if chosen area is valid
+                 if area not in possible_retreats:
+                      self.add_error('area', _("Invalid retreat destination selected."))
+                      return cleaned_data # Stop validation
 
-		    return cleaned_data
+                 # Check coast if retreating to multi-coast area
+                 if area.board_area.has_multiple_coasts():
+                     # Fleet retreating to multi-coast MUST specify coast
+                     if unit.type == 'F':
+                         if not coast:
+                             self.add_error('coast', _("Must specify coast when retreating a fleet to this area."))
+                         elif coast not in area.board_area.get_coast_list():
+                              self.add_error('coast', _("Invalid coast selected for this area."))
+                     # Army retreating to multi-coast (only possible via conversion?) - coast not applicable
+                     elif coast:
+                          cleaned_data['coast'] = None # Clear invalid coast for army
+                 elif coast:
+                     # Clear coast if specified but area is not multi-coastal
+                     cleaned_data['coast'] = None
 
+                 # Check if retreating to current area (conversion)
+                 if area == unit.area:
+                      # Ensure conversion is actually possible (redundant with get_possible_retreats check?)
+                      if not unit.area.board_area.is_fortified or \
+                         Unit.objects.filter(area=unit.area, type='G').exclude(id=unit.id).exists() or \
+                         (unit.type == 'F' and not unit.area.board_area.has_port):
+                           self.add_error('area', _("Cannot retreat by converting to Garrison here."))
+                      cleaned_data['coast'] = None # Coast not relevant for conversion
 
-	return RetreatForm
+            elif coast: # Disbanding, but coast specified? Clear it.
+                 cleaned_data['coast'] = None
+
+            return cleaned_data
+
+    return RetreatForm
 
 def make_reinforce_form(player, finances=False, special_units=False):
-	if finances:
-		unit_types = (('', '---'),) + UNIT_TYPES
-		noarea_label = '---'
-	else:
-		unit_types = UNIT_TYPES
-		noarea_label = None
-    area_qs = player.get_areas_for_new_units(finances).select_related('board_area') # Optimize
+    if finances:
+        unit_types = (('', '---'),) + UNIT_TYPES # Allow blank choice if maybe not building
+        noarea_label = '---'
+    else: # Basic game
+        unit_types = UNIT_TYPES # Must choose a type
+        noarea_label = None
+
+    # Get areas using updated model method
+    area_qs = player.get_areas_for_new_units(finances=finances).select_related('board_area') # Optimize
 
     class ReinforceForm(forms.Form):
-        type = forms.ChoiceField(required=True, choices=unit_types)
-        area = forms.ModelChoiceField(required=True,
+        type = forms.ChoiceField(required=not finances, choices=unit_types) # Required only in Basic
+        area = forms.ModelChoiceField(required=not finances, # Required only in Basic
                               queryset=area_qs,
                               empty_label=noarea_label)
         # New Coast Field for Build
         coast = forms.ChoiceField(choices=BLANK_COAST_CHOICE + COAST_CHOICES, required=False, label=_("Build Coast"))
 
-        if special_units and not player.has_special_unit():
+        # Special unit selection (Optional Rule IV)
+        if finances and special_units and not player.has_special_unit(): # Only if finances, option on, player doesn't have one
             unit_class = forms.ModelChoiceField(required=False,
-                                            queryset=player.country.special_units.all(),
-                                            empty_label=_("Regular (3d)"))
+                                            queryset=SpecialUnit.objects.all(), # Allow choosing any defined special unit
+                                            empty_label=_("Regular (Cost: 3)"), # Default is regular
+                                            label=_("Unit Class"))
 
         def clean(self):
             cleaned_data = super(ReinforceForm, self).clean()
             type_ = cleaned_data.get('type')
             area = cleaned_data.get('area')
             coast = cleaned_data.get('coast')
+            unit_class = cleaned_data.get('unit_class') # Get special unit choice
 
-            if not type_ or not area: return cleaned_data
+            # In finance mode, fields aren't required, skip validation if blank
+            if finances and not type_ and not area:
+                 # Check if unit_class was selected without type/area
+                 if unit_class:
+                      self.add_error('type', _("Must select type and area if choosing a special unit."))
+                 return cleaned_data # Allow empty form submission
 
-            # --- Existing validation ---
-            if type_ == 'G' and not area.board_area.is_fortified:
-                raise forms.ValidationError(_('Garrisons can only be placed in fortified cities/fortresses.'))
-            if type_ == 'F' and not area.board_area.has_port:
-                 raise forms.ValidationError(_('Fleets can only be placed in port cities.'))
-            if type_ == 'A' and (area.board_area.is_sea or area.board_area.code == 'VEN'):
-                 raise forms.ValidationError(_('Armies cannot be placed in seas or Venice.'))
+            if not type_: self.add_error('type', _("This field is required.")); return cleaned_data
+            if not area: self.add_error('area', _("This field is required.")); return cleaned_data
+
+            # --- Basic Placement Rule Checks ---
+            board_area = area.board_area
+            error = None
+            if type_ == 'G':
+                 if not board_area.is_fortified: error = _('Garrisons can only be placed in fortified cities/fortresses.')
+                 # Check if city already occupied (Rule V.B.1.b / V.B.3.c)
+                 elif area.unit_set.filter(type='G').exists(): error = _('A Garrison already exists in this city.')
+            elif type_ == 'F':
+                 if not board_area.has_port: error = _('Fleets can only be placed in port cities.')
+                 # Check if province already occupied (Rule V.B.1.b / V.B.3.c)
+                 elif area.unit_set.exclude(type='G').exists(): error = _('An Army or Fleet already exists in this province.')
+            elif type_ == 'A':
+                 if board_area.is_sea or board_area.code == 'VEN': error = _('Armies cannot be placed in seas or Venice.')
+                 # Check if province already occupied (Rule V.B.1.b / V.B.3.c)
+                 elif area.unit_set.exclude(type='G').exists(): error = _('An Army or Fleet already exists in this province.')
+
+            if error: self.add_error(None, error); return cleaned_data
 
             # --- Coast Validation for Build ---
-            if type_ == 'F' and area.board_area.has_multiple_coasts():
+            if type_ == 'F' and board_area.has_multiple_coasts():
                 if not coast:
                     self.add_error('coast', _("Must specify coast when building a fleet in this area."))
-                elif coast not in area.board_area.get_coast_list():
+                elif coast not in board_area.get_coast_list():
                     self.add_error('coast', _("Invalid coast selected for this area."))
             elif coast:
                 # Clear coast if not building a fleet or area is not multi-coastal
                 cleaned_data['coast'] = None
+
+            # --- Finance Checks (Cost) ---
+            if finances:
+                 cost = unit_class.cost if unit_class else 3
+                 # Check available ducats (done in view/formset to sum costs)
+                 # Store cost for formset validation
+                 cleaned_data['cost'] = cost
 
             return cleaned_data
 
@@ -640,167 +877,213 @@ def make_ducats_list(ducats, f=3):
 
 
 def make_expense_form(player):
-	# Base cost for counter-bribe is 3, but allow multiples
-	counter_bribe_choices = make_ducats_list(player.ducats, 3)
-	# Other expenses have fixed minimums, but allow overpaying (in multiples of 3?)
-	# Rule VI.C.4.g.2: Bribe increases must be in units of 3.
-	# Let's make all expense choices multiples of 3 for consistency, up to player's ducats.
-	general_expense_choices = make_ducats_list(player.ducats, 3)
+    # Use general list for ducats, validation happens in clean()
+    general_expense_choices = make_ducats_list(player.ducats, 3) # Rule VI.C.4.g.2: Multiples of 3 for bribes > min
 
-	unit_qs = Unit.objects.filter(player__game=player.game).order_by('area__board_area__code')
-	area_qs = GameArea.objects.filter(game=player.game).order_by('board_area__code')
+    # Querysets for dropdowns
+    # Target units: Any unit not owned by the player (for bribes) or any unit (for counter-bribe)
+    # Filter further based on expense type in clean()
+    unit_qs = Unit.objects.filter(player__game=player.game) \
+                    .exclude(player=player) \
+                    .select_related('area__board_area', 'player__country') \
+                    .order_by('player__country__name', 'area__board_area__code')
+    counter_bribe_unit_qs = Unit.objects.filter(player__game=player.game) \
+                    .select_related('area__board_area', 'player__country') \
+                    .order_by('player__country__name', 'area__board_area__code')
 
-	class ExpenseForm(forms.ModelForm):
-		# Use dynamic choices based on type later? For now, use general list.
-		ducats = forms.ChoiceField(required=True, choices=general_expense_choices)
-		area = forms.ModelChoiceField(required=False, queryset=area_qs)
-		unit = forms.ModelChoiceField(required=False, queryset=unit_qs)
+    # Target areas: Any non-sea area controlled by another player (for rebellions) or any area (for famine relief)
+    area_qs = GameArea.objects.filter(game=player.game) \
+                    .exclude(board_area__is_sea=True) \
+                    .select_related('board_area', 'player__country') \
+                    .order_by('board_area__code')
+    famine_area_qs = GameArea.objects.filter(game=player.game, famine=True) \
+                    .select_related('board_area') \
+                    .order_by('board_area__code')
 
-		def __init__(self, player, **kwargs):
-			super(ExpenseForm, self).__init__(**kwargs)
-			self.instance.player = player
-			# Dynamically set ducat choices based on selected type? Complex for basic form.
-			# We'll validate amount against minimum cost in clean().
 
-		class Meta:
-			model = Expense
-			fields = ('type', 'ducats', 'area', 'unit')
+    class ExpenseForm(forms.ModelForm):
+        # Use dynamic choices based on type later? For now, use general list.
+        ducats = forms.ChoiceField(required=True, choices=general_expense_choices, label=_("Ducats to Spend"))
+        # Querysets are broad initially, refined by JS or validated in clean()
+        area = forms.ModelChoiceField(required=False, queryset=area_qs, label=_("Target Area"))
+        unit = forms.ModelChoiceField(required=False, queryset=counter_bribe_unit_qs, label=_("Target Unit")) # Start with broader unit QS
 
-		def clean(self):
-			cleaned_data = super(ExpenseForm, self).clean() # Use super().clean()
-			type_ = cleaned_data.get('type')
-			ducats_str = cleaned_data.get('ducats')
-			area = cleaned_data.get('area')
-			unit = cleaned_data.get('unit')
+        def __init__(self, player, **kwargs):
+            super(ExpenseForm, self).__init__(**kwargs)
+            self.instance.player = player
+            # JS could potentially update querysets based on type selection
+            # self.fields['area'].queryset = ...
+            # self.fields['unit'].queryset = ...
 
-			if type_ is None or ducats_str is None: # Check basic fields exist
-			    return cleaned_data
+        class Meta:
+            model = Expense
+            fields = ('type', 'ducats', 'area', 'unit') # Order fields logically
 
-			try:
-			    ducats = int(ducats_str)
-			except (ValueError, TypeError):
-			    raise forms.ValidationError(_("Invalid ducat amount selected."))
+        def clean(self):
+            cleaned_data = super(ExpenseForm, self).clean()
+            type_ = cleaned_data.get('type')
+            ducats_str = cleaned_data.get('ducats')
+            area = cleaned_data.get('area')
+            unit = cleaned_data.get('unit')
 
-			# Validate required fields based on type
-			if type_ in (0, 1, 2, 3): # Famine Relief, Pacify, Rebel
-				if not area: raise forms.ValidationError(_("You must choose an area for this expense."))
-				cleaned_data['unit'] = None # Ensure unit is None
-			elif type_ in (4, 5, 6, 7, 8, 9): # Counter-Bribe, Bribes
-				if not unit: raise forms.ValidationError(_("You must choose a unit for this expense."))
-				cleaned_data['area'] = None # Ensure area is None
-			else:
-				raise forms.ValidationError(_("Unknown expense type selected."))
+            if type_ is None or ducats_str is None: # Check basic fields exist
+                return cleaned_data
 
-			# Check minimum cost (using updated get_expense_cost)
-			try:
-				min_cost = get_expense_cost(type_, unit)
-			except ValueError as e: # Handle errors from get_expense_cost (e.g., missing unit)
-			    raise forms.ValidationError(unicode(e))
+            try:
+                ducats = int(ducats_str)
+                if ducats <= 0: raise forms.ValidationError(_("Must spend a positive amount."))
+            except (ValueError, TypeError):
+                raise forms.ValidationError(_("Invalid ducat amount selected."))
 
-			if ducats < min_cost:
-				raise forms.ValidationError(_("You must pay at least %(cost)s ducats for this expense.") % {'cost': min_cost})
+            # --- Validate required fields based on type ---
+            if type_ == 0: # Famine relief
+                if not area: self.add_error('area', _("Famine relief requires a target area.")); return cleaned_data
+                if not area.famine: self.add_error('area', _("Selected area does not have famine."))
+                cleaned_data['unit'] = None
+            elif type_ == 1: # Pacify rebellion
+                if not area: self.add_error('area', _("Pacify rebellion requires a target area.")); return cleaned_data
+                if not Rebellion.objects.filter(area=area).exists(): self.add_error('area', _("There is no rebellion in the selected area."))
+                cleaned_data['unit'] = None
+            elif type_ in (2, 3): # Start rebellion
+                if not area: self.add_error('area', _("Starting a rebellion requires a target area.")); return cleaned_data
+                if not area.player: self.add_error('area', _("Selected area is not controlled by anyone."))
+                elif area.player == player: self.add_error('area', _("Cannot start rebellion in your own area."))
+                else: # Check home vs conquered (Rule VI.C.5.a/b)
+                    is_home = area in area.player.home_country(original=True) # Check original home country
+                    if type_ == 2 and is_home: self.add_error('type', _("This is a home province; use 'Home province to rebel'."))
+                    elif type_ == 3 and not is_home: self.add_error('type', _("This is a conquered province; use 'Conquered province to rebel'."))
+                # Check Venice occupation (Rule VI.C.5.c.11)
+                if area.board_area.code == 'VEN' and area.unit_set.exists():
+                    self.add_error('area', _("Cannot start rebellion in occupied Venice."))
+                cleaned_data['unit'] = None
+            elif type_ == 4: # Counter-bribe
+                 if not unit: self.add_error('unit', _("Counter-bribe requires a target unit.")); return cleaned_data
+                 cleaned_data['area'] = None
+            elif type_ in (5, 6, 7, 8, 9, 10): # Bribes
+                if not unit: self.add_error('unit', _("Bribe requires a target unit.")); return cleaned_data
+                cleaned_data['area'] = None
+                # Validate target unit type based on bribe type
+                if type_ in (5, 6): # Disband/Buy Auto G
+                     if unit.player and unit.player.user is not None: self.add_error('unit', _("Target must be an autonomous garrison."))
+                     elif unit.type != 'G': self.add_error('unit', _("Target must be an autonomous garrison."))
+                elif type_ == 7: # Commit G -> Auto
+                     if not unit.player or unit.player.user is None: self.add_error('unit', _("Target must be a committed (non-autonomous) garrison."))
+                     elif unit.type != 'G': self.add_error('unit', _("Target must be a committed garrison."))
+                elif type_ == 8: # Disband Commit G
+                     if not unit.player or unit.player.user is None: self.add_error('unit', _("Target must be a committed (non-autonomous) garrison."))
+                     elif unit.type != 'G': self.add_error('unit', _("Target must be a committed garrison."))
+                elif type_ == 9: # Disband A/F
+                     if not unit.player or unit.player.user is None: self.add_error('unit', _("Target must be a committed (non-autonomous) unit."))
+                     elif unit.type not in ['A', 'F']: self.add_error('unit', _("Target must be an Army or Fleet."))
+                elif type_ == 10: # Buy A/F
+                     if not unit.player or unit.player.user is None: self.add_error('unit', _("Target must be a committed (non-autonomous) unit."))
+                     elif unit.type not in ['A', 'F']: self.add_error('unit', _("Target must be an Army or Fleet."))
+            else:
+                self.add_error('type', _("Unknown expense type selected."))
+                return cleaned_data
 
-			# Check amount is multiple of 3 if required (e.g., for bribes > min)
-			if type_ in (4, 5, 6, 7, 8, 9) and ducats > min_cost:
-			    if (ducats - min_cost) % 3 != 0:
-			        # Or just check ducats % 3 != 0 if min_cost is always multiple of 3
-			        if ducats % 3 != 0:
-			             raise forms.ValidationError(_("Ducat amount must be a multiple of 3."))
+            # --- Check minimum cost and ducat amount ---
+            try:
+                min_cost = get_expense_cost(type_, unit)
+                if ducats < min_cost:
+                    self.add_error('ducats', _("Must spend at least %(cost)s ducats for this expense.") % {'cost': min_cost})
+                # Check amount is multiple of 3 if required (Rule VI.C.4.g.2)
+                # Applies to bribes > min cost and counter-bribes
+                if type_ >= 4 and ducats % 3 != 0:
+                     self.add_error('ducats', _("Amount must be a multiple of 3."))
 
-			# Specific expense type validations
-			if type_ == 0: # Famine relief
-				if not area or not area.famine: raise forms.ValidationError(_("There is no famine in the selected area."))
-			elif type_ == 1: # Pacify rebellion
-				if not area or not Rebellion.objects.filter(area=area).exists(): raise forms.ValidationError(_("There is no rebellion in the selected area."))
-			elif type_ == 2 or type_ == 3: # Start rebellion
-				if not area or not area.player: raise forms.ValidationError(_("Selected area is not controlled by anyone."))
-				elif area.player == player: raise forms.ValidationError(_("Cannot start rebellion in your own area."))
-				# Check home vs conquered (using updated home_country method)
-				is_home = area in area.player.home_country(original=True) # Check original home country
-				if type_ == 2 and is_home: raise forms.ValidationError(_("This area is part of the player's home country; use 'Home province to rebel' expense."))
-				elif type_ == 3 and not is_home: raise forms.ValidationError(_("This area is not in the home country of the player who controls it; use 'Conquered province to rebel' expense."))
-				# Rule VI.C.5.c.11: No rebellion in Venice if occupied
-				if area.board_area.code == 'VEN' and area.unit_set.exists():
-				    raise forms.ValidationError(_("Cannot start rebellion in Venice while it is occupied."))
-			elif type_ in (5, 6): # Disband/Buy Autonomous Garrison
-				if not unit or unit.type != 'G' or unit.player.user is not None: raise forms.ValidationError(_("You must choose an autonomous garrison."))
-			elif type_ in (7, 8, 9): # Convert/Disband/Buy Enemy Unit
-				if not unit or unit.player == player: raise forms.ValidationError(_("You must choose an enemy unit."))
-				if unit.player.user is None: raise forms.ValidationError(_("You must choose an enemy unit, not an autonomous one."))
-				if type_ == 7 and unit.type != 'G': raise forms.ValidationError(_("You must choose a non-autonomous garrison to convert."))
-				if type_ == 9: # Buy enemy A/F
-				    if unit.type not in ['A', 'F']: raise forms.ValidationError(_("You must choose an enemy Army or Fleet to buy."))
+            except ValueError as e: # Handle errors from get_expense_cost
+                self.add_error(None, unicode(e)) # Non-field error
 
-			# Check bribe adjacency (Rule VI.C.4.g.4)
-			if type_ in (5, 6, 7, 8, 9):
-				# Check if player has unit adjacent to target unit's area
-				adjacent_areas = unit.area.get_adjacent_areas(include_self=False) # Areas adjacent to target
-				q_player_unit_adjacent = Q(player=player, area__in=adjacent_areas)
-				# Check if player controls area adjacent to target unit's area
-				q_player_control_adjacent = Q(player=player, board_area__in=unit.area.board_area.borders.all())
+            # --- Check bribe adjacency (Rule VI.C.4.g.4) ---
+            if type_ in (5, 6, 7, 8, 9, 10) and unit: # Check if it's a bribe and unit is set
+                # Check if player has unit adjacent to target unit's area OR controls area adjacent to target
+                adjacent_areas = unit.area.get_adjacent_areas(include_self=False) # Areas adjacent to target
+                q_player_unit_adjacent = Q(player=player, area__in=adjacent_areas)
+                # Control check needs careful thought - controlling the province itself? Or just bordering?
+                # Rule says "adjacent to one of that player's military units". Let's stick to that.
+                # q_player_control_adjacent = Q(player=player, board_area__in=unit.area.board_area.borders.all())
 
-				is_adjacent = Unit.objects.filter(q_player_unit_adjacent).exists() or \
-				              GameArea.objects.filter(q_player_control_adjacent).exists()
+                is_adjacent = Unit.objects.filter(q_player_unit_adjacent).exists()
+                              # or GameArea.objects.filter(q_player_control_adjacent).exists()
 
-				# Optional Rule V.A: Check adjacency via ally
-				# This requires more complex logic, maybe handled in view or model
+                # Optional Rule V.A: Check adjacency via ally (requires complex check)
+                # if not is_adjacent and player.game.configuration.bribes_via_ally:
+                #    # Check if any ally unit is adjacent
+                #    pass
 
-				if not is_adjacent:
-					# Optional Rule V.B: Allow bribe anywhere (if enabled in config)
-					if not player.game.configuration.bribes_anywhere: # Assuming a config flag
-					    raise forms.ValidationError(_("You cannot bribe this unit because it's too far from your units or controlled areas."))
+                if not is_adjacent:
+                    # Optional Rule V.B: Allow bribe anywhere
+                    if not player.game.configuration.bribes_anywhere: # Assuming a config flag
+                        self.add_error('unit', _("You cannot bribe this unit because it's not adjacent to any of your units."))
 
-			return cleaned_data
+            return cleaned_data
 
-	return ExpenseForm
+    return ExpenseForm
 
 class LendForm(forms.Form):
 	ducats = forms.IntegerField(required=True, min_value=1) # Cannot lend 0
 
 TERMS = (
-	(1, _("1 year, 20%")),
-	(2, _("2 years, 50%")),
+    (1, _("1 year, 20% interest")), # Rule X.A.3
+    (2, _("2 years, 50% interest")), # Rule X.A.3
 )
 
 class BorrowForm(forms.Form):
-	ducats = forms.IntegerField(required=True, min_value=1, label=_("Ducats to borrow")) # Cannot borrow 0
-	term = forms.ChoiceField(required=True, choices=TERMS, label=_("Term and interest"))
+    ducats = forms.IntegerField(required=True, min_value=1, label=_("Ducats to borrow"))
+    term = forms.ChoiceField(required=True, choices=TERMS, label=_("Term and interest"))
 
-	def __init__(self, player=None, *args, **kwargs):
-	    self.player = player
-	    super(BorrowForm, self).__init__(*args, **kwargs)
+    def __init__(self, player=None, *args, **kwargs):
+        self.player = player
+        super(BorrowForm, self).__init__(*args, **kwargs)
+        # Disable form if player cannot borrow
+        if not self.player or self.player.defaulted or self.player.get_credit() <= 0:
+             for field in self.fields:
+                  self.fields[field].widget.attrs['disabled'] = True
 
-	def clean_ducats(self):
-	    ducats = self.cleaned_data.get('ducats')
-	    if ducats is None: return None # Handled by required=True
+    def clean_ducats(self):
+        ducats = self.cleaned_data.get('ducats')
+        if ducats is None: return None # Handled by required=True
 
-	    if not self.player: # Should not happen if form initialized correctly
-	        raise forms.ValidationError("Player context missing.")
+        if not self.player: # Should not happen if form initialized correctly
+            raise forms.ValidationError("Player context missing.")
+        if self.player.defaulted: # Rule X.B
+             raise forms.ValidationError(_("You cannot borrow after defaulting on a previous loan."))
 
-	    # Check max loan limit (Rule X.A.1)
-	    current_debt = 0
-	    try:
-	        current_debt = self.player.loan.debt # Assumes loan stores principal? No, rules say total owed.
-	        # Need to track principal separately if max is on principal. Assuming max is on *new* loan amount.
-	    except Loan.DoesNotExist:
-	        pass
+        # Check max loan limit (Rule X.A.1)
+        # Rule: "total number of ducats owed... may never exceed twenty-five"
+        # This implies the *new principal* + *existing principal* cannot exceed 25.
+        current_principal = 0
+        try:
+            # Assumes Loan model stores principal correctly
+            current_principal = self.player.loan.principal
+        except Loan.DoesNotExist:
+            pass
+        except AttributeError: # If Loan model doesn't have principal yet
+             pass
 
-	    # Rule X.A.1: "total number of ducats owed... may never exceed twenty-five"
-	    # This implies the *new* loan amount cannot exceed 25 if no current loan,
-	    # or the *new* amount + *existing principal* cannot exceed 25.
-	    # Let's assume the limit is on the amount being borrowed *now*.
-	    max_borrow = 25
-	    # If limit applies to total principal, need to store principal on Loan model.
+        if (current_principal + ducats) > 25:
+             max_borrow = 25 - current_principal
+             if max_borrow < 0: max_borrow = 0
+             raise forms.ValidationError(_("Cannot borrow: Total debt principal would exceed 25 ducats. You can borrow at most %(max)s more.") % {'max': max_borrow})
 
-	    if ducats > max_borrow:
-	         raise forms.ValidationError(_("You cannot borrow more than 25 ducats at one time."))
+        # Check against player's credit limit (Optional Rule X.A - based on areas/units unless unbalanced)
+        # get_credit() likely needs implementation based on Rule X.A if not using unbalanced.
+        # Assuming get_credit() exists and returns the limit for *this specific loan*.
+        # credit_limit = self.player.get_credit()
+        # if ducats > credit_limit:
+        #      raise forms.ValidationError(_("Your current credit limit is %(limit)s ducats.") % {'limit': credit_limit})
+        # Credit limit check might be redundant if max total principal is 25.
 
-	    # Check against player's credit limit (Optional Rule X.A - based on areas/units unless unbalanced)
-	    credit_limit = self.player.get_credit() # Uses model method
-	    if ducats > credit_limit:
-	         raise forms.ValidationError(_("Your current credit limit is %(limit)s ducats.") % {'limit': credit_limit})
+        return ducats
 
-	    return ducats
+    def clean(self):
+        # Ensure form is disabled if needed
+        if not self.player or self.player.defaulted or self.player.get_credit() <= 0:
+             # If form submitted despite being disabled, raise error
+             if self.has_changed():
+                  raise forms.ValidationError(_("Cannot borrow money at this time."))
+        return super(BorrowForm, self).clean()
 
 
 class RepayForm(forms.Form):
@@ -808,40 +1091,64 @@ class RepayForm(forms.Form):
 	pass
 
 def make_assassination_form(player):
-	# Cost is minimum 12, max 36 (multiples of 12)
-	max_spend = min(player.ducats, 36)
-	assassination_choices = []
-	if max_spend >= 12: assassination_choices.append((12, 12))
-	if max_spend >= 24: assassination_choices.append((24, 24))
-	if max_spend >= 36: assassination_choices.append((36, 36))
+    # Cost is minimum 12, max 36 (multiples of 12) - Rule VI.C.6.a
+    assassination_choices = []
+    # Check affordability based on player's ducats
+    if player.ducats >= 12: assassination_choices.append((12, _("12 Ducats (1 die roll)")))
+    if player.ducats >= 24: assassination_choices.append((24, _("24 Ducats (2 die rolls)")))
+    if player.ducats >= 36: assassination_choices.append((36, _("36 Ducats (3 die rolls)")))
 
-	if not assassination_choices: # Cannot afford even minimum
-	    assassination_choices = ((0, _("Cannot afford")),) # Placeholder
+    if not assassination_choices: # Cannot afford even minimum
+        assassination_choices = (('', _("Cannot afford")),) # Placeholder, disable form
 
-	assassin_ids = player.assassin_set.values_list('target', flat=True)
-	# Exclude eliminated players and self
-	targets_qs = Country.objects.filter(
-	    player__game=player.game, id__in=assassin_ids
-	).exclude(
-	    player__eliminated=True
+    # Get countries the player has an assassin token for (Rule VI.C.6)
+    assassin_targets_qs = Country.objects.filter(
+        assassin__owner=player # Check Assassin model for tokens owned by player
     ).exclude(
-        player=player # Cannot target self
-    )
+        player__game=player.game, player__eliminated=True # Exclude eliminated players in this game
+    ).exclude(
+        id=player.country_id # Cannot target self
+    ).distinct().order_by('name')
 
-	class AssassinationForm(forms.Form):
-		ducats = forms.ChoiceField(required=True, choices=assassination_choices, label=_("Ducats to pay (12=1 die, 24=2 dice, 36=3 dice)"))
-		target = forms.ModelChoiceField(required=True, queryset=targets_qs, label=_("Target country"))
+    class AssassinationForm(forms.Form):
+        # Use dynamic choices based on affordability
+        ducats = forms.ChoiceField(required=True, choices=assassination_choices, label=_("Cost (Selects Dice)"))
+        # Use dynamic queryset based on available tokens
+        target = forms.ModelChoiceField(required=True, queryset=assassin_targets_qs, label=_("Target Country"))
 
-		def clean_ducats(self):
-		    ducats = self.cleaned_data.get('ducats')
-		    try:
-		        ducats_int = int(ducats)
-		        if ducats_int == 0: # Handle the "Cannot afford" case
-		             raise forms.ValidationError(_("You cannot afford an assassination attempt."))
-		        if ducats_int not in [12, 24, 36]:
-		             raise forms.ValidationError(_("Invalid amount selected for assassination."))
-		    except (ValueError, TypeError):
-		        raise forms.ValidationError(_("Invalid amount selected."))
-		    return ducats_int # Return as integer
+        def __init__(self, *args, **kwargs):
+             super(AssassinationForm, self).__init__(*args, **kwargs)
+             # Disable form if no choices available
+             if not assassin_targets_qs.exists() or assassination_choices[0][0] == '':
+                  for field in self.fields:
+                       self.fields[field].widget.attrs['disabled'] = True
 
-	return AssassinationForm
+        def clean_ducats(self):
+            ducats_str = self.cleaned_data.get('ducats')
+            try:
+                ducats_int = int(ducats_str)
+                if ducats_int not in [12, 24, 36]:
+                     raise forms.ValidationError(_("Invalid amount selected for assassination."))
+                # Check affordability again (belt-and-suspenders)
+                if ducats_int > player.ducats:
+                     raise forms.ValidationError(_("Insufficient ducats for selected amount."))
+            except (ValueError, TypeError):
+                raise forms.ValidationError(_("Invalid amount selected."))
+            return ducats_int # Return as integer
+
+        def clean_target(self):
+             target_country = self.cleaned_data.get('target')
+             # Check if player actually has the token (redundant with queryset?)
+             if target_country and not Assassin.objects.filter(owner=player, target=target_country).exists():
+                  raise forms.ValidationError(_("You do not have an assassin token for this country."))
+             return target_country
+
+        def clean(self):
+             # Ensure form is disabled if needed
+             if not assassin_targets_qs.exists() or assassination_choices[0][0] == '':
+                  if self.has_changed():
+                       raise forms.ValidationError(_("Cannot attempt assassination at this time."))
+             return super(AssassinationForm, self).clean()
+
+
+    return AssassinationForm

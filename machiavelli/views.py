@@ -1497,53 +1497,48 @@ def whisper_list(request, slug):
 							context_instance=RequestContext(request))
 
 # --- AJAX Views ---
-# machiavelli/views.py
 
-# ... (imports and other views) ...
 
 @login_required
 def get_valid_destinations(request, slug):
     """
-    AJAX view to get valid destinations for a unit based on order type ('-' or '=').
-    For '-', includes direct moves and potential convoy moves, plus valid coasts.
-    For '=', includes the current area and valid conversion types.
+    AJAX view to get valid destinations for Advance ('-') or Conversion ('=').
+    Includes coast information.
     """
     game = get_object_or_404(Game, slug=slug)
     unit_id = request.GET.get('unit_id')
-    order_type = request.GET.get('order_type')
+    order_code = request.GET.get('order_code') # Renamed from order_type for clarity
 
     response_data = {'destinations': []} # Default empty
 
     try:
-        # Select related area and board_area for efficiency
         unit = Unit.objects.select_related('area__board_area', 'player').get(id=unit_id, player__game=game)
-        player = Player.objects.get(user=request.user, game=game) # Ensure request user is in game
+        player = Player.objects.get(user=request.user, game=game)
 
         # --- Permission Check ---
+        # Basic check: Player owns the unit
         can_order = (unit.player == player)
-        # Add finance check if implementing bribe-ordering
+        # Advanced: Allow ordering if bought via bribe (requires tracking confirmed bribes)
         # if not can_order and game.configuration.finances:
-        #     can_order = Expense.objects.filter(player=player, type__in=(6, 9), unit=unit, confirmed=True).exists() # Example check
+        #     can_order = Expense.objects.filter(player=player, type=10, unit=unit, confirmed=True).exists() # Check confirmed 'Buy A/F'
 
         if not can_order:
              if logging: logging.warning(f"User {request.user} cannot order unit {unit_id}")
              return JsonResponse(response_data)
 
-        # --- Process Order Type ---
-        destinations_list = [] # Use a temporary list
+        # --- Process Order Code ---
+        destinations_list = []
 
-        if order_type == '-': # Advance
+        if order_code == '-': # Advance (Rule VII.B.1)
             # 1. Check Preconditions
-            if unit.siege_stage > 0:
+            if unit.siege_stage > 0: # Rule VII.B.4
                 if logging: logging.info(f"Unit {unit_id} cannot advance, siege_stage > 0")
                 return JsonResponse(response_data) # Cannot advance if besieging
 
             # 2. Find Directly Adjacent Valid Destinations
-            valid_direct_moves = []
             bordering_areas = unit.area.board_area.borders.all() # Get Area objects
             bordering_game_areas = GameArea.objects.filter(
-                game=game,
-                board_area__in=bordering_areas
+                game=game, board_area__in=bordering_areas
             ).select_related('board_area') # Get relevant GameAreas efficiently
 
             for dest_ga in bordering_game_areas:
@@ -1553,149 +1548,243 @@ def get_valid_destinations(request, slug):
                     fleet=(unit.type == 'F'),
                     source_unit_coast=unit.coast # Pass current coast
                 ) and dest_ga.board_area.accepts_type(unit.type):
-                    valid_direct_moves.append(dest_ga)
                     destinations_list.append({
                         'id': dest_ga.id,
                         'name': dest_ga.board_area.name,
                         'code': dest_ga.board_area.code,
-                        'coasts': dest_ga.board_area.get_coast_list(), # Add coasts info
+                        'coasts': dest_ga.board_area.get_coast_list(), # Add coasts info ['nc', 'sc']
                         'convoy_only': False
                     })
 
-            # 3. Find Potential Convoy Destinations (Army on Coast only)
+            # 3. Find Potential Convoy Destinations (Army on Coast only) (Rule VII.B.6)
             if unit.type == 'A' and unit.area.board_area.is_coast:
-                # Get IDs of areas already found as direct moves
-                direct_move_ids = [ga.id for ga in valid_direct_moves]
+                direct_move_ids = {d['id'] for d in destinations_list} # Set of direct move IDs
                 # Find all coastal areas in the game, excluding current area and direct moves
                 potential_convoy_gareas = GameArea.objects.filter(
-                    game=game,
-                    board_area__is_coast=True
+                    game=game, board_area__is_coast=True
                 ).exclude(
-                    id__in=direct_move_ids + [unit.area.id] # Exclude current and direct
+                    id__in=direct_move_ids | {unit.area.id} # Exclude current and direct using set union
                 ).select_related('board_area')
 
                 for dest_ga in potential_convoy_gareas:
-                    # No complex path check here, just offer all other coastal as options
+                    # No complex path check here, just offer all other coastal areas as options
                     destinations_list.append({
                         'id': dest_ga.id,
                         'name': dest_ga.board_area.name,
                         'code': dest_ga.board_area.code,
                         'coasts': dest_ga.board_area.get_coast_list(), # Add coasts info
-                        'convoy_only': True
+                        'convoy_only': True # Mark as needing convoy
                     })
 
-            response_data['destinations'] = destinations_list # Assign the final list
+            response_data['destinations'] = destinations_list
 
-        elif order_type == '=': # Conversion
+        elif order_code == '=': # Conversion (Rule VII.B.7)
             valid_types = []
             # 1. Check Preconditions
-            # Use siege_stage and exclude self
+            if not unit.area.board_area.is_fortified: # Rule VII.B.7.a
+                 return JsonResponse(response_data)
+            # Rule VII.B.7.h: Besieged Garrison may not convert
             if unit.type == 'G' and Unit.objects.filter(area=unit.area, siege_stage__gt=0).exclude(id=unit.id).exists():
-                 if logging: logging.info(f"Unit {unit_id} cannot convert, garrison besieged")
-                 return JsonResponse(response_data) # Besieged garrison cannot convert
+                 return JsonResponse(response_data)
 
             # 2. Determine Valid Conversion Types
-            if unit.area.board_area.is_fortified:
-                if unit.type == 'G':
-                    valid_types.append('A')
-                    if unit.area.board_area.has_port: valid_types.append('F')
-                else: # A or F converting to G
-                    # Check if city is empty of *other* Garrisons
-                    if not Unit.objects.filter(area=unit.area, type='G').exclude(id=unit.id).exists():
-                         # Fleet needs port to convert to G? Assume yes.
-                         if unit.type == 'A' or (unit.type == 'F' and unit.area.board_area.has_port):
-                              valid_types.append('G')
+            board_area = unit.area.board_area
+            if unit.type == 'G': # G -> A or F
+                valid_types.append('A')
+                if board_area.has_port: valid_types.append('F') # Rule VII.B.7.c
+            elif unit.type in ['A', 'F']: # A/F -> G
+                # Check if city is empty of *other* Garrisons (Rule VII.B.1.b)
+                if not Unit.objects.filter(area=unit.area, type='G').exclude(id=unit.id).exists():
+                     # Fleet needs port to convert to G? Rule VII.B.7.b implies yes.
+                     if unit.type == 'A' or (unit.type == 'F' and board_area.has_port):
+                          valid_types.append('G')
+            # Direct A<->F disallowed (Rule VII.B.7.d)
 
-            # 3. Build Response
+            # 3. Build Response (Only includes current area, but lists valid types)
             if valid_types:
-                 # Response for conversion is slightly different: includes valid_types
                  destinations_list = [{
-                     'id': unit.area.id,
+                     'id': unit.area.id, # Target is always the current area for conversion itself
                      'name': unit.area.board_area.name,
                      'code': unit.area.board_area.code,
-                     'valid_types': valid_types,
+                     'valid_types': valid_types, # Pass valid types to JS
                      'coasts': [] # Coasts not relevant for conversion target itself
                  }]
-            response_data['destinations'] = destinations_list # Assign the final list
+            response_data['destinations'] = destinations_list
 
-        # --- Handle other order types (L, 0, B, S, C) ---
+        # --- Handle other order codes (L, 0, B, S, C) ---
         # These generally don't need a primary destination list from this view.
-        # Support ('S') and Convoy ('C') destinations are handled by get_valid_support_destinations.
+        # Support ('S') and Convoy ('C') use get_valid_support_destinations / get_supportable_units.
         # Lift Siege ('L'), Disband ('0'), Besiege ('B') don't target another area.
         else:
-            if logging: logging.info(f"Order type '{order_type}' does not require destinations from this view.")
+            if logging: logging.debug(f"Order code '{order_code}' does not require destinations from this view.")
             # response_data remains {'destinations': []}
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error(f"Error in get_valid_destinations: {e}")
-        pass # Return default empty list on error
+        if logging: logging.error(f"Error in get_valid_destinations for game {slug}: {e}")
+        # Return default empty list on error, don't expose internal errors
+        response_data = {'destinations': []}
+    except Exception as e: # Catch unexpected errors
+         if logging: logging.error(f"Unexpected error in get_valid_destinations for game {slug}: {e}")
+         response_data = {'destinations': []}
+
 
     return JsonResponse(response_data)
 
+
 @login_required
 def get_valid_support_destinations(request, slug):
-    # ... (Needs careful review based on rules VII.B.5) ...
+    """
+    AJAX view: Given a SUPPORTING unit, find AREAS it can support into.
+    Rule VII.B.5.a: Supporter must be able to advance into the target area.
+    """
     game = get_object_or_404(Game, slug=slug)
-    unit_id = request.GET.get('unit_id')
-    supported_unit_id = request.GET.get('supported_unit_id')
-    # for_convoy = request.GET.get('for_convoy') == 'true' # Convoy destination is different
+    unit_id = request.GET.get('unit_id') # The SUPPORTING unit
 
     response_data = {'destinations': []}
 
     try:
-        unit = Unit.objects.get(id=unit_id, player__game=game)
-        supported_unit = Unit.objects.get(id=supported_unit_id, player__game=game)
+        unit = Unit.objects.select_related('area__board_area', 'player').get(id=unit_id, player__game=game)
         player = Player.objects.get(user=request.user, game=game)
 
         if unit.player != player: # Basic ownership check
             return JsonResponse(response_data)
 
-        # Determine the area support is being given *into*
-        # This depends on the *supported unit's intended action* (Hold, Move)
-        # This AJAX call might be better structured to ask "Which areas can Unit X support *into*?"
-        # Then a second call asks "Which units in/moving to Area Y can Unit X support?"
-
-        # Simplified: Find areas Unit X *could* support into, regardless of supported unit's order yet.
         supportable_target_areas = []
+        # Rule VII.B.5.c: Garrison supports own province
         if unit.type == 'G':
-            # Rule VII.B.5.c: Garrison supports own province
             supportable_target_areas = [unit.area]
         else:
-            # Rule VII.B.5.a: Must be able to advance into the supported area
+            # Rule VII.B.5.a: Must be able to advance into the supported area (without transport)
             possible_advances = unit.area.board_area.borders.all()
             for area_board in possible_advances:
                  try:
                     game_area = GameArea.objects.get(game=game, board_area=area_board)
-                    if unit.area.board_area.is_adjacent(area_board, fleet=(unit.type == 'F')) and \
-                       game_area.board_area.accepts_type(unit.type):
-                        supportable_target_areas.append(game_area)
+                    # Check direct adjacency (no convoy allowed for support reach)
+                    if unit.area.board_area.is_adjacent(area_board,
+                                                        fleet=(unit.type == 'F'),
+                                                        source_unit_coast=unit.coast):
+                         # Check unit type compatibility with target area
+                         # Army cannot support into sea, Fleet cannot support into non-coast/non-sea
+                         if unit.type == 'A' and game_area.board_area.is_sea: continue
+                         if unit.type == 'F' and not game_area.board_area.is_sea and not game_area.board_area.is_coast: continue
+
+                         supportable_target_areas.append(game_area)
                  except GameArea.DoesNotExist:
                      continue
             # Also include unit's own area (for supporting Hold)
             if unit.area not in supportable_target_areas:
                  supportable_target_areas.append(unit.area)
 
+        # Format response including coast info for target areas
+        destinations = [{
+            'id': area.id,
+            'name': area.board_area.name,
+            'code': area.board_area.code,
+            'coasts': area.board_area.get_coast_list() # Include coasts of potential target areas
+        } for area in supportable_target_areas]
 
-        destinations = [{'id': area.id, 'name': area.board_area.name, 'code': area.board_area.code}
-                        for area in supportable_target_areas]
         response_data['destinations'] = destinations
 
-    except (Unit.DoesNotExist, Player.DoesNotExist):
-        pass
+    except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
+        if logging: logging.error(f"Error in get_valid_support_destinations for game {slug}: {e}")
+        response_data = {'destinations': []}
+    except Exception as e:
+         if logging: logging.error(f"Unexpected error in get_valid_support_destinations for game {slug}: {e}")
+         response_data = {'destinations': []}
 
     return JsonResponse(response_data)
-    # return HttpResponse(json.dumps(response_data, ensure_ascii=False), content_type='application/json')
+
 
 @login_required
+def get_supportable_units(request, slug):
+    """
+    AJAX view: Given a SUPPORTING unit and a TARGET AREA, find units
+    in that area (or potentially moving to it) that can be supported.
+    """
+    game = get_object_or_404(Game, slug=slug)
+    unit_id = request.GET.get('unit_id') # The SUPPORTING unit
+    target_area_id = request.GET.get('target_area_id') # The AREA being supported INTO
+
+    response_data = {'units': []}
+
+    try:
+        unit = Unit.objects.select_related('area__board_area', 'player').get(id=unit_id, player__game=game)
+        target_area = GameArea.objects.select_related('board_area').get(id=target_area_id, game=game)
+        player = Player.objects.get(user=request.user, game=game)
+
+        if unit.player != player:
+            return JsonResponse(response_data)
+
+        # --- Check if supporter can actually support into target_area ---
+        can_support_target = False
+        if unit.type == 'G':
+             can_support_target = (unit.area == target_area) # Rule VII.B.5.c
+        else:
+             # Rule VII.B.5.a: Must be able to advance into target_area (no transport)
+             can_support_target = unit.area.board_area.is_adjacent(target_area.board_area,
+                                                                    fleet=(unit.type == 'F'),
+                                                                    source_unit_coast=unit.coast)
+             # Check type compatibility
+             if unit.type == 'A' and target_area.board_area.is_sea: can_support_target = False
+             if unit.type == 'F' and not target_area.board_area.is_sea and not target_area.board_area.is_coast: can_support_target = False
+
+        if not can_support_target:
+             if logging: logging.warning(f"Unit {unit_id} cannot support into area {target_area_id}")
+             return JsonResponse(response_data)
+
+        # --- Find units to be supported in the target area ---
+        # 1. Units HOLDING in the target area
+        holding_units = Unit.objects.filter(
+            player__game=game, area=target_area
+        ).exclude(id=unit.id).select_related('area__board_area', 'player__country') # Exclude self
+
+        # 2. Units attempting to MOVE INTO the target area
+        # Find areas adjacent to target_area from which a unit could move in
+        possible_origins = GameArea.objects.filter(
+             game=game, board_area__borders=target_area.board_area
+        ).select_related('board_area')
+
+        moving_units_qs = Unit.objects.none()
+        for origin_ga in possible_origins:
+             # Check if units in origin_ga could move to target_area
+             units_in_origin = Unit.objects.filter(player__game=game, area=origin_ga)
+             for u_origin in units_in_origin:
+                  if u_origin.area.board_area.is_adjacent(target_area.board_area,
+                                                          fleet=(u_origin.type == 'F'),
+                                                          source_unit_coast=u_origin.coast):
+                       # Check if this unit has an order to move to target_area
+                       # This requires looking at unconfirmed orders, potentially complex.
+                       # Simplification: List all units that *could* move into the target area.
+                       # The user selects the intended supported unit/move in the form.
+                       moving_units_qs |= Q(id=u_origin.id)
+
+
+        # Combine holding and potentially moving units
+        supportable_units = (holding_units | Unit.objects.filter(moving_units_qs)) \
+                            .distinct().order_by('player__country__name', 'type', 'area__board_area__code')
+
+        # Format response
+        units_data = [{'id': u.id, 'description': u.supportable_order()} for u in supportable_units]
+        response_data['units'] = units_data
+
+    except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
+        if logging: logging.error(f"Error in get_supportable_units for game {slug}: {e}")
+        response_data = {'units': []}
+    except Exception as e:
+         if logging: logging.error(f"Unexpected error in get_supportable_units for game {slug}: {e}")
+         response_data = {'units': []}
+
+    return JsonResponse(response_data)
+
+
 @login_required
 def get_area_info(request, slug):
     """AJAX view to get area information, including coasts."""
     game = get_object_or_404(Game, slug=slug)
-    area_id = request.GET.get('area_id') # Get area_id instead of unit_id
+    area_id = request.GET.get('area_id')
     area_info = {'has_city': False, 'is_fortified': False, 'has_port': False, 'coasts': []} # Default
 
     try:
-        # Fetch GameArea directly
         game_area = GameArea.objects.select_related('board_area').get(id=area_id, game=game)
         board_area = game_area.board_area
 
@@ -1703,10 +1792,13 @@ def get_area_info(request, slug):
             'has_city': board_area.has_city,
             'is_fortified': board_area.is_fortified,
             'has_port': board_area.has_port,
-            'coasts': board_area.get_coast_list() # Get list of coast names
+            'coasts': board_area.get_coast_list() # Get list of coast names ['nc', 'sc']
         }
     except GameArea.DoesNotExist:
         pass # Return default info
+    except Exception as e: # Catch unexpected errors
+         if logging: logging.error(f"Unexpected error in get_area_info for game {slug}, area {area_id}: {e}")
+         pass
 
     return JsonResponse(area_info)
 
