@@ -8,8 +8,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.decorators import login_required
-from .models import VICTORY_TYPES, TIME_LIMITS, UNIT_TYPES, FAST_LIMITS # Import from models
-from .models import Unit, SpecialUnit, Scenario, Game, Configuration, Whisper, Order # Import necessary models
+from .models import VICTORY_TYPES, TIME_LIMITS, UNIT_TYPES, FAST_LIMITS, ORDER_SUBCODES # Import from models
+from .models import Unit, SpecialUnit, Scenario, Game, Configuration, Whisper, Order, GameArea # Import necessary models
 class GameForm(forms.ModelForm):
     scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
                                     empty_label=None,
@@ -42,29 +42,45 @@ class GameForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(GameForm, self).clean()
-        # ... (slug validation) ...
-        if not cleaned_data.get('slug') or len(cleaned_data['slug']) < 4:
-            msg = _("Slug is too short")
-            self.add_error('slug', msg) # Use add_error
+        # Initialize _errors if doesn't exist
+        if not hasattr(self, '_errors'):
+            self._errors = {}
+            
+        # Slug validation
+        if not cleaned_data.get('slug') or len(cleaned_data.get('slug', '')) < 4:
+            if 'slug' not in self._errors:
+                self._errors['slug'] = self.error_class()
+            self._errors['slug'].append(_("Slug is too short"))
+            if 'slug' in cleaned_data:
+                del cleaned_data['slug']
 
-        # ... (karma validation - unchanged) ...
+        # Karma validation
         if self.instance.created_by:
             profile = self.instance.created_by.get_profile()
             if profile:
                 karma = profile.karma
                 if karma < settings.KARMA_TO_JOIN:
                     raise forms.ValidationError(_("You don't have enough karma to create a game."))
+                
                 if int(cleaned_data.get('time_limit', 0)) in FAST_LIMITS:
                     if karma < settings.KARMA_TO_FAST:
-                        self.add_error('time_limit', _("You don't have enough karma for a fast game."))
+                        if 'time_limit' not in self._errors:
+                            self._errors['time_limit'] = self.error_class()
+                        self._errors['time_limit'].append(_("You don't have enough karma for a fast game."))
+                        if 'time_limit' in cleaned_data:
+                            del cleaned_data['time_limit']
+                
                 if cleaned_data.get('private'):
                     if karma < settings.KARMA_TO_PRIVATE:
-                        self.add_error('private', _("You don't have enough karma to create a private game."))
+                        if 'private' not in self._errors:
+                            self._errors['private'] = self.error_class()
+                        self._errors['private'].append(_("You don't have enough karma to create a private game."))
+                        if 'private' in cleaned_data:
+                            del cleaned_data['private']
             else: # Handle profile missing case
                  raise forms.ValidationError(_("User profile not found."))
         else: # Should not happen
              raise forms.ValidationError(_("Game creator not set."))
-
 
         # Validate victory condition choice against player count
         scenario = cleaned_data.get('scenario')
@@ -72,9 +88,17 @@ class GameForm(forms.ModelForm):
         if scenario and vic_type:
              num_players = scenario.get_slots()
              if vic_type == 'advanced_18' and num_players >= 5:
-                  self.add_error('victory_condition_type', _("Advanced (18 cities) requires 4 or fewer players."))
+                  if 'victory_condition_type' not in self._errors:
+                      self._errors['victory_condition_type'] = self.error_class()
+                  self._errors['victory_condition_type'].append(_("Advanced (18 cities) requires 4 or fewer players."))
+                  if 'victory_condition_type' in cleaned_data:
+                      del cleaned_data['victory_condition_type']
              elif vic_type == 'advanced_15' and num_players <= 4:
-                  self.add_error('victory_condition_type', _("Advanced (15 cities) requires 5 or more players."))
+                  if 'victory_condition_type' not in self._errors:
+                      self._errors['victory_condition_type'] = self.error_class()
+                  self._errors['victory_condition_type'].append(_("Advanced (15 cities) requires 5 or more players."))
+                  if 'victory_condition_type' in cleaned_data:
+                      del cleaned_data['victory_condition_type']
 
         # cities_to_win is set in model save, no need to clean here.
 
@@ -93,6 +117,10 @@ class GameForm(forms.ModelForm):
 class ConfigurationForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(ConfigurationForm, self).clean()
+        # Initialize _errors if doesn't exist
+        if not hasattr(self, '_errors'):
+            self._errors = {}
+            
         # ... (existing dependency checks - unchanged) ...
         if cleaned_data.get('lenders') or cleaned_data.get('unbalanced_loans'):
             cleaned_data['finances'] = True
@@ -327,7 +355,7 @@ def make_order_form(player):
                       raise forms.ValidationError(_("This order (including coast selection) is not possible according to the rules."))
             except Exception as e:
                  # Catch potential errors during temp order creation or validation
-                 self.add_error(None, "Validation Error: {e}")
+                 self.add_error(None, "Validation Error: %s" % e)
                  return cleaned_data
 
 
@@ -388,7 +416,7 @@ def get_valid_destinations(request, slug):
         #     can_order = Expense.objects.filter(player=player, type__in=(6, 9), unit=unit, confirmed=True).exists() # Example check
 
         if not can_order:
-             if logging: logging.warning("User {request.user} cannot order unit {unit_id}")
+             if logging: logging.warning("User %s cannot order unit %s" % (request.user, unit_id))
              return JsonResponse(response_data)
 
         # --- Process Order Type ---
@@ -397,7 +425,7 @@ def get_valid_destinations(request, slug):
         if order_type == '-': # Advance
             # 1. Check Preconditions
             if unit.siege_stage > 0:
-                if logging: logging.info("Unit {unit_id} cannot advance, siege_stage > 0")
+                if logging: logging.info("Unit %s cannot advance, siege_stage > 0" % unit_id)
                 return JsonResponse(response_data) # Cannot advance if besieging
 
             # 2. Find Directly Adjacent Valid Destinations
@@ -453,7 +481,7 @@ def get_valid_destinations(request, slug):
             # 1. Check Preconditions
             # Use siege_stage and exclude self
             if unit.type == 'G' and Unit.objects.filter(area=unit.area, siege_stage__gt=0).exclude(id=unit.id).exists():
-                 if logging: logging.info("Unit {unit_id} cannot convert, garrison besieged")
+                 if logging: logging.info("Unit %s cannot convert, garrison besieged" % unit_id)
                  return JsonResponse(response_data) # Besieged garrison cannot convert
 
             # 2. Determine Valid Conversion Types
@@ -485,11 +513,11 @@ def get_valid_destinations(request, slug):
         # Support ('S') and Convoy ('C') destinations are handled by get_valid_support_destinations.
         # Lift Siege ('L'), Disband ('0'), Besiege ('B') don't target another area.
         else:
-            if logging: logging.info("Order type '{order_type}' does not require destinations from this view.")
+            if logging: logging.info("Order type '%s' does not require destinations from this view." % order_type)
             # response_data remains {'destinations': []}
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error("Error in get_valid_destinations: {e}")
+        if logging: logging.error("Error in get_valid_destinations: %s" % e)
         pass # Return default empty list on error
 
     return JsonResponse(response_data)

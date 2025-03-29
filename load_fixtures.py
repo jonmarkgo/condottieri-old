@@ -48,11 +48,11 @@ def load_machiavelli_areas():
                     coast_names=item['fields'].get('coast_names', None)
                 )
                 created_areas[area_obj.id] = area_obj
-                print "Created Machiavelli area:", area_obj.code
+                print "Created Machiavelli area: %s" % area_obj.code
             except KeyError as e:
-                print "KeyError processing area PK {}: Missing key {}".format(item.get('pk'), e)
+                print "KeyError processing area PK %s: Missing key %s" % (item.get('pk'), e)
             except Exception as e:
-                print "Error creating area PK {}: {}".format(item.get('pk'), e)
+                print "Error creating area PK %s: %s" % (item.get('pk'), e)
 
         # Second pass: Update borders
         print "\nUpdating Machiavelli area borders..."
@@ -69,14 +69,14 @@ def load_machiavelli_areas():
                     if border_area:
                         borders_to_add.append(border_area)
                     else:
-                        print "Warning: Border area PK {} not found for area {}".format(border_id, area.code)
+                        print "Warning: Border area PK %s not found for area %s" % (border_id, area.code)
                 
                 if borders_to_add:
                     area.borders.add(*borders_to_add)
-                    print "Added {} borders to {}".format(len(borders_to_add), area.code)
+                    print "Added %d borders to %s" % (len(borders_to_add), area.code)
 
             except Exception as e:
-                print "Error adding borders for area {}: {}".format(item.get('pk'), e)
+                print "Error adding borders for area %s: %s" % (item.get('pk'), e)
 
     finally:
         cursor.execute('SET FOREIGN_KEY_CHECKS=1;')
@@ -116,9 +116,9 @@ def load_diplomacy_areas():
                         coast_names=item['fields'].get('coast_names', None)
                     )
                     created_areas[area_obj.id] = area_obj
-                    print "Created Diplomacy area:", area_obj.code
+                    print "Created Diplomacy area: %s" % area_obj.code
                 except Exception as e:
-                    print "Error creating Diplomacy area PK {}: {}".format(item.get('pk'), e)
+                    print "Error creating Diplomacy area PK %s: %s" % (item.get('pk'), e)
 
         # Then update borders
         print "\nUpdating Diplomacy area borders..."
@@ -136,14 +136,14 @@ def load_diplomacy_areas():
                         if border_area:
                             borders_to_add.append(border_area)
                         else:
-                            print "Warning: Border area PK {} not found for area {}".format(border_id, area.code)
+                            print "Warning: Border area PK %s not found for area %s" % (border_id, area.code)
                     
                     if borders_to_add:
                         area.borders.add(*borders_to_add)
-                        print "Added {} borders to {}".format(len(borders_to_add), area.code)
+                        print "Added %d borders to %s" % (len(borders_to_add), area.code)
 
                 except Exception as e:
-                    print "Error adding borders for area {}: {}".format(item.get('pk'), e)
+                    print "Error adding borders for area %s: %s" % (item.get('pk'), e)
 
     finally:
         cursor.execute('SET FOREIGN_KEY_CHECKS=1;')
@@ -206,9 +206,9 @@ def load_other_fixtures():
         try:
             print "\nLoading fixture:", fixture
             management.call_command('loaddata', fixture, verbosity=1)
-            print "Successfully loaded", fixture
+            print "Successfully loaded %s" % fixture
         except Exception as e:
-            print "Error loading {}: {}".format(fixture, e)
+            print "Error loading %s: %s" % (fixture, e)
             print "Continuing with next fixture..."
 
 if __name__ == '__main__':

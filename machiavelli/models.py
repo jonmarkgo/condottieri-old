@@ -177,7 +177,7 @@ BONUS_TIME = getattr(settings, 'BONUS_TIME', 0.2)
 def is_strait_blocked(area1_code, area2_code, game, convoying_player):
     """Checks if movement between two areas is blocked by a strait rule."""
     # Rule VII.D.2: Messina Strait (GON <-> IS blocked by F MES)
-    if {area1_code, area2_code} == {'GON', 'IS'}:
+    if set([area1_code, area2_code]) == set(['GON', 'IS']):
         try:
             messina_ga = GameArea.objects.get(game=game, board_area__code='MES')
             # Check if an *enemy* fleet is in Messina
@@ -203,7 +203,7 @@ def is_strait_blocked(area1_code, area2_code, game, convoying_player):
              # If Piombino has an enemy fleet, which sea connections does it block?
              # Rule VII.D.1 says it controls straits between mainland and Elba, part of ETS.
              # It blocks hostile fleets moving Pisa <-> ETS. Let's assume it blocks convoy path GOL<->ETS.
-             if {area1_code, area2_code} == {'GOL', 'ETS'}:
+             if set([area1_code, area2_code]) == set(['GOL', 'ETS']):
                   if logging: logging.debug("Convoy path blocked: Piombino Strait (%s<->%s) blocked by enemy fleet in PIO." % (area1_code, area2_code))
                   return True
     except GameArea.DoesNotExist:
@@ -495,7 +495,7 @@ actually played in GameArea objects.
     def __unicode__(self):
         # Use capfirst for better display
         from django.template.defaultfilters import capfirst
-        return "{self.code} - {capfirst(self.name)}"
+        return "%s - %s" % (self.code, capfirst(self.name))
 
     class Meta:
         ordering = ('code',)
@@ -660,6 +660,9 @@ class Game(models.Model):
                 self.configuration
             except Configuration.DoesNotExist:
                 Configuration.objects.create(game=self)
+            # Generate initial scenario map
+            self.create_game_board()
+            self.make_map()
 
     ##------------------------
     ## representation methods
@@ -790,7 +793,12 @@ class Game(models.Model):
             self.make_map()
             self.started = datetime.now()
             self.last_phase_change = datetime.now()
-            self.notify_players("game_started", {"game": self})
+            
+            # Send notifications directly instead of using notify_players method
+            if notification:
+                context = {"game": self}
+                for player in self.player_set.filter(user__isnull=False):
+                    notification.send([player.user], "game_started", context, True)
         self.save()
         #if self.map_outdated == True:
         #	self.make_map()
@@ -827,7 +835,12 @@ class Game(models.Model):
             if excom:
                 p.may_excommunicate = p.country.can_excommunicate
             if finances:
-                t = Treasury.objects.get(scenario=self.scenario, country=p.country)
+                # Get or create Treasury record with default values
+                t, created = Treasury.objects.get_or_create(
+                    scenario=self.scenario,
+                    country=p.country,
+                    defaults={'ducats': 0, 'double': False}
+                )
                 p.double_income = t.double
             p.save()
 
@@ -1032,7 +1045,11 @@ class Game(models.Model):
                 # Call new_phase logic for each player (check if they need to act)
                 for p in self.player_set.filter(user__isnull=False, eliminated=False):
                     p.new_phase() # Let player model determine if 'done' should be true for new phase
-                self.notify_players("new_phase", {"game": self})
+                # Send notification directly instead of using notify_players method
+                if notification:
+                    context = {"game": self}
+                    for player in self.player_set.filter(user__isnull=False):
+                        notification.send([player.user], "new_phase", context, True)
                 self.make_map() # Update map for new phase
             return True # Phase advanced
         else:
@@ -1224,7 +1241,7 @@ class Game(models.Model):
     def end_of_season_checks(self, season_ended):
         """ Performs checks that happen at the end of a specific season,
             AFTER orders and retreats for that season are fully resolved. """
-        if logging: logging.info("Game {self.id}: Performing end-of-season checks for season {season_ended}")
+        if logging: logging.info("Game %s: Performing end-of-season checks for season %s" % (self.id, season_ended))
         config = self.configuration
 
         # --- Actions at End of ANY Season ---
@@ -1241,7 +1258,7 @@ class Game(models.Model):
             if config.famine:
                 famine_units = Unit.objects.filter(player__game=self, area__famine=True)
                 if famine_units.exists():
-                    if logging: logging.info("Game {self.id} (End of Spring): Removing {famine_units.count()} units due to famine.")
+                    if logging: logging.info("Game %s (End of Spring): Removing %d units due to famine." % (self.id, famine_units.count()))
                     # Log which units are removed before deleting
                     for unit in famine_units:
                          if signals: signals.unit_disbanded.send(sender=unit, context="famine")
@@ -1263,7 +1280,7 @@ class Game(models.Model):
             if config.storms:
                 storm_units = Unit.objects.filter(player__game=self, area__storm=True)
                 if storm_units.exists():
-                     if logging: logging.info("Game {self.id} (End of Fall): Removing {storm_units.count()} units due to storms.")
+                     if logging: logging.info("Game %s (End of Fall): Removing %d units due to storms." % (self.id, storm_units.count()))
                      for unit in storm_units:
                           if signals: signals.unit_disbanded.send(sender=unit, context="storm")
                      storm_units.delete()
@@ -1285,7 +1302,7 @@ class Game(models.Model):
 
             # Check for winner AFTER all end-of-fall actions (Rule III.A)
             if self.check_winner():
-                if logging: logging.info("Game {self.id}: Winner found at end of Fall {self.year}.")
+                if logging: logging.info("Game %s: Winner found at end of Fall %s." % (self.id, self.year))
                 # Game ends here, set phase to inactive to stop further advancement
                 self.phase = PHINACTIVE
                 self.save(update_fields=['phase'])
@@ -1298,12 +1315,12 @@ class Game(models.Model):
             # Disband unpaid units
             to_disband = Unit.objects.filter(player__game=self, placed=True, paid=False).exclude(player__user__isnull=True) # Exclude autonomous
             if to_disband.exists():
-                if logging: logging.info("Game {self.id}: Disbanding {to_disband.count()} unpaid units.")
+                if logging: logging.info("Game %s: Disbanding %d unpaid units." % (self.id, to_disband.count()))
                 to_disband.delete()
             # Place newly built units
             to_place = Unit.objects.filter(player__game=self, placed=False)
             if to_place.exists():
-                 if logging: logging.info("Game {self.id}: Placing {to_place.count()} new units.")
+                 if logging: logging.info("Game %s: Placing %d new units." % (self.id, to_place.count()))
                  for u in to_place: u.place() # Calls signal etc.
             # Mark all remaining non-autonomous units as unpaid for the *next* Spring
             Unit.objects.filter(player__game=self).exclude(player__user__isnull=True).update(paid=False)
@@ -1311,12 +1328,12 @@ class Game(models.Model):
             # Units marked paid=False by view logic need disbanding
             to_disband = Unit.objects.filter(player__game=self, placed=True, paid=False).exclude(player__user__isnull=True)
             if to_disband.exists():
-                if logging: logging.info("Game {self.id}: Disbanding {to_disband.count()} excess units (Basic).")
+                if logging: logging.info("Game %s: Disbanding %d excess units (Basic)." % (self.id, to_disband.count()))
                 to_disband.delete()
             # Units marked placed=False by view logic need placing
             to_place = Unit.objects.filter(player__game=self, placed=False)
             if to_place.exists():
-                if logging: logging.info("Game {self.id}: Placing {to_place.count()} new units (Basic).")
+                if logging: logging.info("Game %s: Placing %d new units (Basic)." % (self.id, to_place.count()))
                 for u in to_place: u.place()
             # No concept of payment in basic, reset flags? Or rely on view logic setting them correctly each Spring.
             # Let's assume view logic handles it.
@@ -1406,7 +1423,7 @@ class Game(models.Model):
             return
 
         die = dice.roll_1d6() # Rule V.B.1.d
-        if logging: logging.info("Game {self.id}: Variable income roll (Spring {self.year}): {die}")
+        if logging: logging.info("Game %s: Variable income roll (Spring %s): %s" % (self.id, self.year, die))
 
         # Get IDs of major cities for this scenario (Rule V.B.1.c.2)
         # Use Area.major_city_income if populated, otherwise CityIncome model
@@ -1563,7 +1580,7 @@ class Game(models.Model):
         orders_to_delete = []
         for s_order in support_orders:
             supporter = s_order.unit
-            info += "Checking support order {s_order.id} from {supporter}.\n"
+            info += "Checking support order %s from %s.\n" % (s_order.id, supporter)
             # Find attacks specifically targeting this supporter's area
             attacks_on_supporter = attacking_orders.filter(
                 ~Q(unit__player=supporter.player) & # Must be enemy attack
@@ -1571,7 +1588,7 @@ class Game(models.Model):
             )
 
             if attacks_on_supporter.exists():
-                info += "Supporting unit {supporter} is being attacked.\n"
+                info += "Supporting unit %s is being attacked.\n" % supporter
                 support_cut = False
                 # Determine the area the support is directed *into*
                 support_target_area = None
@@ -1587,10 +1604,10 @@ class Game(models.Model):
                 for attack_order in attacks_on_supporter:
                     # Rule VIII.B.3.d: Support is NOT cut if attack comes FROM the area support was directed TO.
                     if attack_order.unit.area == support_target_area:
-                        info += "Attack from {attack_order.unit} is from the supported area ({support_target_area.board_area.code}). Support NOT cut.\n"
+                        info += "Attack from %s is from the supported area (%s). Support NOT cut.\n" % (attack_order.unit, support_target_area.board_area.code)
                         continue # This attack doesn't cut support
                     else:
-                        info += "Attack from {attack_order.unit} (in {attack_order.unit.area.board_area.code}) cuts support into {support_target_area.board_area.code}.\n"
+                        info += "Attack from %s (in %s) cuts support into %s.\n" % (attack_order.unit, attack_order.unit.area.board_area.code, support_target_area.board_area.code)
                         support_cut = True
                         break # One cutting attack is enough
 
@@ -1600,7 +1617,7 @@ class Game(models.Model):
 
         if orders_to_delete:
              Order.objects.filter(id__in=orders_to_delete).delete()
-             info += "Deleted {len(orders_to_delete)} cut support orders.\n"
+             info += "Deleted %d cut support orders.\n" % len(orders_to_delete)
 
         return info
 
@@ -1614,7 +1631,7 @@ class Game(models.Model):
 
         for c_order in convoy_orders:
             fleet = c_order.unit
-            info += "Checking convoy order {c_order.id} by {fleet}.\n"
+            info += "Checking convoy order %s by %s.\n" % (c_order.id, fleet)
             # Check attacks targeting the fleet's area
             attacks_on_fleet = Order.objects.filter(
                 ~Q(unit__player=fleet.player) & Q(unit__player__game=self, confirmed=True) &
@@ -1623,7 +1640,7 @@ class Game(models.Model):
             if not attacks_on_fleet.exists():
                 continue # Fleet not attacked
 
-            info += "Convoying fleet {fleet} is under attack.\n"
+            info += "Convoying fleet %s is under attack.\n" % fleet
             fleet_strength_obj = Unit.objects.get_with_strength(self.game, id=fleet.id)
             fleet_strength = fleet_strength_obj.strength
 
@@ -1631,11 +1648,11 @@ class Game(models.Model):
             for attack_order in attacks_on_fleet:
                 attacker_strength_obj = Unit.objects.get_with_strength(self.game, id=attack_order.unit.id)
                 attacker_strength = attacker_strength_obj.strength
-                info += "Attacked by {attack_order.unit} (Strength: {attacker_strength}). Fleet strength: {fleet_strength}.\n"
+                info += "Attacked by %s (Strength: %s). Fleet strength: %s.\n" % (attack_order.unit, attacker_strength, fleet_strength)
                 # If any single attacker has > strength, fleet is dislodged
                 # If attacker has == strength, it's a standoff, fleet holds, convoy proceeds.
                 if attacker_strength > fleet_strength:
-                    info += "Fleet {fleet} will be dislodged by {attack_order.unit}. Cancelling convoy.\n"
+                    info += "Fleet %s will be dislodged by %s. Cancelling convoy.\n" % (fleet, attack_order.unit)
                     dislodged = True
                     break # One successful dislodge is enough
 
@@ -1646,13 +1663,13 @@ class Game(models.Model):
                 if army_order:
                     # Check if other convoys exist for this army move (complex)
                     # Simplification: Assume if the main convoy fails, the move fails.
-                    info += "Cancelling advance order for convoyed army {c_order.subunit}.\n"
+                    info += "Cancelling advance order for convoyed army %s.\n" % c_order.subunit
                     orders_to_delete.append(army_order.id)
 
 
         if orders_to_delete:
              Order.objects.filter(id__in=orders_to_delete).delete()
-             info += "Deleted {len(orders_to_delete)} orders due to disrupted convoys.\n"
+             info += "Deleted %d orders due to disrupted convoys.\n" % len(orders_to_delete)
 
         return info
 
@@ -1683,12 +1700,12 @@ class Game(models.Model):
                          # TODO: Implement full find_convoy_line check here if needed for stricter validation.
 
                 if not is_convoy_possible:
-                    info += "Impossible attack: {order}. Area not adjacent and no valid convoy.\n"
+                    info += "Impossible attack: %s. Area not adjacent and no valid convoy.\n" % order
                     orders_to_delete.append(order.id)
 
         if orders_to_delete:
             Order.objects.filter(id__in=orders_to_delete).delete()
-            info += "Deleted {len(orders_to_delete)} unreachable attack orders.\n"
+            info += "Deleted %d unreachable attack orders.\n" % len(orders_to_delete)
         return info
 
 
@@ -1701,30 +1718,30 @@ class Game(models.Model):
 
         for g_order in garrisoning_orders:
             unit = g_order.unit
-            info += "{unit} tries to convert into garrison in {unit.area}.\n"
+            info += "%s tries to convert into garrison in %s.\n" % (unit, unit.area)
             # Check if city already has a garrison
             if Unit.objects.filter(area=unit.area, type='G').exists():
-                info += "Fail: Garrison already exists in {unit.area}.\n"
+                info += "Fail: Garrison already exists in %s.\n" % unit.area
                 orders_to_delete.append(g_order.id) # Order fails
             else:
                 # Check if another unit is trying to convert to G in the same area
                 competing_conversions = garrisoning_orders.filter(unit__area=unit.area).exclude(id=g_order.id)
                 if competing_conversions.exists():
-                     info += "Fail: Competing conversion to Garrison in {unit.area}.\n"
+                     info += "Fail: Competing conversion to Garrison in %s.\n" % unit.area
                      # Both fail? Or highest strength wins? Rules don't specify. Assume both fail.
                      orders_to_delete.append(g_order.id)
                      for comp_order in competing_conversions:
                          if comp_order.id not in orders_to_delete: orders_to_delete.append(comp_order.id)
                 else:
                     # Conversion successful
-                    info += "Success! {unit} converts to Garrison.\n"
+                    info += "Success! %s converts to Garrison.\n" % unit
                     unit.convert('G') # Update unit type
                     units_converted.append(unit.id)
                     orders_to_delete.append(g_order.id) # Order completed
 
         if orders_to_delete:
             Order.objects.filter(id__in=orders_to_delete).delete()
-            info += "Processed {len(garrisoning_orders)} Garrison conversion orders.\n"
+            info += "Processed %d Garrison conversion orders.\n" % len(garrisoning_orders)
 
         return info
 
@@ -1750,7 +1767,7 @@ class Game(models.Model):
         retreating_units = {} # {unit_id: source_area_code}
 
         for area in target_game_areas:
-            info += "\nResolving conflicts for area: {area.board_area.code}\n"
+            info += "\nResolving conflicts for area: %s\n" % area.board_area.code
             area.standoff = False # Reset standoff for this resolution step
 
             # Units trying to ENTER this area
@@ -1792,7 +1809,7 @@ class Game(models.Model):
                     is_possible_now = order.is_possible() # Use the order's check
 
                 if not is_possible_now:
-                    info += "Order impossible/unreachable now: {order}. Deleting.\n"
+                    info += "Order impossible/unreachable now: %s. Deleting.\n" % order
                     processed_units.add(order.unit.id)
                     order.delete()
                     continue # Skip this order
@@ -1802,9 +1819,9 @@ class Game(models.Model):
                     strength_obj = Unit.objects.get_with_strength(self.game, id=order.unit.id)
                     invader_strengths[order.id] = strength_obj.strength
                     valid_invading_orders.append(order) # Add to list of valid invaders
-                    info += "Invader: {order.unit} (Strength: {strength_obj.strength})\n"
+                    info += "Invader: %s (Strength: %s)\n" % (order.unit, strength_obj.strength)
                 except Unit.DoesNotExist:
-                    info += "Error: Unit for order {order.id} not found during strength calc.\n"
+                    info += "Error: Unit for order %s not found during strength calc.\n" % order.id
                     order.delete() # Clean up invalid order
 
 
@@ -1814,9 +1831,9 @@ class Game(models.Model):
                     # Occupier strength includes support for HOLDING
                     strength_obj = Unit.objects.get_with_strength(self.game, id=occupier.id)
                     occupier_strength = strength_obj.strength # get_with_strength handles hold support
-                    info += "Occupier: {occupier} (Strength: {occupier_strength})\n"
+                    info += "Occupier: %s (Strength: %s)\n" % (occupier, occupier_strength)
                 except Unit.DoesNotExist:
-                     info += "Error: Occupier unit {occupier.id} not found during strength calc.\n"
+                     info += "Error: Occupier unit %s not found during strength calc.\n" % occupier.id
                      occupier = None # Treat as non-existent
 
 
@@ -1828,7 +1845,7 @@ class Game(models.Model):
                 winners = [oid for oid, s in invader_strengths.items() if s == max_invader_strength]
 
             if len(winners) > 1: # Standoff among invaders
-                info += "Standoff among invaders for {area.board_area.code} (Strength: {max_invader_strength}).\n"
+                info += "Standoff among invaders for %s (Strength: %s).\n" % (area.board_area.code, max_invader_strength)
                 area.standoff = True
                 # All involved invaders fail and hold
                 for order_id in invader_strengths.keys():
@@ -1848,11 +1865,11 @@ class Game(models.Model):
                 try:
                     winning_order = Order.objects.get(id=winners[0])
                     winning_strength = max_invader_strength
-                    info += "Winning invader: {winning_order.unit} (Strength: {winning_strength})\n"
+                    info += "Winning invader: %s (Strength: %s)\n" % (winning_order.unit, winning_strength)
 
                     if occupier:
                         if winning_strength > occupier_strength: # Invader wins, occupier retreats
-                            info += "{winning_order.unit} dislodges {occupier}.\n"
+                            info += "%s dislodges %s.\n" % (winning_order.unit, occupier)
                             retreating_units[occupier.id] = winning_order.unit.area.board_area.code
                             processed_units.add(occupier.id)
                             if occupying_order: occupying_order.delete()
@@ -1864,18 +1881,18 @@ class Game(models.Model):
                             processed_units.add(winning_order.unit.id)
                             winning_order.delete()
                         elif winning_strength == occupier_strength: # Bounce / Standoff
-                            info += "Bounce between {winning_order.unit} and {occupier}.\n"
+                            info += "Bounce between %s and %s.\n" % (winning_order.unit, occupier)
                             area.standoff = True
                             processed_units.add(winning_order.unit.id)
                             winning_order.delete()
                             processed_units.add(occupier.id)
                         else: # Occupier wins, invader holds
-                            info += "{occupier} holds against {winning_order.unit}.\n"
+                            info += "%s holds against %s.\n" % (occupier, winning_order.unit)
                             processed_units.add(winning_order.unit.id)
                             winning_order.delete()
                             processed_units.add(occupier.id)
                     else: # No occupier, invader succeeds
-                        info += "{winning_order.unit} successfully enters empty {area.board_area.code}.\n"
+                        info += "%s successfully enters empty %s.\n" % (winning_order.unit, area.board_area.code)
                         # Execute winning order, passing coast
                         if winning_order.code == '-':
                             winning_order.unit.invade_area(area, target_coast=winning_order.destination_coast)
@@ -1885,16 +1902,16 @@ class Game(models.Model):
                         winning_order.delete()
 
                 except Order.DoesNotExist:
-                    info += "Error: Winning order {winners[0]} not found.\n"
+                    info += "Error: Winning order %s not found.\n" % winners[0]
 
             elif not winners and occupier: # No valid invaders, occupier holds
-                 info += "Occupier {occupier} holds uncontested.\n"
+                 info += "Occupier %s holds uncontested.\n" % occupier
                  processed_units.add(occupier.id)
                  # Occupier executes original order only if it wasn't just holding/supporting hold
                  if occupying_order and occupying_order.code not in ['H', 'S'] : # If it was moving/convoying etc.
                       # This order should have been processed when resolving *its* target area.
                       # If it's still here, it likely failed. Delete it.
-                      info += "Deleting occupier's non-hold order {occupying_order.id} as it likely failed elsewhere.\n"
+                      info += "Deleting occupier's non-hold order %s as it likely failed elsewhere.\n" % occupying_order.id
                       occupying_order.delete()
 
             # Save standoff status for the area after all checks
@@ -1919,20 +1936,20 @@ class Game(models.Model):
                      order.unit.siege_stage = 0
                      order.unit.besieging = False
                      order.unit.save(update_fields=['siege_stage', 'besieging'])
-                     info += "{order.unit} lifts siege.\n"
+                     info += "%s lifts siege.\n" % order.unit
                  orders_to_delete_ids.append(order.id)
              elif order.code == '0':
-                 info += "{order.unit} disbands.\n"
+                 info += "%s disbands.\n" % order.unit
                  units_to_disband_ids.append(order.unit.id)
                  # Order deleted with unit
              elif order.code == 'C':
-                 info += "{order.unit} provides convoy (holds position).\n"
+                 info += "%s provides convoy (holds position).\n" % order.unit
                  orders_to_delete_ids.append(order.id)
              elif order.code == 'S':
-                 info += "{order.unit} provides support (holds position).\n"
+                 info += "%s provides support (holds position).\n" % order.unit
                  orders_to_delete_ids.append(order.id)
              elif order.code == 'H':
-                 info += "{order.unit} holds.\n"
+                 info += "%s holds.\n" % order.unit
                  orders_to_delete_ids.append(order.id)
              # Besiege ('B') orders are handled in resolve_sieges
 
@@ -1955,7 +1972,7 @@ class Game(models.Model):
         disband_units_ids = retreat_orders.filter(area__isnull=True).values_list('unit_id', flat=True)
         if disband_units_ids:
             units_to_delete = Unit.objects.filter(id__in=disband_units_ids)
-            info += "Disbanding units: {', '.join(str(u) for u in units_to_delete)}\n"
+            info += "Disbanding units: %s\n" % ', '.join(str(u) for u in units_to_delete)
             units_to_delete.delete()
 
         # Units ordered to retreat to a specific area
@@ -1974,8 +1991,8 @@ class Game(models.Model):
                 # Conflict: Multiple units targeting same area/coast -> all disband
                 area_id, coast = target_key
                 dest_ga = GameArea.objects.get(id=area_id) # For logging
-                coast_str = "/{coast}" if coast else ""
-                info += "Retreat conflict: Units {unit_ids} targeting {dest_ga}{coast_str}. All disband.\n"
+                coast_str = "/{%s}" % coast if coast else ""
+                info += "Retreat conflict: Units %s targeting %s%s. All disband.\n" % (unit_ids, dest_ga, coast_str)
                 units_to_disband_conflict.update(unit_ids)
             else:
                 # Potential valid retreat, store details
@@ -1996,25 +2013,25 @@ class Game(models.Model):
                 dest_area = GameArea.objects.get(id=destination.id)
                 can_retreat_here = True
                 if dest_area.standoff:
-                    info += "Cannot retreat {unit} to {destination}: Area became standoff.\n"
+                    info += "Cannot retreat %s to %s: Area became standoff.\n" % (unit, destination)
                     can_retreat_here = False
                 # Check for A/F units that might have moved *into* the destination *after* conflicts were resolved
                 # This check might be complex/redundant if conflict resolution is perfect.
                 # Let's assume conflict resolution correctly cleared the path or marked standoff.
                 # if Unit.objects.filter(area=dest_area, type__in=['A','F']).exists():
-                #     info += "Cannot retreat {unit} to {destination}: Area became occupied.\n"
+                #     info += "Cannot retreat %s to %s: Area became occupied.\n" % (unit, destination)
                 #     can_retreat_here = False
 
                 if can_retreat_here:
-                    coast_str = "/{retreat_coast}" if retreat_coast else ""
-                    info += "{unit} retreats to {destination}{coast_str}.\n"
+                    coast_str = "/{%s}" % retreat_coast if retreat_coast else ""
+                    info += "%s retreats to %s%s.\n" % (unit, destination, coast_str)
                     unit.retreat(destination, target_coast=retreat_coast) # Pass coast
                 else:
-                     info += "No valid retreat for {unit} to {destination}. Unit disbands.\n"
+                     info += "No valid retreat for %s to %s. Unit disbands.\n" % (unit, destination)
                      unit.delete()
 
             except GameArea.DoesNotExist:
-                 info += "Retreat destination {destination.id} not found for {unit}. Unit disbands.\n"
+                 info += "Retreat destination %s not found for %s. Unit disbands.\n" % (destination.id, unit)
                  try: unit.delete()
                  except Unit.DoesNotExist: pass # Already deleted
             except Unit.DoesNotExist:
@@ -2038,7 +2055,7 @@ class Game(models.Model):
 
             b = b_order.unit
             area = b.area
-            info += "{b} ordered to besiege in {area.board_area.code}. "
+            info += "%s ordered to besiege in %s. " % (b, area.board_area.code)
             target_unit = None
             target_rebellion = None
 
@@ -2052,7 +2069,7 @@ class Game(models.Model):
             try:
                 target_unit = Unit.objects.get(area=area, type='G')
                 if target_unit.player == b.player: target_unit = None # Cannot besiege self
-                else: info += "Target: Garrison {target_unit}. "
+                else: info += "Target: Garrison {target_unit}. " % target_unit
             except Unit.DoesNotExist:
                 target_rebellion = area.has_rebellion(b.player, same=False) # Target enemy rebellion
                 if target_rebellion and target_rebellion.garrisoned:
@@ -2111,7 +2128,7 @@ class Game(models.Model):
         )
 
         for b in broken_sieges:
-            info += "Siege by {b} broken (no Besiege order or forced retreat).\n"
+            info += "Siege by %s broken (no Besiege order or forced retreat).\n" % b
             b.siege_stage = 0
             # b.besieging = False # Removed field
             b.save(update_fields=['siege_stage'])
@@ -2124,7 +2141,7 @@ class Game(models.Model):
         retreating = Unit.objects.filter(player__game=self).exclude(must_retreat__exact='')
         if retreating.exists():
             for u in retreating:
-                info += "{u} must retreat from {u.area} (attack from {u.must_retreat}).\n"
+                info += "%s must retreat from %s (attack from %s).\n" % (u, u.area, u.must_retreat)
                 if signals: signals.forced_to_retreat.send(sender=u)
         else:
             info += "No retreats required this turn.\n"
@@ -2217,7 +2234,7 @@ def adjudicate_movement_phase(self):
         disband_units = retreat_orders.filter(area__isnull=True).values_list('unit', flat=True)
         if disband_units:
             units_to_delete = Unit.objects.filter(id__in=disband_units)
-            info += "Disbanding units: {', '.join(map(str, units_to_delete))}\n"
+            info += "Disbanding units: %s\n" % ', '.join(map(str, units_to_delete))
             units_to_delete.delete()
 
         # Units ordered to retreat to a specific area
@@ -2239,7 +2256,7 @@ def adjudicate_movement_phase(self):
                 # Multiple units trying to retreat to the same spot -> all disband (Rule VIII.B.6.e implies this?)
                 # Rule doesn't explicitly state multiple retreats cause disband, only if *no* place is available.
                 # Let's follow common Diplomacy interpretation: retreat conflict = disband.
-                info += "Retreat conflict for {unit} targeting {destination}. Unit disbands.\n"
+                info += "Retreat conflict for %s targeting %s. Unit disbands.\n" % (unit, destination)
                 try: unit.delete()
                 except Unit.DoesNotExist: pass # Might already be deleted if involved in multiple conflicts
             else:
@@ -2248,22 +2265,22 @@ def adjudicate_movement_phase(self):
                     dest_area = GameArea.objects.get(id=destination.id)
                     can_retreat_here = True
                     if dest_area.standoff: # Rule VIII.B.6.c.1
-                        info += "Cannot retreat {unit} to {destination}: Area is standoff.\n"
+                        info += "Cannot retreat %s to %s: Area is standoff.\n" % (unit, destination)
                         can_retreat_here = False
                     if Unit.objects.filter(area=dest_area, type__in=['A','F']).exists():
-                        info += "Cannot retreat {unit} to {destination}: Area occupied.\n"
+                        info += "Cannot retreat %s to %s: Area occupied.\n" % (unit, destination)
                         can_retreat_here = False
                     # Cannot retreat where attacker came from (already filtered in get_possible_retreats)
 
                     if can_retreat_here:
-                        info += "{unit} retreats to {destination}.\n"
+                        info += "%s retreats to %s.\n" % (unit, destination)
                         unit.retreat(destination) # Handles conversion if retreating to own city
                     else:
-                         info += "No valid retreat for {unit}. Unit disbands.\n"
+                         info += "No valid retreat for %s. Unit disbands.\n" % unit
                          unit.delete()
 
                 except GameArea.DoesNotExist:
-                     info += "Retreat destination {destination.id} not found for {unit}. Unit disbands.\n"
+                     info += "Retreat destination %s not found for %s. Unit disbands.\n" % (destination.id, unit)
                      try: unit.delete()
                      except Unit.DoesNotExist: pass
                 except Unit.DoesNotExist:
@@ -2291,14 +2308,14 @@ def adjudicate_movement_phase(self):
                 new_controller = players_present.pop()
                 if area.player != new_controller:
                     old_controller_name = area.player.country.name if area.player else "Neutral"
-                    info += "Area {area.board_area.code}: Control changed from {old_controller_name} to {new_controller.country.name}.\n"
+                    info += "Area %s: Control changed from %s to %s.\n" % (area.board_area.code, old_controller_name, new_controller.country.name)
                     area.player = new_controller
                     area.save()
                     if signals: signals.area_controlled.send(sender=area)
             elif len(players_present) > 1:
                 # Contested area, no one controls (Rule V.C.1.a)
                 if area.player is not None:
-                    info += "Area {area.board_area.code}: Control lost by {area.player.country.name} (contested).\n"
+                    info += "Area %s: Control lost by %s (contested).\n" % (area.board_area.code, area.player.country.name)
                     area.player = None
                     area.save()
             # If len(players_present) == 0, control remains with the last controller (area.player)
@@ -2408,7 +2425,11 @@ def adjudicate_movement_phase(self):
         self.save()
         if signals:
             signals.game_finished.send(sender=self)
-        self.notify_players("game_over", {"game": self})
+        # Send notification directly instead of using notify_players method
+        if notification:
+            context = {"game": self}
+            for player in self.player_set.filter(user__isnull=False):
+                notification.send([player.user], "game_over", context, True)
         self.tweet_message("The game %(game)s is over" % {'game': self.slug})
         self.tweet_results()
         self.clean_useless_data()
@@ -2427,14 +2448,18 @@ def adjudicate_movement_phase(self):
     ##------------------------
 
     def notify_players(self, label, extra_context={}, on_site=True):
-        if notification:
-            users = User.objects.filter(player__game=self,
-                                        player__eliminated=False)
-            extra_context.update({'STATIC_URL': settings.STATIC_URL, })
-            if self.fast:
-                notification.send_now(users, label, extra_context, on_site)
-            else:
-                notification.send(users, label, extra_context, on_site)
+        """ Notify all players in the game about something """
+        # Gracefully handle cases where notification module is unavailable
+        try:
+            if notification:
+                context = {"game": self}
+                context.update(extra_context)
+                for player in self.player_set.filter(user__isnull=False):
+                    notification.send([player.user], label, context, on_site)
+        except Exception as e:
+            if logging:
+                logging.error("Error sending notification '%s': %s" % (label, str(e)))
+            # Continue execution even if notification fails
 
     def tweet_message(self, message):
         if twitter_api:
@@ -2450,6 +2475,11 @@ def adjudicate_movement_phase(self):
                             winners[1].user,
                             winners[2].user)
             self.tweet_message(message)
+
+    def tweet_new_game(sender, instance, created, **kw):
+        if created and instance.configuration.gossip:
+            instance.tweet_message("New game %s has been created!" % instance.slug)
+
 
 if twitter_api and settings.TWEET_NEW_GAME:
     def tweet_new_game(sender, instance, created, **kw):
@@ -3439,7 +3469,7 @@ class Unit(models.Model):
 
     def supportable_order(self):
         """Returns a description of the unit for the support order dropdown."""
-        coast_str = "/{self.coast}" if self.coast else ""
+        coast_str = "/%s" % self.coast if self.coast else ""
         return _("%(type)s in %(area)s%(coast)s") % {
             'type': self.get_type_display(),
             'area': self.area,
@@ -3465,7 +3495,7 @@ class Unit(models.Model):
         super(Unit, self).delete()
     
     def __unicode__(self):
-        coast_str = "/{self.coast}" if self.coast else ""
+        coast_str = "/%s" % self.coast if self.coast else ""
         return _("%(type)s in %(area)s%(coast)s") % {
             'type': self.get_type_display(),
             'area': self.area,
@@ -3473,7 +3503,7 @@ class Unit(models.Model):
         }
 
     def describe_with_cost(self):
-        coast_str = "/{self.coast}" if self.coast else ""
+        coast_str = "/%s" % self.coast if self.coast else ""
         return _("%(type)s in %(area)s%(coast)s (%(cost)s ducats)") % {
             'type': self.get_type_display(),
             'area': self.area,
@@ -3555,929 +3585,5 @@ class Unit(models.Model):
         self.siege_stage = 0 # Moving resets siege
         # self.besieging = False # Removed field
         self.save()
-        if logging: logging.info("Unit {self.id} ({self.type}) moved from {old_area_code} to {ga.board_area.code}{'/' + self.coast if self.coast else ''}")
+        if logging: logging.info("Unit {self.id} ({self.type}) moved from {old_area_code} to {ga.board_area.code}%s" % ('/' + self.coast if self.coast else ''))
         self.check_rebellion() # Check for liberating rebellion
-
-    def retreat(self, destination, target_coast=None): # Add target_coast parameter
-        """ Moves unit after retreat order, handles conversion option. """
-        if self.area == destination: # Retreating into own city/fortress (Conversion - Rule VIII.B.6.d)
-            if signals: signals.unit_converted.send(sender=self, before=self.type, after='G', context="retreat")
-            if logging: logging.info("Unit {self.id} ({self.type}) retreats by converting to Garrison in {self.area.board_area.code}")
-            self.type = 'G'
-            self.coast = None # Garrisons don't have coasts
-            self.siege_stage = 0
-            # self.besieging = False # Removed field
-            self.must_retreat = ''
-            self.save()
-            # No rebellion check needed when converting to G
-        else: # Retreating to adjacent area
-            if signals: signals.unit_retreated.send(sender=self, destination=destination)
-            old_area_code = self.area.board_area.code
-            self.area = destination
-            # Set coast if retreating to a multi-coast province
-            if destination.board_area.has_multiple_coasts() and self.type == 'F':
-                self.coast = target_coast # Use specified coast from RetreatOrder
-                if not self.coast:
-                     if logging: logging.error("Fleet {self.id} retreated to multi-coast {destination.board_area.code} without target_coast specified!")
-                     self.coast = None # Clear coast if invalid
-            else:
-                self.coast = None # Clear coast otherwise
-
-            self.must_retreat = '' # Successful retreat clears status
-            self.save()
-            if logging: logging.info("Unit {self.id} ({self.type}) retreated from {old_area_code} to {destination.board_area.code}{'/' + self.coast if self.coast else ''}")
-            self.check_rebellion() # Check for liberating rebellion
-
-
-    def convert(self, new_type):
-        """ Executes a conversion order, checking rules. (Rule VII.B.7) """
-        # Rule VII.B.7.h: Besieged Garrison may not convert.
-        # Check if *another* unit is besieging this garrison's area
-        if self.type == 'G' and Unit.objects.filter(area=self.area, siege_stage__gt=0).exclude(id=self.id).exists():
-             if logging: logging.info("Conversion failed: Garrison {self.id} in {self.area.board_area.code} is besieged.")
-             # Order fails, unit holds implicitly. Delete the order? Adjudication loop might handle this.
-             return # Stop the conversion
-
-        # Check if conversion is valid (redundant with Order.is_possible but good defense)
-        board_area = self.area.board_area
-        valid = False
-        if board_area.is_fortified: # Rule VII.B.7.a
-            if self.type == 'G': # G -> A or F
-                if new_type == 'A': valid = True
-                elif new_type == 'F' and board_area.has_port: valid = True # Rule VII.B.7.c
-            elif new_type == 'G': # A/F -> G
-                if self.type == 'A': valid = True
-                elif self.type == 'F' and board_area.has_port: valid = True # Rule VII.B.7.b implies fleet needs port
-                # Check if city already occupied by another Garrison
-                if Unit.objects.filter(area=self.area, type='G').exclude(id=self.id).exists(): valid = False
-            # Direct A<->F disallowed (Rule VII.B.7.d)
-
-        if not valid:
-             if logging: logging.warning("Invalid conversion attempt: {self.id} ({self.type}) to {new_type} in {board_area.code}.")
-             # Order fails, unit holds implicitly.
-             return
-
-        if signals: signals.unit_converted.send(sender=self, before=self.type, after=new_type)
-        if logging: logging.info("Unit {self.id} converting from {self.type} to {new_type} in {board_area.code}")
-
-        old_type = self.type
-        self.type = new_type
-        # Rule VIII.B.6.f suggests conversion happens, *then* retreat if forced.
-        # Do not clear must_retreat here.
-        self.siege_stage = 0 # Reset siege status on conversion
-        # self.besieging = False # Removed field
-
-        # Handle coast attribute based on the NEW type and area
-        if new_type == 'G':
-            self.coast = None # Garrisons don't have coasts
-        elif not board_area.has_multiple_coasts():
-            self.coast = None # Clear coast if area is not multi-coastal
-        else: # Converting A->F or F->A in a multi-coast area
-            # Rule VII.B.7.b/c implies the new unit is placed 'in the province'.
-            # It doesn't specify which coast. Clearing seems safest.
-            self.coast = None
-
-        self.save() # Save all changes made during conversion
-
-        # If converting *out* of Garrison into A/F, check for liberating rebellion
-        if old_type == 'G' and new_type != 'G':
-            self.check_rebellion() # Liberate rebellion if present (Rule VI.C.5.c.8)
-
-    def check_rebellion(self):
-        ## if there is a rebellion against other player, put it down
-        reb = self.area.has_rebellion(self.player, same=False)
-        if reb:
-            reb.delete()
-
-    def delete_order(self):
-        order = self.get_order()
-        if order:
-            order.delete()
-        return True
-
-    def change_player(self, player):
-        assert isinstance(player, Player)
-        self.player = player
-        self.save()
-        self.check_rebellion()
-        if signals:
-            signals.unit_changed_country.send(sender=self)
-
-    def to_autonomous(self):
-        assert self.type == 'G'
-        ## find the autonomous player
-        try:
-            aplayer = Player.objects.get(game=self.player.game, user__isnull=True)
-        except ObjectDoesNotExist:
-            return
-        self.player = aplayer
-        self.paid = True
-        self.save()
-        if signals:
-            signals.unit_to_autonomous.send(sender=self)
-
-class Order(models.Model):
-    """ This class defines an order from a player to a unit. The order will not be
-    effective unless it is confirmed.
-    """
-    unit = models.ForeignKey(Unit)
-    code = models.CharField(max_length=1, choices=ORDER_CODES)
-    # Destination for Advance, target area for Besiege/Lift Siege (unit's area), target area for Support Hold/Move
-    destination = models.ForeignKey(GameArea, blank=True, null=True, related_name='targeted_by_orders')
-    # Type for Conversion (=) or Support Conversion (S =)
-    type = models.CharField(max_length=1, blank=True, null=True, choices=UNIT_TYPES)
-    # Subunit for Support (S) or Convoy (C)
-    subunit = models.ForeignKey(Unit, related_name='affecting_orders', blank=True, null=True)
-    # Subcode for Support (S): H, -, =
-    subcode = models.CharField(max_length=1, choices=ORDER_SUBCODES, blank=True, null=True)
-    # Subdestination for Support Advance (S -) or Convoy (C -)
-    subdestination = models.ForeignKey(GameArea, related_name='sub_targeted_by_orders', blank=True, null=True)
-    # Subtype for Support Conversion (S =)
-    subtype = models.CharField(max_length=1, blank=True, null=True, choices=UNIT_TYPES)
-    confirmed = models.BooleanField(default=False)
-    player = models.ForeignKey(Player, null=True) # Tracks who issued the order (can differ from unit.player if bought)
-    # Coast specifiers
-    destination_coast = models.CharField(max_length=2, blank=True, null=True, choices=(('nc','NC'),('sc','SC'),('ec','EC')))
-    subdestination_coast = models.CharField(max_length=2, blank=True, null=True, choices=(('nc','NC'),('sc','SC'),('ec','EC')))
-
-    class Meta:
-        # Ensure only one confirmed order per unit per turn (player check removed as bribes allow ordering others)
-        # unique_together = (('unit', 'player'),) # Removed player constraint
-        unique_together = (('unit', 'confirmed'),) # Allow multiple unconfirmed, only one confirmed
-
-    # ... (as_dict method - unchanged) ...
-
-    def explain(self):
-        """ Returns a human readable order, including coasts. """
-        unit_str = "{self.unit}" # Uses Unit.__unicode__ which includes coast
-        dest_coast_str = "/{self.destination_coast}" if self.destination_coast else ""
-        subdest_coast_str = "/{self.subdestination_coast}" if self.subdestination_coast else ""
-
-        if self.code == 'H': msg = _("%(unit)s holds.") % {'unit': unit_str}
-        elif self.code == '0': msg = _("%(unit)s disbands.") % {'unit': unit_str}
-        elif self.code == 'L': msg = _("%(unit)s lifts siege.") % {'unit': unit_str}
-        elif self.code == '-': msg = _("%(unit)s -> %(area)s%(coast)s.") % {'unit': unit_str, 'area': self.destination, 'coast': dest_coast_str}
-        elif self.code == 'B': msg = _("%(unit)s besieges.") % {'unit': unit_str}
-        elif self.code == '=': msg = _("%(unit)s converts to %(type)s.") % {'unit': unit_str, 'type': self.get_type_display()}
-        elif self.code == 'C':
-            subunit_str = "{self.subunit}" # Includes subunit coast
-            msg = _("%(unit)s C %(subunit)s -> %(area)s%(coast)s.") % {'unit': unit_str, 'subunit': subunit_str, 'area': self.subdestination, 'coast': subdest_coast_str}
-        elif self.code == 'S':
-            subunit_str = "{self.subunit}" # Includes subunit coast
-            if self.subcode == 'H': msg = _("%(unit)s S %(subunit)s H.") % {'unit': unit_str, 'subunit': subunit_str}
-            elif self.subcode == '-': msg = _("%(unit)s S %(subunit)s -> %(area)s%(coast)s.") % {'unit': unit_str, 'subunit': subunit_str, 'area': self.subdestination, 'coast': subdest_coast_str}
-            # elif self.subcode == '=': msg = _("%(unit)s S %(subunit)s = %(type)s.") % {'unit': unit_str, 'subunit': subunit_str, 'type': self.get_subtype_display()} # Support conversion?
-            else: msg = _("%(unit)s supports %(subunit)s (unknown action).") % {'unit': unit_str, 'subunit': subunit_str}
-        else: msg = _("Unknown order for %(unit)s.") % {'unit': unit_str}
-        return msg
-
-    # ... (confirm method - unchanged) ...
-    # ... (format_suborder method - unchanged) ...
-
-    def format(self):
-        """ Returns abbreviated order string, including coasts. """
-        # Get unit representation including coast
-        f = "{self.unit.type} {self.unit.area.board_area.code}"
-        if self.unit.coast: f += "/{self.unit.coast}"
-
-        f += " {self.code}" # Add the order code
-
-        if self.code == '-':
-            f += " {self.destination.board_area.code}"
-            if self.destination_coast: f += "/{self.destination_coast}"
-        elif self.code == '=':
-            f += " {self.type}"
-        elif self.code in ['S', 'C']:
-            # Get subunit representation including coast
-            sub_f = "{self.subunit.type} {self.subunit.area.board_area.code}"
-            if self.subunit.coast: sub_f += "/{self.subunit.coast}"
-
-            if self.code == 'S':
-                sub_f += " {self.subcode or 'H'}" # Default subcode to H if None
-                if self.subcode == '-':
-                    sub_f += " {self.subdestination.board_area.code}"
-                    if self.subdestination_coast: sub_f += "/{self.subdestination_coast}"
-                # elif self.subcode == '=': sub_f += " {self.subtype}" # Support conversion?
-            elif self.code == 'C':
-                sub_f += " - {self.subdestination.board_area.code}" # Convoy implies move (-)
-                if self.subdestination_coast: sub_f += "/{self.subdestination_coast}"
-            f += " {sub_f}"
-        # Codes H, B, L, 0 require no further parts
-        return f
-
-
-    def find_convoy_line(self):
-        """
-        Checks if a valid, contiguous convoy path exists for an Army Advance order.
-        Uses BFS and considers coasts, rules VII.B.6, VII.D.1, VII.D.2.
-        Returns True if a valid path exists, False otherwise.
-        """
-        # --- 1. Initial Checks ---
-        if not (self.code == '-' and self.unit and self.unit.type == 'A'):
-            return False # Only for Army Advance orders
-        if not self.destination:
-            return False # Needs a destination
-
-        army = self.unit
-        start_area = army.area
-        target_area = self.destination
-        target_coast = self.destination_coast
-        game = army.player.game
-
-        if not start_area.board_area.is_coast or not target_area.board_area.is_coast:
-            return False # Army start and end must be coastal
-
-        # Validate target coast if required
-        if target_area.board_area.has_multiple_coasts():
-            if not target_coast or target_coast not in target_area.board_area.get_coast_list():
-                 if logging: logging.warning("Convoy Check Fail: Invalid/missing target coast '{target_coast}' for multi-coast destination {target_area.board_area.code}")
-                 return False
-        elif target_coast:
-             if logging: logging.warning("Convoy Check Fail: Target coast '{target_coast}' specified for single-coast destination {target_area.board_area.code}")
-             return False # Cannot specify coast for single coast dest
-
-        # --- 2. Pre-fetch Potential Convoying Fleets ---
-        # Fleets must have the correct confirmed C order targeting this army and destination/coast
-        convoy_orders = Order.objects.filter(
-            code='C',
-            confirmed=True,
-            subunit=army,
-            subdestination=target_area,
-            subdestination_coast=target_coast, # Match target coast exactly
-            unit__player__game=game, # Fleet must be in the same game
-            unit__type='F' # Must be a fleet
-        ).filter(
-            # Fleet must be in a Sea or Venice Lagoon (Rule VII.B.6.b implies chain uses seas)
-            Q(unit__area__board_area__is_sea=True) | Q(unit__area__board_area__code='VEN')
-        ).select_related('unit', 'unit__area', 'unit__area__board_area') # Optimize
-
-        # Create a map of Area ID -> Convoying Fleet Unit for quick lookup
-        convoy_fleet_map = {order.unit.area_id: order.unit for order in convoy_orders}
-        convoy_area_ids = set(convoy_fleet_map.keys())
-
-        if not convoy_area_ids:
-            return False # No fleets ordered to perform this specific convoy
-
-        # --- 3. BFS Initialization ---
-        queue = collections.deque()
-        visited = set() # Store visited GameArea IDs
-
-        # Find starting fleets adjacent to the army's start area
-        possible_first_fleets = GameArea.objects.filter(
-            game=game,
-            id__in=convoy_area_ids, # Must be one of the convoying fleets
-            board_area__borders=start_area.board_area # Must border army's area
-        )
-
-        for fleet_area in possible_first_fleets:
-            fleet_unit = convoy_fleet_map.get(fleet_area.id)
-            if not fleet_unit: continue # Should not happen
-
-            # Check coast-aware adjacency: Army Area <-> First Fleet Area
-            if start_area.board_area.is_adjacent(fleet_area.board_area,
-                                                 fleet=True, # Check as if fleet moving from sea to coast
-                                                 source_unit_coast=fleet_unit.coast, # Fleet's coast (if any)
-                                                 target_order_coast=army.coast): # Army's coast
-                if fleet_area.id not in visited:
-                    # Check for strait blockage on the first link
-                    if not is_strait_blocked(start_area.board_area.code, fleet_area.board_area.code, game, army.player):
-                        visited.add(fleet_area.id)
-                        queue.append(fleet_area)
-
-        # --- 4. BFS Loop ---
-        while queue:
-            current_area = queue.popleft()
-            current_fleet = convoy_fleet_map.get(current_area.id)
-            if not current_fleet: continue # Should not happen
-
-            # ** Check Final Link (Rule VII.B.6.d) **
-            # Is the current fleet's area adjacent to the army's final destination/coast?
-            if current_area.board_area.is_adjacent(target_area.board_area,
-                                                   fleet=True,
-                                                   source_unit_coast=current_fleet.coast,
-                                                   target_order_coast=target_coast):
-                # Check for strait blockage on the final link
-                if not is_strait_blocked(current_area.board_area.code, target_area.board_area.code, game, army.player):
-                    return True # Valid path found!
-
-            # ** Explore Neighbors for Chain Extension **
-            neighbors = GameArea.objects.filter(
-                game=game,
-                board_area__borders=current_area.board_area
-            ).select_related('board_area') # Optimize
-
-            for neighbor in neighbors:
-                if neighbor.id in visited:
-                    continue # Already processed
-
-                # Is the neighbor part of the convoy chain?
-                if neighbor.id in convoy_area_ids:
-                    next_fleet = convoy_fleet_map.get(neighbor.id)
-                    if not next_fleet: continue
-
-                    # Check coast-aware adjacency: Current Fleet Area <-> Next Fleet Area
-                    if current_area.board_area.is_adjacent(neighbor.board_area,
-                                                           fleet=True,
-                                                           source_unit_coast=current_fleet.coast,
-                                                           target_order_coast=next_fleet.coast):
-                        # Check for strait blockage between fleets
-                        if not is_strait_blocked(current_area.board_area.code, neighbor.board_area.code, game, army.player):
-                            visited.add(neighbor.id)
-                            queue.append(neighbor)
-
-        # --- 5. No Path Found ---
-        return False
-
-    def get_attacked_area(self):
-        """ Returns the game area being targeted by this order (for conflict resolution). """
-        if self.code == '-':
-            return self.destination
-        elif self.code == '=' and self.type in ['A', 'F']: # Conversion G->A/F attacks the province
-            return self.unit.area
-        # Other orders don't directly attack/enter a new area in the same way
-        return None
-
-    def is_possible(self):
-        """ Checks if an Order is possible based on rules, including coasts. """
-        unit = self.unit
-        area = unit.area
-        board_area = area.board_area
-
-        # --- Basic Type/State Checks ---
-        if self.code == '-': # Advance
-            if unit.type not in ['A', 'F']: return False
-            if unit.siege_stage > 0: return False # Rule VII.B.4
-            if not self.destination: return False
-        elif self.code == 'B': # Besiege
-            if unit.type not in ['A', 'F']: return False
-            if not board_area.is_fortified: return False
-            if unit.type == 'F' and not board_area.has_port: return False # Rule VII.B.2.a
-            # Check target validity (enemy G or garrisoned R) is complex here, better handled in resolve_sieges
-            if unit.siege_stage == 2: return False # Already at max stage
-        elif self.code == 'L': # Lift Siege
-            if unit.type not in ['A', 'F']: return False
-            if unit.siege_stage == 0: return False # Rule VII.B.4
-        elif self.code == '=': # Conversion
-            if not board_area.is_fortified: return False # Rule VII.B.7.a
-            if not self.type: return False
-            if unit.type == self.type: return False # Must be different type
-            # Rule VII.B.7.h: Besieged Garrison may not convert. Check if *another* unit is besieging.
-            if unit.type == 'G' and Unit.objects.filter(area=area, siege_stage__gt=0).exclude(id=unit.id).exists(): return False
-            # Type specific conversion rules (Rule VII.B.7.b/c)
-            if unit.type == 'G': # G -> A or F
-                 if self.type not in ['A', 'F']: return False
-                 if self.type == 'F' and not board_area.has_port: return False
-            elif self.type == 'G': # A/F -> G
-                 if unit.type not in ['A', 'F']: return False # Should not happen
-                 # Fleet needs port to convert to G? Rule VII.B.7.b implies yes.
-                 if unit.type == 'F' and not board_area.has_port: return False
-                 # Check if city already occupied by another Garrison (Rule VII.B.1.b)
-                 if Unit.objects.filter(area=area, type='G').exclude(id=unit.id).exists(): return False
-            else: # A->F or F->A not allowed directly (Rule VII.B.7.d)
-                 return False
-        elif self.code == 'C': # Convoy
-            if unit.type != 'F': return False # Rule VII.B.6
-            if not self.subunit or self.subunit.type != 'A': return False # Rule VII.B.6.a
-            if not self.subdestination: return False
-            # Rule VII.B.6.b: Fleet must remain in place (sea or coastal province)
-            # Rule VII.B.6.d: Fleet can only transport into provinces it could move to.
-            if not board_area.is_sea and not board_area.is_coast: return False # Must be in sea/coast
-            if not self.subunit.area.board_area.is_coast: return False # Army must be on coast
-            if not self.subdestination.board_area.is_coast: return False # Destination must be coast
-            # Check basic adjacency for fleet->army and fleet->destination
-            if not board_area.is_adjacent(self.subunit.area.board_area, fleet=True, source_unit_coast=unit.coast, target_order_coast=self.subunit.coast): return False
-            if not board_area.is_adjacent(self.subdestination.board_area, fleet=True, source_unit_coast=unit.coast, target_order_coast=self.subdestination_coast): return False
-            # Full path check (find_convoy_line) is complex, rely on basic adjacency for now.
-        elif self.code == 'S': # Support
-            if not self.subunit: return False
-            # Determine target area of support
-            support_target_area = None
-            support_target_coast = None
-            if self.subcode == 'H': support_target_area = self.subunit.area; support_target_coast = self.subunit.coast
-            elif self.subcode == '-': support_target_area = self.subdestination; support_target_coast = self.subdestination_coast
-            # elif self.subcode == '=': support_target_area = self.subunit.area # Support conversion? Rule VII.B.5 doesn't explicitly allow/disallow. Assume disallowed for now.
-            else: return False # Invalid subcode
-
-            if not support_target_area: return False
-            # Check if supporter can reach the target area/coast (Rule VII.B.5.a)
-            if not board_area.is_adjacent(support_target_area.board_area,
-                                          fleet=(unit.type == 'F'),
-                                          source_unit_coast=unit.coast,
-                                          target_order_coast=support_target_coast):
-                return False
-        elif self.code == '0': return True # Disband always possible
-        elif self.code == 'H': return True # Hold always possible
-        else: return False # Unknown code
-
-        # --- Adjacency Check for Advance ---
-        if self.code == '-':
-            if not board_area.is_adjacent(self.destination.board_area,
-                                          fleet=(unit.type == 'F'),
-                                          source_unit_coast=unit.coast,
-                                          target_order_coast=self.destination_coast):
-                 # If not directly adjacent, check if it's a valid convoy move
-                 if not (unit.type == 'A' and board_area.is_coast and self.destination.board_area.is_coast):
-                     return False # Only coastal armies can be convoyed
-                 # Basic check: Is *any* fleet ordered to convoy this unit to this dest?
-                 # More robust check would use find_convoy_line.
-                 if not Order.objects.filter(code='C', confirmed=True, subunit=unit, subdestination=self.destination, subdestination_coast=self.destination_coast).exists():
-                      return False # No convoy order found
-
-        # --- Coast Specifier Validation ---
-        # Check destination coast
-        if self.destination:
-            if self.destination.board_area.has_multiple_coasts():
-                # If fleet moving or army being convoyed to multi-coast, coast MUST be specified
-                if (unit.type == 'F' or self.code == 'C') and (not self.destination_coast or self.destination_coast not in self.destination.board_area.get_coast_list()):
-                    return False # Invalid or missing coast for multi-coast destination
-            elif self.destination_coast:
-                return False # Cannot specify coast for single-coast destination
-
-        # Check subdestination coast (for Support Move or Convoy)
-        if self.subdestination:
-            if self.subdestination.board_area.has_multiple_coasts():
-                 # If supporting a fleet move or convoying an army to multi-coast, coast MUST be specified
-                 if (self.code == 'C' or (self.code == 'S' and self.subcode == '-' and self.subunit.type == 'F')) and \
-                    (not self.subdestination_coast or self.subdestination_coast not in self.subdestination.board_area.get_coast_list()):
-                     return False
-            elif self.subdestination_coast:
-                 return False
-
-        return True # Order seems possible based on these checks
-
-    def __unicode__(self):
-        return self.format()
-
-class RetreatOrder(models.Model):
-    """ Defines the area where the unit must try to retreat. If ``area`` is
-    blank, the unit will be disbanded.
-    """
-    unit = models.ForeignKey(Unit)
-    area = models.ForeignKey(GameArea, null=True, blank=True)
-    # New field for target coast
-    coast = models.CharField(max_length=2, blank=True, null=True, choices=(('nc','NC'),('sc','SC'),('ec','EC')))
-
-    def __unicode__(self):
-        coast_str = "/{self.coast}" if self.coast else ""
-        # Use unit's __unicode__ which includes its current location/coast
-        unit_str = "{self.unit}"
-        dest_str = "{self.area}{coast_str}" if self.area else "Disband"
-        return "{unit_str} Retreat -> {dest_str}"
-    
-class ControlToken(models.Model):
-    """ Defines the coordinates of the control token for a board area. """
-
-    area = models.OneToOneField(Area)
-    x = models.PositiveIntegerField()
-    y = models.PositiveIntegerField()
-
-    def __unicode__(self):
-        return "%s, %s" % (self.x, self.y)
-
-
-class GToken(models.Model):
-    """ Defines the coordinates of the Garrison token in a board area. """
-
-    area = models.OneToOneField(Area)
-    x = models.PositiveIntegerField()
-    y = models.PositiveIntegerField()
-
-    def __unicode__(self):
-        return "%s, %s" % (self.x, self.y)
-
-
-class AFToken(models.Model):
-    """ Defines the coordinates of the Army and Fleet tokens in a board area."""
-
-    area = models.OneToOneField(Area)
-    x = models.PositiveIntegerField()
-    y = models.PositiveIntegerField()
-
-    def __unicode__(self):
-        return "%s, %s" % (self.x, self.y)
-
-class TurnLog(models.Model):
-    """ A TurnLog is text describing the processing of the method
-    ``Game.process_orders()``.
-    """
-
-    game = models.ForeignKey(Game)
-    year = models.PositiveIntegerField()
-    season = models.PositiveIntegerField(choices=SEASONS)
-    phase = models.PositiveIntegerField(choices=GAME_PHASES)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    log = models.TextField()
-
-    class Meta:
-        ordering = ['-timestamp',]
-
-    def __unicode__(self):
-        return self.log
-
-class Configuration(models.Model):
-    """ Defines the configuration options for each game. """
-    game = models.OneToOneField('Game', verbose_name=_('game'), editable=False) # Assuming Game model is defined above
-
-    # Existing Flags
-    finances = models.BooleanField(_('finances'), default=False)
-    assassinations = models.BooleanField(_('assassinations'), default=False,
-                    help_text=_('will enable Finances'))
-    bribes = models.BooleanField(_('bribes'), default=False,
-                    help_text=_('will enable Finances'))
-    excommunication = models.BooleanField(_('excommunication'), default=False)
-    special_units = models.BooleanField(_('special units'), default=False,
-                    help_text=_('will enable Finances'))
-    strategic = models.BooleanField(_('strategic movement'), default=False) # Assuming this exists
-    lenders = models.BooleanField(_('money lenders'), default=False,
-                    help_text=_('will enable Finances'))
-    unbalanced_loans = models.BooleanField(_('unbalanced loans'), default=False,
-        help_text=_('the credit for all players will be 25d'))
-    conquering = models.BooleanField(_('conquering'), default=False)
-    famine = models.BooleanField(_('famine'), default=False)
-    plague = models.BooleanField(_('plague'), default=False)
-    storms = models.BooleanField(_('storms'), default=False)
-    gossip = models.BooleanField(_('gossip'), default=False) # Assuming this exists
-
-    # --- New Optional Rule Flags ---
-    bribes_via_ally = models.BooleanField(_('Bribes via Ally (Opt V.A)'), default=False,
-                        help_text=_("Allow bribes adjacent to ally units (permission not enforced)."))
-    bribes_anywhere = models.BooleanField(_('Bribes Anywhere (Opt V.B)'), default=False,
-                        help_text=_("Allow bribes into any province, ignoring adjacency."))
-    random_assassins = models.BooleanField(_('Random Assassin Setup (Opt VI.B)'), default=False,
-                        help_text=_("Use random draw for initial assassin tokens instead of standard."))
-    no_luck = models.BooleanField(_('No Luck Option (Opt IX)'), default=False,
-                        help_text=_("Disable dice rolls (fixed income, no assassination/disasters)."))
-    # --- End New Flags ---
-
-    def __unicode__(self):
-        return unicode(self.game)
-
-    def get_enabled_rules(self):
-        rules = []
-        # Iterate through fields, check if BooleanField and True
-        for f in self._meta.fields:
-            if isinstance(f, models.BooleanField) and f.name != 'id': # Exclude 'id'
-                # Use getattr for safety, check if value is True
-                if getattr(self, f.name, False):
-                    rules.append(unicode(f.verbose_name)) # Use verbose_name
-        return rules
-
-def create_configuration(sender, instance, created, **kwargs):
-    if isinstance(instance, Game) and created:
-        config = Configuration(game=instance)
-        config.save()
-
-models.signals.post_save.connect(create_configuration, sender=Game)
-
-###
-### EXPENSES (Advanced Rule VI)
-###
-
-EXPENSE_TYPES = (
-    (0, _("Famine relief")),           # Rule VI.C.1
-    (1, _("Pacify rebellion")),        # Rule VI.C.2
-    (2, _("Conquered province to rebel")), # Rule VI.C.5.a
-    (3, _("Home province to rebel")),    # Rule VI.C.5.b
-    (4, _("Counter bribe")),           # Rule VI.C.3
-    # Bribes (Rule VI.C.4)
-    (5, _("Disband autonomous garrison")), # D
-    (6, _("Buy autonomous garrison")),     # E
-    (7, _("Committed garrison to autonomous")),# F
-    (8, _("Disband committed garrison")),   # G (Changed from Disband enemy unit)
-    (9, _("Disband army or fleet")),      # H
-    (10, _("Buy army or fleet")),         # I (Changed from Buy enemy unit)
-    # Assassination is handled separately by Assassination model
-)
-
-# Base costs from Rule VI.C
-EXPENSE_COST = {
-    0: 3,   # Famine relief
-    1: 12,  # Pacify rebellion
-    2: 9,   # Conquered rebel
-    3: 15,  # Home rebel
-    4: 3,   # Counter bribe (minimum)
-    5: 6,   # Disband auto G (minimum)
-    6: 9,   # Buy auto G (minimum)
-    7: 9,   # Commit G -> Auto (minimum)
-    8: 12,  # Disband commit G (minimum)
-    9: 12,  # Disband A/F (minimum)
-    10: 18, # Buy A/F (minimum)
-}
-
-def get_expense_cost(type, unit=None):
-    """ Calculates the minimum cost for an expense, considering unit loyalty and major cities. """
-    if type not in EXPENSE_COST:
-        raise ValueError("Invalid expense type")
-
-    base_cost = EXPENSE_COST[type]
-    multiplier = 1
-    loyalty_factor = 1 # Default for non-bribes or loyalty 1 units
-
-    # Bribes targeting a specific unit (Types 5-10)
-    if type in (5, 6, 7, 8, 9, 10):
-        if not isinstance(unit, Unit):
-            # Counter-bribe (type 4) also targets a unit, but cost is variable >= 3
-            if type != 4:
-                 raise ValueError("Unit required for bribe cost calculation")
-
-        if unit: # Check if unit is provided (might be None for type 4 initially)
-            # Optional Rule IV: Special unit loyalty affects bribe cost
-            # Assuming loyalty > 1 doubles the cost (Rule doesn't specify exact mechanism)
-            if unit.loyalty > 1:
-                loyalty_factor = 2 # Example: Double cost for higher loyalty
-
-            # Rule VI.C.4.g.3: Double cost for Garrisons in major cities
-            if unit.type == 'G':
-                area_board = unit.area.board_area
-                # Check if the area itself has major city income OR if it's linked via CityIncome model
-                is_major = (area_board.major_city_income is not None and area_board.major_city_income > 1)
-                # Fallback check using CityIncome model if needed (assuming it links scenario+city)
-                # is_major = is_major or CityIncome.objects.filter(city=area_board, scenario=unit.player.game.scenario).exists()
-                if is_major:
-                    multiplier = 2
-
-    # Counter-bribe cost is minimum 3, but can be increased in multiples of 3 (handled by form)
-    if type == 4:
-        return base_cost # Minimum is 3
-
-    # Apply multipliers for final minimum cost
-    return base_cost * multiplier * loyalty_factor
-
-class Expense(models.Model):
-    """ A player may expend ducats to affect some units or areas in the game. """
-    player = models.ForeignKey(Player)
-    ducats = models.PositiveIntegerField(default=0)
-    type = models.PositiveIntegerField(choices=EXPENSE_TYPES)
-    area = models.ForeignKey(GameArea, null=True, blank=True) # Target for types 0, 1, 2, 3
-    unit = models.ForeignKey(Unit, null=True, blank=True) # Target for types 4, 5, 6, 7, 8, 9, 10
-    # Added field for 'Buy' bribes to specify resulting unit type/ID - complex, handle in view/processing for now
-    # new_unit_id = models.PositiveIntegerField(null=True, blank=True) # Example
-    confirmed = models.BooleanField(default=False) # Mark true when player confirms actions
-
-    def save(self, *args, **kwargs):
-        # Basic validation based on type
-        if self.type in (0, 1, 2, 3): # Famine Relief, Pacify, Rebel
-            if not self.area: raise ValidationError("Expense type requires an area.")
-            self.unit = None # Ensure unit is None
-        elif self.type in (4, 5, 6, 7, 8, 9, 10): # Counter-Bribe, Bribes
-            if not self.unit: raise ValidationError("Expense type requires a unit.")
-            self.area = None # Ensure area is None
-        else:
-            raise ValidationError("Unknown expense type {self.type}")
-
-        # Ensure ducats meet minimum cost (can be overridden by form validation)
-        try:
-            min_cost = get_expense_cost(self.type, self.unit)
-            if self.ducats < min_cost:
-                 # Allow saving if unconfirmed (form handles validation), but log warning
-                 if self.confirmed:
-                      raise ValidationError("Ducats ({self.ducats}) is less than minimum cost ({min_cost}) for confirmed expense.")
-                 # else: print("Warning: Unconfirmed expense ducats {self.ducats} < min {min_cost}")
-        except ValueError as e:
-             raise ValidationError(str(e))
-
-        super(Expense, self).save(*args, **kwargs)
-        # Logging moved to view upon successful form save
-
-    def __unicode__(self):
-        # Use explain method for user-facing description
-        return self.explain()
-
-    def explain(self):
-        """ Provides a user-readable explanation of the expense. """
-        data = {
-            'player': self.player.country if self.player.country else 'Unknown',
-            'ducats': self.ducats,
-            'area': self.area,
-            'unit': self.unit,
-        }
-        messages = {
-            0: _("%(ducats)sd: %(player)s reliefs famine in %(area)s"),
-            1: _("%(ducats)sd: %(player)s pacifies rebellion in %(area)s"),
-            2: _("%(ducats)sd: %(player)s promotes rebellion (conquered) in %(area)s"),
-            3: _("%(ducats)sd: %(player)s promotes rebellion (home) in %(area)s"),
-            4: _("%(ducats)sd: %(player)s counter-bribes %(unit)s"),
-            5: _("%(ducats)sd: %(player)s bribes to disband %(unit)s (Auto G)"),
-            6: _("%(ducats)sd: %(player)s bribes to buy %(unit)s (Auto G)"),
-            7: _("%(ducats)sd: %(player)s bribes %(unit)s (Commit G) to become Autonomous"),
-            8: _("%(ducats)sd: %(player)s bribes to disband %(unit)s (Commit G)"),
-            9: _("%(ducats)sd: %(player)s bribes to disband %(unit)s (A/F)"),
-            10: _("%(ducats)sd: %(player)s bribes to buy %(unit)s (A/F)"),
-        }
-        try:
-            return messages[self.type] % data
-        except KeyError:
-            return "Unknown expense type {self.type}"
-
-    def is_bribe(self):
-        """ Checks if the expense type is a bribe (Rule VI.C.4). """
-        return self.type in (5, 6, 7, 8, 9, 10)
-
-    def is_counter_bribe(self):
-        return self.type == 4
-
-    def is_rebellion_action(self):
-        return self.type in (1, 2, 3)
-
-    def undo(self):
-        """ Deletes the expense and returns the money to the player (if unconfirmed). """
-        if self.confirmed:
-             if logging: logging.warning("Attempted to undo confirmed expense {self.id}")
-             return False # Cannot undo confirmed expense
-
-        # Refund ducats using F expression
-        Player.objects.filter(id=self.player.id).update(ducats=F('ducats') + self.ducats)
-
-        if logging: logging.info("Undoing expense {self.id} ({self.explain()}). Refunding {self.ducats}d to {self.player}.")
-        self.delete()
-        return True
-    
-
-class Rebellion(models.Model):
-    """
-    A Rebellion may be placed in a GameArea if finances rules are applied.
-    Rebellion.player is the player who controlled the GameArea when the
-    Rebellion was placed. Rebellion.garrisoned is True if the Rebellion is
-    in a fortified city/fortress. (Rule VI.C.5)
-    """
-    area = models.OneToOneField(GameArea, unique=True) # Only one rebellion per area
-    player = models.ForeignKey(Player) # Player the rebellion is AGAINST
-    garrisoned = models.BooleanField(default=False) # True if in city/fortress
-
-    def __unicode__(self):
-        loc = _("in city") if self.garrisoned else _("in province")
-        return _("Rebellion %(loc)s %(area)s against %(player)s") % {
-            'loc': loc,
-            'area': self.area.board_area.code, # Use code for brevity
-            'player': self.player.country if self.player.country else 'Unknown'
-        }
-
-    def save(self, *args, **kwargs):
-        # Ensure area is valid for rebellion
-        if self.area.board_area.is_sea:
-            raise ValidationError("Cannot place rebellion in a sea area.")
-        # Rule VI.C.5.c.11: No Rebellion unit may be placed in Venice if occupied
-        if self.area.board_area.code == 'VEN' and self.area.unit_set.exists():
-             raise ValidationError("Cannot place rebellion in occupied Venice.")
-
-        # Determine player the rebellion is against (current controller)
-        # This should be set by the view/logic creating the rebellion based on Expense target
-        if not self.player_id: # If player not set, try to get current controller
-             if self.area.player:
-                  self.player = self.area.player
-             else:
-                  raise ValidationError("Cannot determine which player the rebellion is against.")
-
-        # Determine if rebellion is garrisoned (Rule VI.C.5)
-        if self.area.board_area.is_fortified:
-            # Place in city/fortress if no garrison unit is present
-            if not self.area.unit_set.filter(type='G').exists():
-                self.garrisoned = True
-            else:
-                self.garrisoned = False # Place in province if city occupied
-        else:
-             self.garrisoned = False # Cannot be garrisoned if not fortified
-
-        super(Rebellion, self).save(*args, **kwargs)
-        if signals:
-            # Pass the player who *caused* the rebellion if known? Signal doesn't support it yet.
-            signals.rebellion_started.send(sender=self.area)
-        if logging: logging.info("Rebellion started: {self}")
-
-    def get_strength(self):
-        """ Returns strength for supporting attacks (Rule VI.C.5.c.9). """
-        return 1
-
-class Loan(models.Model):
-    """ A Loan describes a quantity of money that a player borrows from the bank,
-        with a term and interest. (Optional Rule X) """
-    player = models.OneToOneField(Player) # Player can only have one loan at a time? Rule X.A.1 implies limit on total owed. Let's allow multiple loans but track total.
-    # player = models.ForeignKey(Player) # Allow multiple loans? Let's stick to OneToOne for simplicity first.
-    principal = models.PositiveIntegerField(default=0) # Amount borrowed
-    interest_rate = models.FloatField(default=0.0) # e.g., 0.20 or 0.50
-    debt = models.PositiveIntegerField(default=0) # Total amount to repay (principal + interest)
-    due_season = models.PositiveIntegerField(choices=SEASONS)
-    due_year = models.PositiveIntegerField(default=0)
-
-    def __unicode__(self):
-        return _("%(player)s owes %(debt)s ducats by %(season)s, %(year)s") % {
-            'player': self.player.country if self.player.country else 'Unknown',
-            'debt': self.debt,
-            'season': self.get_due_season_display(),
-            'year': self.due_year,
-        }
-
-    def is_due(self, current_year, current_season):
-        """ Checks if the loan is due or overdue. """
-        if current_year > self.due_year:
-            return True
-        if current_year == self.due_year and current_season >= self.due_season:
-            return True
-        return False
-
-class Assassin(models.Model):
-    """ An Assassin represents a counter that a Player owns, to potentially murder
-        the leader of another country. (Advanced Rule III / Optional VI) """
-    owner = models.ForeignKey(Player, related_name='assassin_set') # Use related_name
-    target = models.ForeignKey(Country) # Target is a Country
-
-    class Meta:
-        unique_together = (('owner', 'target'),) # Player has only one token per target
-
-    def __unicode__(self):
-        owner_name = self.owner.country.name if self.owner.country else 'Unknown'
-        return _("Assassin token owned by %(owner)s for target %(target)s") % {
-            'owner': owner_name,
-            'target': self.target.name,
-        }
-
-class Assassination(models.Model):
-    """ An Assassination describes an attempt made by a Player to murder the
-        leader of another Country, spending some Ducats. (Advanced Rule VI.C.6) """
-    killer = models.ForeignKey(Player, related_name="assassination_attempts")
-    target = models.ForeignKey(Player, related_name="assassination_targets")
-    ducats = models.PositiveIntegerField(default=0) # Must be 12, 24, or 36
-    # Store chosen numbers? Or resolve immediately? Let's resolve immediately in view/processing.
-    # success = models.BooleanField(default=False) # Store result?
-
-    def __unicode__(self):
-        killer_name = self.killer.country.name if self.killer.country else 'Unknown'
-        target_name = self.target.country.name if self.target.country else 'Unknown'
-        return _("%(killer)s attempts assassination on %(target)s for %(ducats)sd") % {
-            'killer': killer_name,
-            'target': target_name,
-            'ducats': self.ducats,
-        }
-
-    def explain(self):
-        # Already provided by __unicode__ essentially
-        return unicode(self)
-
-    def get_dice_count(self):
-        """ Returns number of dice based on ducats spent (Rule VI.C.6.a). """
-        return self.ducats // 12
-
-class Whisper(models.Model):
-    """ A whisper is an _anonymous_ message that is shown in the game screen. """
-    created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User)
-    as_admin = models.BooleanField(default=False)
-    game = models.ForeignKey(Game)
-    text = models.CharField(max_length=140,
-        help_text=_("limit of 140 characters"))
-    order = models.PositiveIntegerField(editable=False, default=0)
-
-    class Meta:
-        ordering = ["-created_at" ,]
-        unique_together = (("game", "order"),)
-
-    def __unicode__(self):
-        return self.text
-
-    def as_li(self):
-        if self.as_admin:
-            li = u"<li class=\"admin\">"
-        else:
-            li = u"<li>"
-        html = u"%(li)s<strong>#%(order)s</strong>&nbsp;&nbsp;%(text)s<span class=\"date\">%(date)s</span> </li>" % {
-                                'order': self.order,
-                                'li': li,
-                                'date': timesince(self.created_at),
-                                'text': force_escape(self.text), }
-        return html
-
-def whisper_order(sender, instance, **kw):
-    """ Checks if a whisper has already an 'order' value and, if not, calculate
-    and assign one """
-    if instance.order is None or instance.order == 0:
-        whispers = Whisper.objects.filter(game=instance.game).order_by("-order")
-        try:
-            last = whispers[0].order
-            instance.order = last + 1
-        except IndexError:
-            instance.order = 1
-
-models.signals.pre_save.connect(whisper_order, sender=Whisper)
-
-class Invitation(models.Model):
-    """ A private game accepts only users that have been invited by the creator
-    of the game. """
-    game = models.ForeignKey(Game)
-    user = models.ForeignKey(User)
-    message = models.TextField(default="", blank=True)
-
-    class Meta:
-        unique_together = (('game', 'user'),)
-
-    def __unicode__(self):
-        return "%s" % self.user
-
-def notify_new_invitation(sender, instance, created, **kw):
-    if notification and isinstance(instance, Invitation) and created:
-        user = [instance.user,]
-        extra_context = {'game': instance.game,
-                        'invitation': instance,}
-        notification.send(user, "new_invitation", extra_context , on_site=True)
-
-models.signals.post_save.connect(notify_new_invitation, sender=Invitation)
-

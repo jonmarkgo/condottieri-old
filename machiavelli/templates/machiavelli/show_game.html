@@ -97,7 +97,7 @@
 	{% endif %}
 	</div>
 	{% if show_users %}
-	<div><a href="{% url 'profile_detail' username=p.user.username %}">{% avatar p.user 20 %}{{ p.user.username }}</a></div> {# Use {% url %} #}
+	<div><a href="{% url profile_detail username=p.user.username %}">{% avatar p.user 20 %}{{ p.user.username }}</a></div> {# Use {% url %} #}
 	{% endif %}
 	<div>{% trans "Cities:" %} {{ p.number_of_cities }}</div>
 	<div>{% trans "Units:" %} {{ p.placed_units_count }}</div> {# Use placed_units_count #}
@@ -107,18 +107,18 @@
 	{% ifnotequal p.eliminated True %} {# Not eliminated #}
 	<div>
 	{# Use {% url %} tags #}
-	<a href="{% url 'condottieri_messages_compose' sender_id=player.id recipient_id=p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/envelope.png" title="{% trans "Send message" %}" /></a>
+	<a href="{% url condottieri_messages_compose sender_id=player.id recipient_id=p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/envelope.png" title="{% trans "Send message" %}" /></a>
 	{% if game.configuration.finances %}
-		<a href="{% url 'lend' game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/coin.png" title="{% trans "Give money" %}" /></a>
+		<a href="{% url lend game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/coin.png" title="{% trans "Give money" %}" /></a>
 	{% endif %}
 	{% if can_excommunicate %} {# Use context variable set in base_context #}
 		{% ifnotequal p.is_excommunicated True %}
-		<a href="{% url 'excommunicate' game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/excommunication-icon-16.png" title="{% trans "Excommunicate" %}" /></a>
+		<a href="{% url excommunicate game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/excommunication-icon-16.png" title="{% trans "Excommunicate" %}" /></a>
 		{% endifnotequal %}
 	{% endif %}
 	{% if can_forgive %} {# Use context variable set in base_context #}
 		{% ifequal p.is_excommunicated True %}
-		<a href="{% url 'forgive-excommunication' game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/forgive-icon-16.png" title="{% trans "Forgive" %}" /></a>
+		<a href="{% url forgive-excommunication game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/forgive-icon-16.png" title="{% trans "Forgive" %}" /></a>
 		{% endifequal %}
 	{% endif %}
 	</div>
@@ -138,7 +138,7 @@
             {% if user == game.created_by or user.is_staff %}
                 {% if p.user != user and not p.eliminated %} {# Can't remove self or already eliminated #}
                     {# Use {% url %} tag #}
-                    <form action="{% url 'quit_player' game.slug p.id %}" method="POST" style="display: inline;" onsubmit="return confirm('{% trans "Are you sure you want to remove this player? Their units will be removed and control replaced by autonomous garrisons." %}');">
+                    <form action="{% url quit_player game.slug p.id %}" method="POST" style="display: inline;" onsubmit="return confirm('{% trans "Are you sure you want to remove this player? Their units will be removed and control replaced by autonomous garrisons." %}');">
                         {% csrf_token %}
                         <button type="submit" class="quit-button">{% trans "Remove Player" %}</button>
                     </form>
@@ -213,14 +213,14 @@
 {% endif %}
 {% if whisper_form %} {# Check if form context exists #}
 {# Use {% url %} tag #}
-<form action="{% url 'new-whisper' game.slug %}" method="POST">
+<form action="{% url new-whisper game.slug %}" method="POST">
 {% csrf_token %}
 {{ whisper_form.text }}
 <input type="submit" value="{% trans "Send" %}" />
 </form>
 {% endif %}
 {# Use {% url %} tag #}
-<p><a href="{% url 'whisper-list' game.slug %}">{% trans "Show all" %}</a></p>
+<p><a href="{% url whisper-list game.slug %}">{% trans "Show all" %}</a></p>
 </div>
 {% endif %}
 
