@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
 from .models import VICTORY_TYPES # Import from models
-
+from .models import Unit, SpecialUnit # Import necessary models
 class GameForm(forms.ModelForm):
     scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
                                     empty_label=None,
@@ -92,27 +92,38 @@ class GameForm(forms.ModelForm):
 class ConfigurationForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(ConfigurationForm, self).clean()
-        # Optional Rule X requires Finances
+        # ... (existing dependency checks - unchanged) ...
         if cleaned_data.get('lenders') or cleaned_data.get('unbalanced_loans'):
             cleaned_data['finances'] = True
-        # Optional Rule IV requires Finances
         if cleaned_data.get('special_units'):
             cleaned_data['finances'] = True
-        # Advanced Rule VI requires Finances
         if cleaned_data.get('assassinations') or cleaned_data.get('bribes'):
             cleaned_data['finances'] = True
-        # Optional Rule III (Disasters) don't strictly require finances, but Famine Relief does
-        # No automatic enabling needed here.
+
+        # Add checks for new flags if they have dependencies
+        # e.g., if bribes_via_ally requires bribes
+        if cleaned_data.get('bribes_via_ally') or cleaned_data.get('bribes_anywhere'):
+             if not cleaned_data.get('bribes'):
+                  # Raise error or automatically enable bribes? Auto-enable is simpler.
+                  cleaned_data['bribes'] = True
+                  cleaned_data['finances'] = True # Bribes require finances
+
+        if cleaned_data.get('random_assassins'):
+             if not cleaned_data.get('assassinations'):
+                  cleaned_data['assassinations'] = True
+                  cleaned_data['finances'] = True # Assassinations require finances
+
+        # no_luck disables others - handle this in game logic, not form cleaning.
 
         return cleaned_data
 
     class Meta:
         model = Configuration
-        # Exclude game FK, it's set automatically in Game.save()
         exclude = ('game',)
-        # Ensure all boolean flags are included unless they should never be user-settable
-        # fields = '__all__' # Or list all fields explicitly if exclude isn't sufficient
-		
+        # Make sure all fields, including new ones, are included by default
+        # or list them explicitly if using 'fields' instead of 'exclude'.
+        # Using exclude = ('game',) should include all other fields automatically.
+
 class InvitationForm(forms.Form):
 	user_list = forms.CharField(required=True,
 								label=_("User list, comma separated"))

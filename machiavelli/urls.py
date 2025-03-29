@@ -47,5 +47,6 @@ urlpatterns = patterns('machiavelli.views',
 	url(r'^game/(?P<slug>[-\w]+)/get_area_info/$', 'get_area_info', name='get-area-info'),
 	url(r'^game/(?P<slug>[-\w]+)', 'play_game', name='show-game'),
 	#url(r'^jsgame/(?P<slug>[-\w]+)', 'js_play_game', name='js-play-game'),
+	url(r'^game/(?P<slug>[-\w]+)/quit_player/(?P<player_id>\d+)$', 'handle_player_quit', name='quit_player')
 )
 

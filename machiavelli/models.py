@@ -4066,43 +4066,53 @@ class TurnLog(models.Model):
 		return self.log
 
 class Configuration(models.Model):
-	""" Defines the configuration options for each game. 
-	
-	At the moment, only some of them are actually implemented.
-	"""
+    """ Defines the configuration options for each game. """
+    game = models.OneToOneField('Game', verbose_name=_('game'), editable=False) # Assuming Game model is defined above
 
-	game = models.OneToOneField(Game, verbose_name=_('game'), editable=False)
-	finances = models.BooleanField(_('finances'), default=False)
-	assassinations = models.BooleanField(_('assassinations'), default=False,
-					help_text=_('will enable Finances'))
-	bribes = models.BooleanField(_('bribes'), default=False,
-					help_text=_('will enable Finances'))
-	excommunication = models.BooleanField(_('excommunication'), default=False)
-	#disasters = models.BooleanField(_('natural disasters'), default=False)
-	special_units = models.BooleanField(_('special units'), default=False,
-					help_text=_('will enable Finances'))
-	strategic = models.BooleanField(_('strategic movement'), default=False)
-	lenders = models.BooleanField(_('money lenders'), default=False,
-					help_text=_('will enable Finances'))
-	unbalanced_loans = models.BooleanField(_('unbalanced loans'), default=False,
-		help_text=_('the credit for all players will be 25d'))
-	conquering = models.BooleanField(_('conquering'), default=False)
-	famine = models.BooleanField(_('famine'), default=False)
-	plague = models.BooleanField(_('plague'), default=False)
-	storms = models.BooleanField(_('storms'), default=False)
-	gossip = models.BooleanField(_('gossip'), default=False)
+    # Existing Flags
+    finances = models.BooleanField(_('finances'), default=False)
+    assassinations = models.BooleanField(_('assassinations'), default=False,
+                    help_text=_('will enable Finances'))
+    bribes = models.BooleanField(_('bribes'), default=False,
+                    help_text=_('will enable Finances'))
+    excommunication = models.BooleanField(_('excommunication'), default=False)
+    special_units = models.BooleanField(_('special units'), default=False,
+                    help_text=_('will enable Finances'))
+    strategic = models.BooleanField(_('strategic movement'), default=False) # Assuming this exists
+    lenders = models.BooleanField(_('money lenders'), default=False,
+                    help_text=_('will enable Finances'))
+    unbalanced_loans = models.BooleanField(_('unbalanced loans'), default=False,
+        help_text=_('the credit for all players will be 25d'))
+    conquering = models.BooleanField(_('conquering'), default=False)
+    famine = models.BooleanField(_('famine'), default=False)
+    plague = models.BooleanField(_('plague'), default=False)
+    storms = models.BooleanField(_('storms'), default=False)
+    gossip = models.BooleanField(_('gossip'), default=False) # Assuming this exists
 
-	def __unicode__(self):
-		return unicode(self.game)
+    # --- New Optional Rule Flags ---
+    bribes_via_ally = models.BooleanField(_('Bribes via Ally (Opt V.A)'), default=False,
+                        help_text=_("Allow bribes adjacent to ally units (permission not enforced)."))
+    bribes_anywhere = models.BooleanField(_('Bribes Anywhere (Opt V.B)'), default=False,
+                        help_text=_("Allow bribes into any province, ignoring adjacency."))
+    random_assassins = models.BooleanField(_('Random Assassin Setup (Opt VI.B)'), default=False,
+                        help_text=_("Use random draw for initial assassin tokens instead of standard."))
+    no_luck = models.BooleanField(_('No Luck Option (Opt IX)'), default=False,
+                        help_text=_("Disable dice rolls (fixed income, no assassination/disasters)."))
+    # --- End New Flags ---
 
-	def get_enabled_rules(self):
-		rules = []
-		for f in self._meta.fields:
-			if isinstance(f, models.BooleanField):
-				if f.value_from_object(self):
-					rules.append(unicode(f.verbose_name))
-		return rules
-	
+    def __unicode__(self):
+        return unicode(self.game)
+
+    def get_enabled_rules(self):
+        rules = []
+        # Iterate through fields, check if BooleanField and True
+        for f in self._meta.fields:
+            if isinstance(f, models.BooleanField) and f.name != 'id': # Exclude 'id'
+                # Use getattr for safety, check if value is True
+                if getattr(self, f.name, False):
+                    rules.append(unicode(f.verbose_name)) # Use verbose_name
+        return rules
+
 def create_configuration(sender, instance, created, **kwargs):
     if isinstance(instance, Game) and created:
 		config = Configuration(game=instance)

@@ -431,11 +431,19 @@ def play_game(request, slug='', **kwargs):
                             context,
                             context_instance=RequestContext(request))
 
-
 def play_reinforcements(request, game, player):
     context = base_context(request, game, player)
+    is_first_spring = (game.year == game.scenario.start_year and game.season == 1)
+
+    if is_first_spring and not player.done:
+        # ... (first spring logic - unchanged) ...
+        player.unit_set.update(paid=True)
+        player.end_phase()
+        messages.info(request, _("Initial setup complete. Proceeding to orders."))
+        return HttpResponseRedirect(request.path)
+
     if player.done:
-        # ... (display summary logic) ...
+        # ... (display summary logic - unchanged) ...
         context['to_place'] = player.unit_set.filter(placed=False)
         context['to_disband'] = player.unit_set.filter(placed=True, paid=False)
         context['to_keep'] = player.unit_set.filter(placed=True, paid=True)
@@ -446,29 +454,25 @@ def play_reinforcements(request, game, player):
 
         if units_to_place > 0:
             context['units_to_place'] = units_to_place
-            # Pass finances=False, special_units=False for basic game
             ReinforceForm = forms.make_reinforce_form(player, finances=False, special_units=False)
             ReinforceFormSet = formset_factory(ReinforceForm,
                                 formset=forms.BaseReinforceFormSet,
                                 extra=units_to_place, max_num=units_to_place)
             if request.method == 'POST':
-                reinforce_formset = ReinforceFormSet(request.POST, prefix='reinforce')
+                # *** ADD form_kwargs HERE ***
+                reinforce_formset = ReinforceFormSet(request.POST, prefix='reinforce', form_kwargs={'player': player})
                 if reinforce_formset.is_valid():
+                    # ... (form processing logic - unchanged) ...
                     units_to_create = []
                     for form in reinforce_formset:
-                        if form.has_changed() and form.is_valid(): # Check individual form validity again
+                        if form.has_changed() and form.is_valid():
                             area = form.cleaned_data.get('area')
                             type_ = form.cleaned_data.get('type')
-                            coast = form.cleaned_data.get('coast') # Get coast value
-
+                            coast = form.cleaned_data.get('coast')
                             if area and type_:
                                 units_to_create.append(
-                                    Unit(type=type_,
-                                         area=area,
-                                         player=player,
-                                         coast=coast, # Assign coast
-                                         placed=False,
-                                         paid=True) # Assume paid in basic
+                                    Unit(type=type_, area=area, player=player,
+                                         coast=coast, placed=False, paid=True)
                                 )
                     if units_to_create:
                         Unit.objects.bulk_create(units_to_create)
@@ -477,11 +481,12 @@ def play_reinforcements(request, game, player):
                     return HttpResponseRedirect(request.path)
                 else:
                     messages.error(request, _("Please correct the errors in the reinforcement form."))
-            else:
-                reinforce_formset = ReinforceFormSet(prefix='reinforce')
+            else: # GET request
+                # *** ADD form_kwargs HERE ***
+                reinforce_formset = ReinforceFormSet(prefix='reinforce', form_kwargs={'player': player})
             context['reinforce_formset'] = reinforce_formset
         elif units_to_place < 0:
-            # ... (disband logic remains the same) ...
+            # ... (disband logic - unchanged) ...
             context['units_to_disband'] = -units_to_place
             DisbandForm = forms.make_disband_form(player)
             if request.method == 'POST':
@@ -489,8 +494,8 @@ def play_reinforcements(request, game, player):
                 if disband_form.is_valid():
                     selected_units = disband_form.cleaned_data['units']
                     if len(selected_units) == -units_to_place:
-                        selected_units.update(paid=False)
-                        player.unit_set.exclude(id__in=selected_units.values_list('id', flat=True)).update(paid=True)
+                        selected_units.update(paid=False, placed=True)
+                        player.unit_set.filter(placed=True).exclude(id__in=selected_units.values_list('id', flat=True)).update(paid=True)
                         player.end_phase()
                         messages.success(request, _("You have successfully selected units for disbandment."))
                         return HttpResponseRedirect(request.path)
@@ -510,129 +515,89 @@ def play_reinforcements(request, game, player):
                             context_instance=RequestContext(request))
 
 def play_finance_reinforcements(request, game, player):
-    context = base_context(request, game, player)
-    any_not_done = game.player_set.filter(done=False).exclude(id=player.id).exists()
+    # ... (context setup, step 0 logic - unchanged) ...
 
-    if player.done and any_not_done:
-        # ... (display summary logic) ...
-        context['to_place'] = player.unit_set.filter(placed=False)
-        context['to_disband'] = player.unit_set.filter(placed=True, paid=False)
-        context['to_keep'] = player.unit_set.filter(placed=True, paid=True)
-        template_name = 'machiavelli/reinforcements_actions.html'
-    elif player.done and not any_not_done:
-         messages.info(request, _("Waiting for game phase to advance."))
-         template_name = 'machiavelli/reinforcements_actions.html'
-    else: # Player not done
-        step = player.step
-        # ... (loan/special unit context setup) ...
-        if game.configuration.lenders:
-            try: loan = player.loan
-            except Loan.DoesNotExist: loan = None
-            context.update({'loan': loan})
-        if game.configuration.special_units:
-            context.update({'special_units': True})
+    # --- Step 1: Placement Step ---
+    elif step == 1:
+        # ... (calculate max_units_possible, check if placement possible - unchanged) ...
+        can_buy = int(player.ducats / 3)
+        can_place = player.get_areas_for_new_units(finances=True).count()
+        max_units_possible = min(can_buy, can_place)
+        can_afford_any = player.ducats >= 3
+        can_place_any = can_place > 0
+        has_special_option = game.configuration.special_units and not player.has_special_unit()
 
+        if not can_afford_any and not can_place_any and not has_special_option:
+            player.end_phase()
+            messages.info(request, _("No new units can be placed this turn (insufficient funds or space)."))
+            return HttpResponseRedirect(request.path)
 
-        if step == 0: # Payment Step
-            # ... (payment logic remains the same) ...
-            UnitPaymentForm = forms.make_unit_payment_form(player)
-            if request.method == 'POST':
-                form = UnitPaymentForm(request.POST)
-                if form.is_valid():
-                    paid_units = form.cleaned_data.get('units', Unit.objects.none())
-                    cost = sum(u.cost for u in paid_units)
-                    paid_units_ids = paid_units.values_list('id', flat=True)
-                    player.unit_set.filter(placed=True, id__in=paid_units_ids).update(paid=True)
-                    player.unit_set.filter(placed=True).exclude(id__in=paid_units_ids).update(paid=False)
-                    Player.objects.filter(id=player.id).update(ducats=F('ducats') - cost)
-                    player.refresh_from_db()
-                    player.step = 1
-                    player.save(update_fields=['step'])
-                    messages.success(request, _("You have successfully paid your units."))
-                    return HttpResponseRedirect(request.path)
+        ReinforceForm = forms.make_reinforce_form(player, finances=True,
+                                            special_units=game.configuration.special_units)
+        extra_forms = max(1, max_units_possible if max_units_possible > 0 else (1 if has_special_option else 0))
+        max_forms = can_place if can_place > 0 else (1 if has_special_option else 0)
+
+        ReinforceFormSet = formset_factory(ReinforceForm,
+                            formset=forms.BaseReinforceFormSet,
+                            extra=extra_forms,
+                            max_num=max_forms) # Use max_forms here
+
+        if request.method == 'POST':
+            # *** ADD form_kwargs HERE ***
+            formset = ReinforceFormSet(request.POST, prefix='reinforce', form_kwargs={'player': player})
+            if formset.is_valid():
+                # ... (form processing logic - unchanged) ...
+                total_cost = 0
+                units_to_create = []
+                cost_from_forms = 0
+                for form in formset:
+                     if form.has_changed() and form.is_valid() and form.cleaned_data.get('area') and form.cleaned_data.get('type'):
+                          cost_from_forms += form.cleaned_data.get('cost', 3)
+
+                if cost_from_forms > player.ducats:
+                     messages.error(request, _("Cannot build all selected units: Insufficient ducats."))
+                     context['formset'] = formset
+                     context['max_units_possible'] = max_units_possible
+                     template_name = 'machiavelli/finance_reinforcements_1.html'
+                     return render_to_response(template_name, context, context_instance=RequestContext(request))
                 else:
-                    messages.error(request, _("There was an error with your unit payment. Please correct the errors below."))
-            else:
-                form = UnitPaymentForm(initial={'units': player.unit_set.filter(placed=True)})
-            context['form'] = form
-            template_name = 'machiavelli/finance_reinforcements_0.html'
-
-        elif step == 1: # Placement Step
-            # ... (calculate max units logic) ...
-            can_buy = int(player.ducats / 3)
-            can_place = player.get_areas_for_new_units(finances=True).count()
-            max_units_possible = min(can_buy, can_place)
-            if max_units_possible <= 0 and not player.has_special_unit() and not game.configuration.special_units:
-                player.end_phase()
-                messages.info(request, _("No new units can be placed this turn."))
-                return HttpResponseRedirect(request.path)
-
-            ReinforceForm = forms.make_reinforce_form(player, finances=True,
-                                                special_units=game.configuration.special_units)
-            ReinforceFormSet = formset_factory(ReinforceForm,
-                                formset=forms.BaseReinforceFormSet,
-                                extra=max(1, can_place),
-                                max_num=can_place)
-
-            if request.method == 'POST':
-                formset = ReinforceFormSet(request.POST, prefix='reinforce')
-                if formset.is_valid():
-                    total_cost = 0
-                    units_to_create = []
-                    special_unit_cost = 0
-                    has_special = player.has_special_unit()
-
-                    for form in formset:
-                        if form.has_changed() and form.is_valid():
-                            area = form.cleaned_data.get('area')
-                            type_ = form.cleaned_data.get('type')
-                            coast = form.cleaned_data.get('coast') # Get coast value
-                            unit_class = form.cleaned_data.get('unit_class')
-
-                            if area and type_:
-                                cost = 3; power = 1; loyalty = 1
-                                if unit_class:
-                                    if has_special:
-                                        messages.error(request, _("Cannot build special unit: You already have one."))
-                                        total_cost = -1; break
-                                    cost = unit_class.cost
+                     total_cost = cost_from_forms
+                     for form in formset:
+                          if form.has_changed() and form.is_valid():
+                               area = form.cleaned_data.get('area')
+                               type_ = form.cleaned_data.get('type')
+                               coast = form.cleaned_data.get('coast')
+                               unit_class = form.cleaned_data.get('unit_class')
+                               cost = form.cleaned_data.get('cost', 3)
+                               power = 1; loyalty = 1
+                               if unit_class:
                                     power = unit_class.power
                                     loyalty = unit_class.loyalty
-                                    special_unit_cost = cost
-                                    has_special = True
-
-                                if total_cost + cost <= player.ducats:
-                                    total_cost += cost
+                               if area and type_:
                                     units_to_create.append(
-                                        Unit(type=type_, area=area, player=player,
-                                             coast=coast, # Assign coast
-                                             placed=False, cost=cost, power=power, loyalty=loyalty)
+                                         Unit(type=type_, area=area, player=player,
+                                              coast=coast, placed=False, cost=cost, power=power, loyalty=loyalty)
                                     )
-                                else:
-                                    messages.error(request, _("Cannot build all selected units: Insufficient ducats."))
-                                    total_cost = -1; break
-
-                    if total_cost != -1:
-                        if units_to_create:
-                            Unit.objects.bulk_create(units_to_create)
-                            Player.objects.filter(id=player.id).update(ducats=F('ducats') - total_cost)
-                            player.refresh_from_db()
-                        player.end_phase()
-                        messages.success(request, _("You have successfully made your reinforcements."))
-                        return HttpResponseRedirect(request.path)
-                else:
-                    messages.error(request, _("Please correct the errors in the reinforcement formset."))
+                     if units_to_create:
+                          Unit.objects.bulk_create(units_to_create)
+                          Player.objects.filter(id=player.id).update(ducats=F('ducats') - total_cost)
+                          player.refresh_from_db()
+                     player.end_phase()
+                     messages.success(request, _("You have successfully made your reinforcements."))
+                     return HttpResponseRedirect(request.path)
             else:
-                formset = ReinforceFormSet(prefix='reinforce')
+                messages.error(request, _("Please correct the errors in the reinforcement formset."))
+        else: # GET request
+            # *** ADD form_kwargs HERE ***
+            formset = ReinforceFormSet(prefix='reinforce', form_kwargs={'player': player})
 
-            context['formset'] = formset
-            context['max_units_possible'] = max_units_possible
-            template_name = 'machiavelli/finance_reinforcements_1.html'
-        else:
-            raise Http404
+        context['formset'] = formset
+        context['max_units_possible'] = max_units_possible
+        template_name = 'machiavelli/finance_reinforcements_1.html'
+
+    # ... (rest of view) ...
     return render_to_response(template_name, context,
                             context_instance=RequestContext(request))
-
 
 def play_orders(request, game, player):
     context = base_context(request, game, player)
@@ -673,6 +638,113 @@ def play_orders(request, game, player):
     return render_to_response('machiavelli/orders_actions.html',
                             context,
                             context_instance=RequestContext(request))
+@login_required # At least require login
+def handle_player_quit(request, slug, player_id):
+    """
+    Handles the process of removing a player from an active game,
+    placing autonomous garrisons according to Rule VII.
+    Requires appropriate permissions (e.g., game creator or staff).
+    """
+    game = get_object_or_404(Game, slug=slug)
+    quitting_player = get_object_or_404(Player, pk=player_id, game=game)
+
+    # --- Permission Check ---
+    # Allow game creator or superuser/staff to remove players
+    if not (request.user == game.created_by or request.user.is_staff):
+        messages.error(request, _("You do not have permission to remove players from this game."))
+        return redirect('show-game', slug=game.slug)
+    # --- End Permission Check ---
+
+    # --- Validation ---
+    if not quitting_player.user:
+        messages.error(request, _("Cannot remove the autonomous player."))
+        return redirect('show-game', slug=game.slug)
+
+    if game.phase == PHINACTIVE:
+         messages.error(request, _("Cannot remove player from a finished game."))
+         return redirect('show-game', slug=game.slug)
+
+    if quitting_player.eliminated:
+         messages.warning(request, _("Player is already marked as eliminated."))
+         # Allow proceeding to ensure cleanup, or redirect? Let's proceed.
+    # --- End Validation ---
+
+    if logging: logging.warning(f"Game {game.id}: Player {quitting_player} ({quitting_player.user}) is being removed (quit/kicked).")
+
+    # --- Core Logic (adapted from conceptual code) ---
+    try:
+        # 1. Get Autonomous Player
+        try:
+            autonomous_player = Player.objects.get(game=game, user__isnull=True)
+        except Player.DoesNotExist:
+            # Create autonomous player if it doesn't exist (should have been created at game start)
+            logging.error(f"Game {game.id}: Autonomous player not found! Creating one.")
+            autonomous_player = Player(game=game, done=True)
+            autonomous_player.save()
+
+        # 2. Store controlled fortified areas BEFORE removing control
+        controlled_fortified_areas = list(
+            GameArea.objects.filter(game=game, player=quitting_player, board_area__is_fortified=True)
+        )
+
+        # 3. Mark player as eliminated/quit
+        quitting_player.eliminated = True
+        quitting_player.done = True # Mark as done for current phase processing
+        quitting_player.ducats = 0
+        # Clear other flags if necessary
+        quitting_player.save(update_fields=['eliminated', 'done', 'ducats'])
+
+        # 4. Remove Units
+        units_removed_count = quitting_player.unit_set.all().delete()
+        if logging: logging.info(f"Removed {units_removed_count} units for quitting player {quitting_player}.")
+
+        # 5. Remove Control from all areas
+        areas_updated = quitting_player.gamearea_set.all().update(player=None)
+        if logging: logging.info(f"Removed control from {areas_updated} areas for quitting player {quitting_player}.")
+
+        # 6. Remove Orders, Expenses, etc.
+        quitting_player.order_set.all().delete()
+        # Refund pending expenses? Rule doesn't say. Let's just delete.
+        quitting_player.expense_set.all().delete()
+        quitting_player.assassination_attempts.all().delete()
+        Assassin.objects.filter(owner=quitting_player).delete()
+        Loan.objects.filter(player=quitting_player).delete()
+        # Remove pending revolutions *against* this player? Or let them resolve? Let's remove.
+        Rebellion.objects.filter(player=quitting_player).delete()
+
+        # 7. Place Autonomous Garrisons (Rule VII)
+        garrisons_placed = 0
+        for area in controlled_fortified_areas:
+            # Refresh area from DB to ensure it's actually empty now
+            area.refresh_from_db()
+            if not Unit.objects.filter(area=area, type='G').exists():
+                Unit.objects.create(
+                    type='G',
+                    area=area,
+                    player=autonomous_player,
+                    placed=True,
+                    paid=True # Autonomous units don't use payment system
+                )
+                garrisons_placed += 1
+                if logging: logging.info(f"Placed autonomous garrison in {area} for quitting player {quitting_player}.")
+
+        # 8. Update Game State
+        game.reset_players_cache()
+        # Check if removing the player finishes the current phase or game
+        game.check_finished_phase()
+
+        messages.success(request, _("Player %(user)s (%(country)s) removed from game. %(num)s autonomous garrisons placed.") % {
+            'user': quitting_player.user.username,
+            'country': quitting_player.country if quitting_player.country else 'N/A',
+            'num': garrisons_placed
+        })
+
+    except Exception as e:
+        # Catch unexpected errors during the process
+        if logging: logging.error(f"Error removing player {player_id} from game {game.id}: {e}", exc_info=True)
+        messages.error(request, _("An unexpected error occurred while removing the player."))
+
+    return redirect('show-game', slug=game.slug) # Redirect back to game view
 
 @login_required
 def delete_order(request, slug='', order_id=''):

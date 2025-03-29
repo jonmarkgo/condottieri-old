@@ -126,6 +126,24 @@
 {% endif %}
 	</div>
 	{% endif %}
+	{# Inside the loop iterating through 'p' in player_list #}
+{% if p.user %} {# Check if it's a real player #}
+    <div class="player {{ p.country.css_class }}">
+        {# ... existing player info ... #}
+
+        {# Add Quit Button/Link (visible to game creator or staff) #}
+        {% if user.is_authenticated and (user == game.created_by or user.is_staff) %}
+            {% if p.user != user and not p.eliminated %} {# Can't remove self or already eliminated #}
+                {# Use {% url %} tag #}
+                <form action="{% url 'quit_player' game.slug p.id %}" method="POST" style="display: inline;" onsubmit="return confirm('{% trans "Are you sure you want to remove this player? Their units will be removed and control replaced by autonomous garrisons." %}');">
+                    {% csrf_token %}
+                    <button type="submit" class="quit-button">{% trans "Remove Player" %}</button>
+                </form>
+            {% endif %}
+        {% endif %}
+        {# End Quit Button/Link #}
+    </div>
+{% endif %}
 {% endfor %}
 
 {% else %} {# show only the user names of the players #}

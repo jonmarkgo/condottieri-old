@@ -100,9 +100,9 @@ class AreaAdmin(admin.ModelAdmin):
 		AFTokenInline ]
 
 class ConfigurationInline(admin.TabularInline):
-	model = Configuration
-	extra = 1
-
+    model = Configuration
+    extra = 1
+	
 class GameAdmin(admin.ModelAdmin):
 	list_display = ('pk', 'slug', 'year', 'season', 'phase', 'slots', 'scenario', 'created_by', 'next_phase_change', 'started', 'finished', 'player_list')
 	actions = ['redraw_map',
