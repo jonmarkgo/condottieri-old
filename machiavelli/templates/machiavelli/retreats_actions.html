@@ -1,28 +1,46 @@
+{# machiavelli/templates/machiavelli/retreats_actions.html #}
 {% extends 'machiavelli/show_game.html' %}
 
 {% load i18n %}
 
 {% block actions %}
-
+<div class="action_block"> {# Added wrapper div #}
 <h2>{% trans "Retreats" %}</h2>
 {% if done %}
-<p>{% blocktrans %}At least one player has not yet retreated his units. You have to wait until all
-players have done it or the time limit is reached.{% endblocktrans %}</p>
+<p>{% blocktrans %}You have completed your retreats. Waiting for other players.{% endblocktrans %}</p> {# Updated message #}
 {% else %}
-<form action="{% url show-game game.slug %}" method="post">
+{# Use {% url %} tag #}
+<form action="{% url 'show-game' game.slug %}" method="post">
 {% csrf_token %}
 {% if retreat_forms %}
 <p>{% blocktrans %}
-Some of your units have been defeated and must retreat. For each unit, you can decide a retreat area
-or even disband the unit. If a unit has been defeated and has no possible retreat, it will be
-disbanded.
-{% endblocktrans %}</p>
-{% for f in retreat_forms %}
-<p>{{ f }}</p>
+Some of your units have been defeated and must retreat. For each unit, you must choose a valid retreat area from the list or select 'Disband unit'. If a unit has no valid retreat options available, it will be disbanded automatically if you select 'Disband unit' or submit without choosing.
+{% endblocktrans %}</p> {# Clarified instructions #}
+
+{# Display form errors #}
+{% for form in retreat_forms %}
+    {% if form.non_field_errors %}
+        <div class="errorlist">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% for field in form %}
+        {% if field.errors %}
+            <div class="errorlist">{{ field.label }}: {{ field.errors }}</div>
+        {% endif %}
+    {% endfor %}
 {% endfor %}
-<input type="submit" value="{% trans "Retreat" %}" />
+
+{% for f in retreat_forms %}
+{# Display each form clearly #}
+<div class="retreat-form-item">
+    {{ f.as_p }} {# Render form fields as paragraphs #}
+</div>
+{% endfor %}
+<p><input type="submit" value="{% trans "Retreat" %}" /></p> {# Added paragraph for button #}
+{% else %}
+    {# This case should be handled by redirect in view #}
+    <p>{% trans "No retreats required this turn." %}</p>
 {% endif %}
 </form>
 {% endif %}
-
+</div> {# End wrapper div #}
 {% endblock %}

@@ -1,12 +1,13 @@
 - fields:
-    borders: [59, 56, 72, 57]
+    borders: [59, 56, 72, 57] # Corrected borders based on previous fixture
     code: ALB
-    has_city: true
+    has_city: true # Corrected based on previous fixture
     has_port: false
     is_coast: true
     is_fortified: false
     is_sea: false
     name: Albania
+    coast_names: null # Ensure single-coast areas have null or empty coast_names
   model: machiavelli.area
   pk: 58
 - fields:
@@ -194,6 +195,7 @@
     is_fortified: false
     is_sea: false
     name: Croatia
+    coast_names: nc,sc # Added: North Coast, South Coast (Rule VII.D.3)
   model: machiavelli.area
   pk: 33
 - fields:
@@ -568,6 +570,7 @@
     is_fortified: false
     is_sea: false
     name: Provence
+    coast_names: nc,sc # Added: North Coast, South Coast (Rule VII.D.4)
   model: machiavelli.area
   pk: 7
 - fields:

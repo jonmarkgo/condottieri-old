@@ -52,6 +52,9 @@ def make_map(game):
 	for player in game.player_set.filter(user__isnull=False):
 		## paste control markers
 		controls = player.gamearea_set.all()
+		# Skip players without countries
+		if not player.country:
+			continue
 		marker = Image.open("%s/control-%s.png" % (BASEDIR, player.country.css_class))
 		for area in controls:
 			base_map.paste(marker, (area.board_area.controltoken.x, area.board_area.controltoken.y), marker)

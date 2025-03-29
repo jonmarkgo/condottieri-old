@@ -15,7 +15,6 @@ machiavelli/media/machiavelli/maps/
 site_media/static/machiavelli/avatars/
 machiavelli/media/machiavelli/avatars/
 maintenance.html*
-*/migrations/
 activate
 doc/_*
 templates/ganalytics.html

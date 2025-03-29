@@ -94,15 +94,15 @@ class AFTokenInline(admin.TabularInline):
 	extra = 1
 
 class AreaAdmin(admin.ModelAdmin):
-	list_display = ('name', 'code', 'is_sea', 'is_coast', 'has_city', 'is_fortified', 'has_port', 'control_income', 'garrison_income')
+	list_display = ('name', 'code', 'is_sea', 'is_coast', 'has_city', 'is_fortified', 'has_port')
 	inlines = [ ControlTokenInline,
 		GTokenInline,
 		AFTokenInline ]
 
 class ConfigurationInline(admin.TabularInline):
-	model = Configuration
-	extra = 1
-
+    model = Configuration
+    extra = 1
+	
 class GameAdmin(admin.ModelAdmin):
 	list_display = ('pk', 'slug', 'year', 'season', 'phase', 'slots', 'scenario', 'created_by', 'next_phase_change', 'started', 'finished', 'player_list')
 	actions = ['redraw_map',
@@ -144,7 +144,7 @@ class RebellionAdmin(admin.ModelAdmin):
 	list_filter = ('player',)
 
 class LoanAdmin(admin.ModelAdmin):
-	list_display = ('player', 'debt', 'year', 'season', )
+	list_display = ('player', 'debt', 'due_year', 'due_season')
 
 class AssassinAdmin(admin.ModelAdmin):
 	pass

@@ -1,3 +1,4 @@
+{# machiavelli/templates/machiavelli/game_form.html #}
 {% extends "machiavelli/base.html" %}
 
 {% load i18n %}
@@ -29,9 +30,9 @@ phases of the game. This time limit is reset when all the players have completed
 </tr></thead>
 {% for s in scenarios %}
 <tr>
-<td><a href="{% url show-scenario s.pk %}">{% trans s.title %}</a></td>
+<td><a href="{% url show-scenario s.pk %}">{% trans s.title %}</a></td> {# Use {% url %} tag #}
 <td class="data_c">{{ s.start_year }}</td>
-<td class="data_c">{{ s.get_slots }}</td>
+<td class="data_c">{{ s.get_slots }}</td> {# Use get_slots for player count #}
 </tr>
 {% endfor %}
 </table>
@@ -41,10 +42,11 @@ phases of the game. This time limit is reset when all the players have completed
 <h2>{% trans "Create a new game" %}</h2>
 
 <div style="width: 50%">
+{# Use {% url %} tag #}
 <form action="{% url new-game %}" method="post" class="uniForm">
 {% csrf_token %}
 <fieldset class="inlineLabels">
-{{ game_form|as_uni_form }}
+{{ game_form|as_uni_form }} {# This will now render victory_condition_type #}
 <h3>{% trans "Rules" %}</h3>
 {{ config_form|as_uni_form }}
 <div class="form_block">

@@ -11,6 +11,8 @@ register = template.Library()
 @register.filter
 def karma_stars(value):
 	""" Integer between 0 and 10 to represent the average karma with stars """
+	if value is None:
+		return mark_safe("<img src=\"%smachiavelli/img/0-blue.png\" alt=\"0 stars\" />" % settings.STATIC_URL)
 	highest = settings.KARMA_MAXIMUM
 	if highest == 0:
 		return mark_safe("<img src=\"%smachiavelli/img/0-blue.png\" alt=\"0 stars\" />" % settings.STATIC_URL)

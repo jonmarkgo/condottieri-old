@@ -1,27 +1,27 @@
-- fields: {cities_to_win: 15, enabled: true, name: spanish, start_year: 1521, title: The
+- fields: {enabled: true, name: spanish, start_year: 1521, title: The
       Spanish Preponderance}
   model: machiavelli.scenario
   pk: 1
-- fields: {cities_to_win: 15, enabled: true, name: balance, start_year: 1454, title: The
+- fields: {enabled: true, name: balance, start_year: 1454, title: The
       Balance of Power}
   model: machiavelli.scenario
   pk: 3
-- fields: {cities_to_win: 15, enabled: true, name: struggle-i, start_year: 1499, title: Struggle
+- fields: {enabled: true, name: struggle-i, start_year: 1499, title: Struggle
       for Dominance I}
   model: machiavelli.scenario
   pk: 4
-- fields: {cities_to_win: 15, enabled: true, name: struggle-ii, start_year: 1513,
+- fields: {enabled: true, name: struggle-ii, start_year: 1513,
     title: Struggle for Dominance II}
   model: machiavelli.scenario
   pk: 5
-- fields: {cities_to_win: 23, enabled: true, name: spanish-uv23, start_year: 1521,
+- fields: {enabled: true, name: spanish-uv23, start_year: 1521,
     title: The Spanish Preponderance - Ultimate Victory}
   model: machiavelli.scenario
   pk: 6
 ## The following is a development scenario. Comment it out if you want to use
 ## it in your development server. Note that the scenario is disabled by default
 ####
-- fields: {cities_to_win: 6, enabled: false, name: development, start_year: 1521, title: Condottieri Development}
+- fields: {enabled: false, name: development, start_year: 1521, title: Condottieri Development}
   model: machiavelli.scenario
   pk: 7
 

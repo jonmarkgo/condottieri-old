@@ -1,14 +1,16 @@
+{# machiavelli/templates/machiavelli/show_game.html #}
 {% extends "machiavelli/base.html" %}
 
 
 {% load i18n %}
 {% load game_icons %}
 {% load avatar_tags %}
+{% load humanize %} {# Load humanize for timesince/timeuntil #}
 
 {% block head_title %}
-{% if player %}
+{% if player and player.pk %} {# Check if player is valid #}
 	{% if player.done %}
-		[&bull;]
+		[•]
 	{% else %}
 		[ ]
 	{% endif %}
@@ -19,16 +21,18 @@
 {% block body %}
 <div id="game_info">
 <ul>
-<li id="cities_to_win">{{ game.cities_to_win }}</li>
+{# Display victory condition description #}
+<li id="victory_condition">{% blocktrans with game.cities_to_win as cities %}Win: {{ cities }} cities{% endblocktrans %} ({{ game.get_victory_condition_type_display }})</li>
 <li>{{ game.slug }}</li>
+{# Display phase name robustly #}
 <li>{{ game.year|default_if_none:"" }} |
 {{ game.get_season_display|default_if_none:"" }} |
-{{ game.get_phase_display }}</li>
+{{ game.get_phase_display|default_if_none:"Setup" }}</li>
 <li>
-{% if player and game.slots == 0 %}
+{% if player and player.pk and game.slots == 0 %} {# Check player validity #}
 	{% if time_exceeded %}
 	<span style="color: LightCoral">
-	{{ game.next_phase_change|timeuntil }} 
+	{{ game.next_phase_change|timeuntil }}
 	</span>
 	{% else %}
 	<span style="color: Green">
@@ -36,10 +40,14 @@
 	</span>
 	{% endif %}
 {% else %}
-	{{ game.next_phase_change|timeuntil }}</li>
+	{% if game.last_phase_change %}  {# Show game deadline if no specific player deadline #}
+	{{ game.next_phase_change|timeuntil }}
+	{% else %}
+	{% trans "Not Started" %}
+	{% endif %}
 {% endif %}
 </li>
-{% if player %}
+{% if player and player.pk %} {# Check player validity #}
 <li>
 	{% if player.country %}
 		{{ player.country }}
@@ -48,7 +56,7 @@
 {% else %}
 <li>
 		{% ifnotequal game.slots 0 %}
-			<a href="{% url join-game game.slug %}">{% trans "Join game" %}</a>
+			<a href="{% url join-game game.slug %}">{% trans "Join game" %}</a> {# Use {% url %} #}
 		{% endifnotequal %}
 </li>
 {% endif %}
@@ -58,7 +66,7 @@
 </li>
 {% endif %}
 
-{% if ducats %}
+{% if ducats %} {# Check if ducats context exists #}
 <li>{% trans "Ducats" %}: {{ ducats }}</li>
 {% endif %}
 </ul>
@@ -68,44 +76,48 @@
 
 <div class="col1">
 <div id="powers">
-{% if player.country %}
+{% if player and player.pk and player.country %} {# Check player validity #}
 <div style="text-align: center">
 <img src="{{ STATIC_URL }}machiavelli/img/banner-{{ player.country.css_class }}.png" />
 </div>
 {% endif %}
 {% if game.slots == 0 %} {# show all the powers info #}
 {% for p in player_list %}
-	{% if p.user %}
+	{% if p.user %} {# Display only actual players #}
 	<div class="player {{ p.country.css_class }}">
 	<div><strong>{{ p.country }}</strong>
 	{% if p.conqueror %}
-		({{ p.conqueror.country }})
+		({% trans "conquered by" %} {{ p.conqueror.country }})
+	{% endif %}
+	{% if p.eliminated %}
+	    ({% trans "Eliminated" %})
 	{% endif %}
 	{% if p.is_excommunicated %}
-	<img src="{{ STATIC_URL }}machiavelli/img/excommunication-icon-16.png" />
+	<img src="{{ STATIC_URL }}machiavelli/img/excommunication-icon-16.png" title="{% trans 'Excommunicated' %}"/>
 	{% endif %}
 	</div>
 	{% if show_users %}
-	<div><a href="{% url profile_detail username=p.user.username %}">{% avatar p.user 20 %}{{ p.user.username }}</a></div>
+	<div><a href="{% url profile_detail username=p.user.username %}">{% avatar p.user 20 %}{{ p.user.username }}</a></div> {# Use {% url %} #}
 	{% endif %}
 	<div>{% trans "Cities:" %} {{ p.number_of_cities }}</div>
-	<div>{% trans "Units:" %} {{ p.placed_units_count }}</div>
-{% if player %}
-	{% ifnotequal game.phase 0 %}
-	{% ifnotequal p player %}
-	{% ifnotequal p.eliminated 1 %}
+	<div>{% trans "Units:" %} {{ p.placed_units_count }}</div> {# Use placed_units_count #}
+{% if player and player.pk %} {# Check current user's player object validity #}
+	{% ifnotequal game.phase PHINACTIVE %} {# Check game phase #}
+	{% ifnotequal p player %} {# Not self #}
+	{% ifnotequal p.eliminated True %} {# Not eliminated #}
 	<div>
+	{# Use {% url %} tags #}
 	<a href="{% url condottieri_messages_compose sender_id=player.id recipient_id=p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/envelope.png" title="{% trans "Send message" %}" /></a>
 	{% if game.configuration.finances %}
 		<a href="{% url lend game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/coin.png" title="{% trans "Give money" %}" /></a>
 	{% endif %}
-	{% if can_excommunicate %}
-		{% ifnotequal p.is_excommunicated 1 %}
+	{% if can_excommunicate %} {# Use context variable set in base_context #}
+		{% ifnotequal p.is_excommunicated True %}
 		<a href="{% url excommunicate game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/excommunication-icon-16.png" title="{% trans "Excommunicate" %}" /></a>
 		{% endifnotequal %}
 	{% endif %}
-	{% if can_forgive %}
-		{% ifequal p.is_excommunicated 1 %}
+	{% if can_forgive %} {# Use context variable set in base_context #}
+		{% ifequal p.is_excommunicated True %}
 		<a href="{% url forgive-excommunication game.slug p.id %}"><img src="{{ STATIC_URL }}machiavelli/img/forgive-icon-16.png" title="{% trans "Forgive" %}" /></a>
 		{% endifequal %}
 	{% endif %}
@@ -116,6 +128,26 @@
 {% endif %}
 	</div>
 	{% endif %}
+	{# Inside the loop iterating through 'p' in player_list #}
+{% if p.user %} {# Check if it's a real player #}
+    <div class="player {{ p.country.css_class }}">
+        {# ... existing player info ... #}
+
+        {# Add Quit Button/Link (visible to game creator or staff) #}
+        {% if user.is_authenticated %}
+            {% if user == game.created_by or user.is_staff %}
+                {% if p.user != user and not p.eliminated %} {# Can't remove self or already eliminated #}
+                    {# Use {% url %} tag #}
+                    <form action="{% url quit_player game.slug p.id %}" method="POST" style="display: inline;" onsubmit="return confirm('{% trans "Are you sure you want to remove this player? Their units will be removed and control replaced by autonomous garrisons." %}');">
+                        {% csrf_token %}
+                        <button type="submit" class="quit-button">{% trans "Remove Player" %}</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        {# End Quit Button/Link #}
+    </div>
+{% endif %}
 {% endfor %}
 
 {% else %} {# show only the user names of the players #}
@@ -132,7 +164,8 @@
 </div>
 
 <div class="col2">
-	<div id="map" class="viewer">
+	{# Use a unique ID for the map container #}
+	<div id="map-viewer-{{ game.id }}" class="viewer">
 	</div>
 </div>
 
@@ -140,14 +173,22 @@
 
 <div id="log">
 <h3>{% trans "Campaign log" %}</h3>
+{# Check if log context exists #}
+{% if log %}
 <ul>
 {% for l in log %}
+{# Ensure log entries are properly escaped or marked safe #}
+{# Assuming l.color_output is safe HTML #}
 {{ l.color_output|safe }}
 {% endfor %}
 </ul>
+{% else %}
+<p>{% trans "No recent log entries." %}</p>
+{% endif %}
 </div>
 <div class="menu">
-<p><a href="{% url game-log game.slug %}">{% trans "See all" %}</a> | 
+{# Use {% url %} tags #}
+<p><a href="{% url game-log game.slug %}">{% trans "See all" %}</a> |
 <a href="{% url turn-log-list game.slug %}">{% trans "Process" %}</a></p>
 </div>
 </div>
@@ -160,18 +201,25 @@
 {% if game.configuration.gossip %}
 <div id="mini_shoutbox">
 <h2>{% trans "Gossip" %}</h2>
+{# Check if whispers context exists #}
+{% if whispers %}
 <ul>
 {% for w in whispers %}
 {{ w.as_li|safe }}
 {% endfor %}
 </ul>
-{% if whisper_form %}
+{% else %}
+<p>{% trans "No gossip yet." %}</p>
+{% endif %}
+{% if whisper_form %} {# Check if form context exists #}
+{# Use {% url %} tag #}
 <form action="{% url new-whisper game.slug %}" method="POST">
 {% csrf_token %}
 {{ whisper_form.text }}
 <input type="submit" value="{% trans "Send" %}" />
 </form>
 {% endif %}
+{# Use {% url %} tag #}
 <p><a href="{% url whisper-list game.slug %}">{% trans "Show all" %}</a></p>
 </div>
 {% endif %}
@@ -182,9 +230,9 @@
 {% block extra_body %}
 {% block extra_game %}{% endblock %}
 
-
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js" integrity="sha256-AlTido85uXPlSyyaZNsjJXeCs07eSv3r43kyCVc8ChI=" crossorigin="anonymous"></script>
+{# Consider updating jQuery and plugins #}
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 <script src="{{ STATIC_URL }}machiavelli/js/jquery.form.js" type="text/javascript"></script>
 <link rel="stylesheet" href="{{ STATIC_URL }}machiavelli/js/jquery.iviewer.css" />
 <script src="{{ STATIC_URL }}machiavelli/js/jquery.mousewheel.js" type="text/javascript"></script>
@@ -192,37 +240,57 @@
 <script type="text/javascript">
 	$(function() {
 		makeLayout();
-		// Check for map updates every 10 seconds
-		setInterval(checkMapUpdate, 10000);
+		// Check for map updates every 10 seconds if game is active
+		if ({{ game.phase }} != {{ PHINACTIVE|default:"0" }}) {
+		    setInterval(checkMapUpdate, 10000);
+		}
 	});
 
-	var currentMapTimestamp = '{{ map }}';
+	// Use game-specific timestamp variable if multiple maps could be on one page
+	var currentMapTimestamp_{{ game.id }} = '{{ game.last_phase_change|date:"U"|default:"0" }}'; // Use timestamp
 
 	function checkMapUpdate() {
-		$.get('{{ MEDIA_URL }}machiavelli/maps/{{ map }}', function() {
-			var newTimestamp = arguments[2].getResponseHeader('Last-Modified');
-			if (newTimestamp && newTimestamp !== currentMapTimestamp) {
-				currentMapTimestamp = newTimestamp;
-				// Force reload the map
-				var viewer = $('#map').iviewer('viewer');
-				viewer.loadImage(viewer.options.src + '&t=' + new Date().getTime());
-			}
-		});
+	    var mapUrl = "{{ MEDIA_URL }}machiavelli/maps/{{ game.get_map_url }}"; // Get dynamic map URL
+		$.ajax({
+            url: mapUrl,
+            type: 'HEAD', // Just get headers
+            success: function(data, textStatus, jqXHR) {
+                var newTimestamp = jqXHR.getResponseHeader('Last-Modified');
+                // Convert Last-Modified string to comparable value (e.g., timestamp)
+                var newTimestampVal = new Date(newTimestamp).getTime() / 1000;
+                if (newTimestamp && newTimestampVal > currentMapTimestamp_{{ game.id }}) {
+                    console.log("Map updated. Old:", currentMapTimestamp_{{ game.id }}, "New:", newTimestampVal);
+                    currentMapTimestamp_{{ game.id }} = newTimestampVal;
+                    // Force reload the map in the correct viewer instance
+                    var viewer = $('#map-viewer-{{ game.id }}').iviewer('viewer');
+                    if (viewer) { // Check if viewer exists
+                        // Append timestamp to force reload, use dynamic URL
+                        viewer.loadImage(mapUrl + '?t=' + new Date().getTime());
+                    }
+                }
+            },
+            error: function() {
+                // Handle error fetching map head (e.g., map not generated yet)
+                console.log("Error checking map update for game {{ game.id }}");
+            }
+        });
 	}
 
 	function makeLayout() {
 		var MEDIA_URL = "{{ MEDIA_URL }}";
+		var mapUrl = MEDIA_URL + "machiavelli/maps/{{ game.get_map_url }}"; // Get dynamic map URL
 		var viewer_opts = {
-			src: MEDIA_URL + "machiavelli/maps/{{ map }}",
-			ui_disabled: true,
+			src: mapUrl,
+			ui_disabled: false, // Enable UI for zooming/panning
 			zoom: "fit",
-			zoom_max: 100,
+			zoom_max: 200, // Allow more zoom
 			zoom_min: 10,
 			zoom_delta: 1.4,
 			update_on_resize: true
 		};
 
-		$("#map").iviewer(viewer_opts);
+		// Use game-specific map ID
+		$("#map-viewer-{{ game.id }}").iviewer(viewer_opts);
 	}
 </script>
 
