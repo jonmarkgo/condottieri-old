@@ -39,10 +39,12 @@
 	{{ player.next_phase_change|timeuntil }}
 	</span>
 	{% endif %}
-{% elif game.last_phase_change %} {# Show game deadline if no specific player deadline #}
-	{{ game.next_phase_change|timeuntil }}
 {% else %}
-    {% trans "Not Started" %}
+	{% if game.last_phase_change %}  {# Show game deadline if no specific player deadline #}
+	{{ game.next_phase_change|timeuntil }}
+	{% else %}
+	{% trans "Not Started" %}
+	{% endif %}
 {% endif %}
 </li>
 {% if player and player.pk %} {# Check player validity #}
@@ -54,7 +56,7 @@
 {% else %}
 <li>
 		{% ifnotequal game.slots 0 %}
-			<a href="{% url 'join-game' game.slug %}">{% trans "Join game" %}</a> {# Use {% url %} #}
+			<a href="{% url join-game game.slug %}">{% trans "Join game" %}</a> {# Use {% url %} #}
 		{% endifnotequal %}
 </li>
 {% endif %}
@@ -132,13 +134,15 @@
         {# ... existing player info ... #}
 
         {# Add Quit Button/Link (visible to game creator or staff) #}
-        {% if user.is_authenticated and (user == game.created_by or user.is_staff) %}
-            {% if p.user != user and not p.eliminated %} {# Can't remove self or already eliminated #}
-                {# Use {% url %} tag #}
-                <form action="{% url 'quit_player' game.slug p.id %}" method="POST" style="display: inline;" onsubmit="return confirm('{% trans "Are you sure you want to remove this player? Their units will be removed and control replaced by autonomous garrisons." %}');">
-                    {% csrf_token %}
-                    <button type="submit" class="quit-button">{% trans "Remove Player" %}</button>
-                </form>
+        {% if user.is_authenticated %}
+            {% if user == game.created_by or user.is_staff %}
+                {% if p.user != user and not p.eliminated %} {# Can't remove self or already eliminated #}
+                    {# Use {% url %} tag #}
+                    <form action="{% url 'quit_player' game.slug p.id %}" method="POST" style="display: inline;" onsubmit="return confirm('{% trans "Are you sure you want to remove this player? Their units will be removed and control replaced by autonomous garrisons." %}');">
+                        {% csrf_token %}
+                        <button type="submit" class="quit-button">{% trans "Remove Player" %}</button>
+                    </form>
+                {% endif %}
             {% endif %}
         {% endif %}
         {# End Quit Button/Link #}
@@ -184,8 +188,8 @@
 </div>
 <div class="menu">
 {# Use {% url %} tags #}
-<p><a href="{% url 'game-log' game.slug %}">{% trans "See all" %}</a> |
-<a href="{% url 'turn-log-list' game.slug %}">{% trans "Process" %}</a></p>
+<p><a href="{% url game-log game.slug %}">{% trans "See all" %}</a> |
+<a href="{% url turn-log-list game.slug %}">{% trans "Process" %}</a></p>
 </div>
 </div>
 
@@ -237,7 +241,7 @@
 	$(function() {
 		makeLayout();
 		// Check for map updates every 10 seconds if game is active
-		if ({{ game.phase }} != {{ PHINACTIVE }}) {
+		if ({{ game.phase }} != {{ PHINACTIVE|default:"0" }}) {
 		    setInterval(checkMapUpdate, 10000);
 		}
 	});

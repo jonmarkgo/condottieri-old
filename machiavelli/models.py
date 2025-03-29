@@ -294,7 +294,7 @@ class Area(models.Model):
 actually played in GameArea objects.
     """
     name = AutoTranslateField(max_length=30)
-    code = models.CharField(max_length=5, unique=True)
+    code = models.CharField(max_length=10, unique=True)
     is_sea = models.BooleanField(default=False)
     is_coast = models.BooleanField(default=False)
     has_city = models.BooleanField(default=False)
@@ -539,6 +539,8 @@ class Setup(models.Model):
     country = models.ForeignKey(Country, blank=True, null=True) # Null for Autonomous
     area = models.ForeignKey(Area)
     unit_type = models.CharField(max_length=1, choices=UNIT_TYPES)
+    # Added coast field for initial unit placement on multi-coast areas
+    coast = models.CharField(max_length=2, blank=True, null=True, choices=(('nc','NC'),('sc','SC'),('ec','EC'))) # North, South, East
 
     def __unicode__(self):
         return _("%(unit)s in %(area)s") % { 'unit': self.get_unit_type_display(),
@@ -654,7 +656,10 @@ class Game(models.Model):
         # Create configuration if it's a new game and doesn't exist yet
         # Moved from signal to ensure it happens reliably within the save transaction
         if is_new:
-            Configuration.objects.get_or_create(game=self)
+            try:
+                self.configuration
+            except Configuration.DoesNotExist:
+                Configuration.objects.create(game=self)
 
     ##------------------------
     ## representation methods
@@ -1086,7 +1091,7 @@ class Game(models.Model):
                         player=p, type='G', area__unit__siege_stage__gt=0, area__unit__player__game=self # Check siege_stage > 0
                     ).distinct()
                     for garrison in besieged_garrisons:
-                        besieger = Unit.objects.filter(area=garrison.area, siege_stage__gt=0).first()
+                        besieger = Unit.objects.filter(area=garrison.area, siege_stage__gt=0)[0]
                         if logging: logging.info("Assassination: Garrison %s surrenders to %s." % (garrison, besieger if besieger else 'siege'))
                         if signals: signals.unit_surrendered.send(sender=garrison, context="assassination")
                         garrison.delete()
@@ -1637,7 +1642,7 @@ class Game(models.Model):
             if dislodged:
                 orders_to_delete.append(c_order.id)
                 # Also cancel the corresponding army's advance order if it relied solely on this convoy
-                army_order = Order.objects.filter(unit=c_order.subunit, code='-', destination=c_order.subdestination, confirmed=True).first()
+                army_order = Order.objects.filter(unit=c_order.subunit, code='-', destination=c_order.subdestination, confirmed=True)[0]
                 if army_order:
                     # Check if other convoys exist for this army move (complex)
                     # Simplification: Assume if the main convoy fails, the move fails.
@@ -1757,10 +1762,10 @@ class Game(models.Model):
             # Unit(s) currently OCCUPYING this area (A/F unit)
             # Use select_related for efficiency
             occupier = Unit.objects.select_related('area__board_area', 'player') \
-                           .filter(area=area, type__in=['A', 'F']).first() # Use first()
+                           .filter(area=area, type__in=['A', 'F'])[0] # Use array indexing
             occupying_order = None
             if occupier:
-                occupying_order = Order.objects.filter(unit=occupier, confirmed=True).first()
+                occupying_order = Order.objects.filter(unit=occupier, confirmed=True)[0]
                 if occupier.id in retreating_units: # Ignore if already retreating
                     occupier = None
                     occupying_order = None

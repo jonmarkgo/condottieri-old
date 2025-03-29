@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.decorators import login_required
-from .models import VICTORY_TYPES, TIME_LIMITS, UNIT_TYPES # Import from models
+from .models import VICTORY_TYPES, TIME_LIMITS, UNIT_TYPES, FAST_LIMITS # Import from models
 from .models import Unit, SpecialUnit, Scenario, Game, Configuration, Whisper, Order # Import necessary models
 class GameForm(forms.ModelForm):
     scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
@@ -315,7 +315,7 @@ def make_order_form(player):
             try:
                  # Check if unit already has a confirmed order from this player
                  # Allow replacing unconfirmed orders
-                 existing_order = Order.objects.filter(unit=unit, player=player, confirmed=True).first()
+                 existing_order = Order.objects.filter(unit=unit, player=player, confirmed=True)[0] if Order.objects.filter(unit=unit, player=player, confirmed=True).exists() else None
                  if existing_order and (not self.instance or self.instance.pk != existing_order.pk):
                       raise forms.ValidationError(_("This unit already has a confirmed order from you."))
 

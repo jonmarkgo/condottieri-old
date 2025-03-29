@@ -132,7 +132,7 @@ def summary(request):
         joinable = Game.objects.filter(slots__gt=0, private=False).order_by('slots').select_related('scenario', 'configuration', 'player__user')
         context.update( {'revolutions': Revolution.objects.filter(opposition__isnull=True).select_related('government__game', 'government__country')} ) # Correct related name
     if joinable:
-        context.update( {'joinable_game': joinable.first()} ) # Use first() instead of index
+        context.update( {'joinable_game': joinable[0]} ) # Use [0] instead of first() for Django 1.2.7
 
     return render_to_response('machiavelli/summary.html',
                             context,
@@ -1182,10 +1182,11 @@ def create_game(request):
 
             new_game.save() # Save game first to get PK
 
-            # Save configuration linked to the new game
-            config = config_form.save(commit=False)
-            config.game = new_game
-            config.save()
+            # Update the existing configuration with form data
+            config = new_game.configuration
+            config_form = forms.ConfigurationForm(request.POST, instance=config)
+            if config_form.is_valid():
+                config_form.save()
 
             # Create player entry for the creator
             new_player = Player(user=request.user, game=new_game)
