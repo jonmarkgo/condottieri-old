@@ -326,7 +326,7 @@ def make_order_form(player):
                       raise forms.ValidationError(_("This order (including coast selection) is not possible according to the rules."))
             except Exception as e:
                  # Catch potential errors during temp order creation or validation
-                 self.add_error(None, f"Validation Error: {e}")
+                 self.add_error(None, "Validation Error: {e}")
                  return cleaned_data
 
 
@@ -387,7 +387,7 @@ def get_valid_destinations(request, slug):
         #     can_order = Expense.objects.filter(player=player, type__in=(6, 9), unit=unit, confirmed=True).exists() # Example check
 
         if not can_order:
-             if logging: logging.warning(f"User {request.user} cannot order unit {unit_id}")
+             if logging: logging.warning("User {request.user} cannot order unit {unit_id}")
              return JsonResponse(response_data)
 
         # --- Process Order Type ---
@@ -396,7 +396,7 @@ def get_valid_destinations(request, slug):
         if order_type == '-': # Advance
             # 1. Check Preconditions
             if unit.siege_stage > 0:
-                if logging: logging.info(f"Unit {unit_id} cannot advance, siege_stage > 0")
+                if logging: logging.info("Unit {unit_id} cannot advance, siege_stage > 0")
                 return JsonResponse(response_data) # Cannot advance if besieging
 
             # 2. Find Directly Adjacent Valid Destinations
@@ -452,7 +452,7 @@ def get_valid_destinations(request, slug):
             # 1. Check Preconditions
             # Use siege_stage and exclude self
             if unit.type == 'G' and Unit.objects.filter(area=unit.area, siege_stage__gt=0).exclude(id=unit.id).exists():
-                 if logging: logging.info(f"Unit {unit_id} cannot convert, garrison besieged")
+                 if logging: logging.info("Unit {unit_id} cannot convert, garrison besieged")
                  return JsonResponse(response_data) # Besieged garrison cannot convert
 
             # 2. Determine Valid Conversion Types
@@ -484,11 +484,11 @@ def get_valid_destinations(request, slug):
         # Support ('S') and Convoy ('C') destinations are handled by get_valid_support_destinations.
         # Lift Siege ('L'), Disband ('0'), Besiege ('B') don't target another area.
         else:
-            if logging: logging.info(f"Order type '{order_type}' does not require destinations from this view.")
+            if logging: logging.info("Order type '{order_type}' does not require destinations from this view.")
             # response_data remains {'destinations': []}
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error(f"Error in get_valid_destinations: {e}")
+        if logging: logging.error("Error in get_valid_destinations: {e}")
         pass # Return default empty list on error
 
     return JsonResponse(response_data)

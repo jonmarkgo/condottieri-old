@@ -396,7 +396,7 @@ def play_game(request, slug='', **kwargs):
 					fp = clones.Fingerprint(user=request.user, game=game, ip=ip_address)
 					fp.save()
 			except Exception as e: # Catch potential errors during fingerprinting
-				if logging: logging.error(f"Fingerprint save error for game {game.id}, user {request.user.id}: {e}")
+				if logging: logging.error("Fingerprint save error for game {game.id}, user {request.user.id}: {e}")
 				pass
 		# --- End IP Tracking ---
 
@@ -421,7 +421,7 @@ def play_game(request, slug='', **kwargs):
 		    return handler()
 		else:
 		    # Fallback or error for unhandled phases
-		    if logging: logging.warning(f"Unhandled phase {game.phase} in game {game.id}")
+		    if logging: logging.warning("Unhandled phase {game.phase} in game {game.id}")
 		    # Default to showing orders or inactive screen
 		    return play_orders(request, game, player)
 
@@ -669,7 +669,7 @@ def handle_player_quit(request, slug, player_id):
          # Allow proceeding to ensure cleanup, or redirect? Let's proceed.
     # --- End Validation ---
 
-    if logging: logging.warning(f"Game {game.id}: Player {quitting_player} ({quitting_player.user}) is being removed (quit/kicked).")
+    if logging: logging.warning("Game {game.id}: Player {quitting_player} ({quitting_player.user}) is being removed (quit/kicked).")
 
     # --- Core Logic (adapted from conceptual code) ---
     try:
@@ -678,7 +678,7 @@ def handle_player_quit(request, slug, player_id):
             autonomous_player = Player.objects.get(game=game, user__isnull=True)
         except Player.DoesNotExist:
             # Create autonomous player if it doesn't exist (should have been created at game start)
-            logging.error(f"Game {game.id}: Autonomous player not found! Creating one.")
+            logging.error("Game {game.id}: Autonomous player not found! Creating one.")
             autonomous_player = Player(game=game, done=True)
             autonomous_player.save()
 
@@ -696,11 +696,11 @@ def handle_player_quit(request, slug, player_id):
 
         # 4. Remove Units
         units_removed_count = quitting_player.unit_set.all().delete()
-        if logging: logging.info(f"Removed {units_removed_count} units for quitting player {quitting_player}.")
+        if logging: logging.info("Removed {units_removed_count} units for quitting player {quitting_player}.")
 
         # 5. Remove Control from all areas
         areas_updated = quitting_player.gamearea_set.all().update(player=None)
-        if logging: logging.info(f"Removed control from {areas_updated} areas for quitting player {quitting_player}.")
+        if logging: logging.info("Removed control from {areas_updated} areas for quitting player {quitting_player}.")
 
         # 6. Remove Orders, Expenses, etc.
         quitting_player.order_set.all().delete()
@@ -726,7 +726,7 @@ def handle_player_quit(request, slug, player_id):
                     paid=True # Autonomous units don't use payment system
                 )
                 garrisons_placed += 1
-                if logging: logging.info(f"Placed autonomous garrison in {area} for quitting player {quitting_player}.")
+                if logging: logging.info("Placed autonomous garrison in {area} for quitting player {quitting_player}.")
 
         # 8. Update Game State
         game.reset_players_cache()
@@ -741,7 +741,7 @@ def handle_player_quit(request, slug, player_id):
 
     except Exception as e:
         # Catch unexpected errors during the process
-        if logging: logging.error(f"Error removing player {player_id} from game {game.id}: {e}", exc_info=True)
+        if logging: logging.error("Error removing player {player_id} from game {game.id}: {e}", exc_info=True)
         messages.error(request, _("An unexpected error occurred while removing the player."))
 
     return redirect('show-game', slug=game.slug) # Redirect back to game view
@@ -759,7 +759,7 @@ def delete_order(request, slug='', order_id=''):
 	except Exception as e: # Catch specific exceptions if possible
 		response_dict.update({'bad': 'true', 'error': str(e)})
 		messages.error(request, _("Failed to delete order."))
-		if logging: logging.error(f"Error deleting order {order_id} for player {player.id}: {e}")
+		if logging: logging.error("Error deleting order {order_id} for player {player.id}: {e}")
 
 	if request.is_ajax():
 		return JsonResponse(response_dict)
@@ -814,7 +814,7 @@ def confirm_orders(request, slug=''):
 				# to avoid blocking the user request.
 				call_command('check_turns', game_id=game.id) # Pass game_id if command supports it
 			except Exception as e:
-			    if logging: logging.error(f"Error calling check_turns after confirm_orders for game {game.id}: {e}")
+			    if logging: logging.error("Error calling check_turns after confirm_orders for game {game.id}: {e}")
 			    messages.error(request, _("Error triggering game phase advance."))
 
 
@@ -932,7 +932,7 @@ def undo_expense(request, slug='', expense_id=''):
 		messages.success(request, _("Expense successfully undone."))
 	except Exception as e: # Catch potential errors during undo
 		messages.error(request, _("Expense could not be undone."))
-		if logging: logging.error(f"Error undoing expense {expense_id} for player {player.id}: {e}")
+		if logging: logging.error("Error undoing expense {expense_id} for player {player.id}: {e}")
 
 	return redirect('expenses', slug=game.slug) # Redirect back to expenses page
 
@@ -1595,7 +1595,7 @@ def get_valid_destinations(request, slug):
         #     can_order = Expense.objects.filter(player=player, type=10, unit=unit, confirmed=True).exists() # Check confirmed 'Buy A/F'
 
         if not can_order:
-             if logging: logging.warning(f"User {request.user} cannot order unit {unit_id}")
+             if logging: logging.warning("User {request.user} cannot order unit {unit_id}")
              return JsonResponse(response_data)
 
         # --- Process Order Code ---
@@ -1604,7 +1604,7 @@ def get_valid_destinations(request, slug):
         if order_code == '-': # Advance (Rule VII.B.1)
             # 1. Check Preconditions
             if unit.siege_stage > 0: # Rule VII.B.4
-                if logging: logging.info(f"Unit {unit_id} cannot advance, siege_stage > 0")
+                if logging: logging.info("Unit {unit_id} cannot advance, siege_stage > 0")
                 return JsonResponse(response_data) # Cannot advance if besieging
 
             # 2. Find Directly Adjacent Valid Destinations
@@ -1688,15 +1688,15 @@ def get_valid_destinations(request, slug):
         # Support ('S') and Convoy ('C') use get_valid_support_destinations / get_supportable_units.
         # Lift Siege ('L'), Disband ('0'), Besiege ('B') don't target another area.
         else:
-            if logging: logging.debug(f"Order code '{order_code}' does not require destinations from this view.")
+            if logging: logging.debug("Order code '{order_code}' does not require destinations from this view.")
             # response_data remains {'destinations': []}
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error(f"Error in get_valid_destinations for game {slug}: {e}")
+        if logging: logging.error("Error in get_valid_destinations for game {slug}: {e}")
         # Return default empty list on error, don't expose internal errors
         response_data = {'destinations': []}
     except Exception as e: # Catch unexpected errors
-         if logging: logging.error(f"Unexpected error in get_valid_destinations for game {slug}: {e}")
+         if logging: logging.error("Unexpected error in get_valid_destinations for game {slug}: {e}")
          response_data = {'destinations': []}
 
 
@@ -1758,10 +1758,10 @@ def get_valid_support_destinations(request, slug):
         response_data['destinations'] = destinations
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error(f"Error in get_valid_support_destinations for game {slug}: {e}")
+        if logging: logging.error("Error in get_valid_support_destinations for game {slug}: {e}")
         response_data = {'destinations': []}
     except Exception as e:
-         if logging: logging.error(f"Unexpected error in get_valid_support_destinations for game {slug}: {e}")
+         if logging: logging.error("Unexpected error in get_valid_support_destinations for game {slug}: {e}")
          response_data = {'destinations': []}
 
     return JsonResponse(response_data)
@@ -1801,7 +1801,7 @@ def get_supportable_units(request, slug):
              if unit.type == 'F' and not target_area.board_area.is_sea and not target_area.board_area.is_coast: can_support_target = False
 
         if not can_support_target:
-             if logging: logging.warning(f"Unit {unit_id} cannot support into area {target_area_id}")
+             if logging: logging.warning("Unit {unit_id} cannot support into area {target_area_id}")
              return JsonResponse(response_data)
 
         # --- Find units to be supported in the target area ---
@@ -1840,10 +1840,10 @@ def get_supportable_units(request, slug):
         response_data['units'] = units_data
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error(f"Error in get_supportable_units for game {slug}: {e}")
+        if logging: logging.error("Error in get_supportable_units for game {slug}: {e}")
         response_data = {'units': []}
     except Exception as e:
-         if logging: logging.error(f"Unexpected error in get_supportable_units for game {slug}: {e}")
+         if logging: logging.error("Unexpected error in get_supportable_units for game {slug}: {e}")
          response_data = {'units': []}
 
     return JsonResponse(response_data)
@@ -1869,7 +1869,7 @@ def get_area_info(request, slug):
     except GameArea.DoesNotExist:
         pass # Return default info
     except Exception as e: # Catch unexpected errors
-         if logging: logging.error(f"Unexpected error in get_area_info for game {slug}, area {area_id}: {e}")
+         if logging: logging.error("Unexpected error in get_area_info for game {slug}, area {area_id}: {e}")
          pass
 
     return JsonResponse(area_info)

@@ -145,7 +145,7 @@ class DATCAdjudicatorTests(TestCase):
         try:
             cls.test_user = User.objects.get(pk=cls.TEST_USER_PK)
         except User.DoesNotExist:
-             raise Exception(f"Fixture default_user.yaml did not load User with pk={cls.TEST_USER_PK} correctly.")
+             raise Exception("Fixture default_user.yaml did not load User with pk={cls.TEST_USER_PK} correctly.")
 
 
     # --- Helper Methods (Keep _parse_unit_string, _parse_order_string, _get_actual_poststate, _parse_poststate_lines as before) ---
@@ -164,7 +164,7 @@ class DATCAdjudicatorTests(TestCase):
             # Use upper() for area code consistency
             return country_name, unit_type, area_code.upper(), coast
         except Exception as e:
-            raise ValueError(f"Could not parse unit string: '{line}' - Error: {e}")
+            raise ValueError("Could not parse unit string: '{line}' - Error: {e}")
 
     def _parse_order_string(self, line):
         """Parses DATC order line -> (country_name, unit_type, unit_area_code, unit_coast, order_details)."""
@@ -185,7 +185,7 @@ class DATCAdjudicatorTests(TestCase):
 
             return country_name, unit_type, unit_area_code, unit_coast, order_details
         except Exception as e:
-            raise ValueError(f"Could not parse order string: '{line}' - Error: {e}")
+            raise ValueError("Could not parse order string: '{line}' - Error: {e}")
 
     def _get_actual_poststate(self, game):
         """Queries DB for final unit positions and dislodged units."""
@@ -197,9 +197,9 @@ class DATCAdjudicatorTests(TestCase):
             area_code = unit.area.board_area.code # Use CODE from Area
             coast_str = ""
             # TODO: Add coast retrieval if your Unit model stores it
-            # if unit.coast: coast_str = f"/{unit.coast}"
+            # if unit.coast: coast_str = "/{unit.coast}"
             # Use Country name from the related Country object
-            unit_str = f"{unit.player.country.name}: {unit.type} {area_code.lower()}{coast_str}"
+            unit_str = "{unit.player.country.name}: {unit.type} {area_code.lower()}{coast_str}"
 
             if unit.must_retreat:
                 dislodged_units.add(unit_str)
@@ -215,17 +215,17 @@ class DATCAdjudicatorTests(TestCase):
             try:
                 # Use the same parsing logic as PRESTATE
                 country_name, unit_type, area_code, coast = self._parse_unit_string(line)
-                coast_str = f"/{coast}" if coast else ""
+                coast_str = "/{coast}" if coast else ""
                 # Use lower() for area code consistency with _get_actual_poststate
-                units.add(f"{country_name}: {unit_type} {area_code.lower()}{coast_str}")
+                units.add("{country_name}: {unit_type} {area_code.lower()}{coast_str}")
             except ValueError as e:
-                print(f"Warning: Could not parse poststate line: '{line}' - {e}")
+                print("Warning: Could not parse poststate line: '{line}' - {e}")
         return units
 
     def _create_game_state(self, case_data):
         """Creates Game, Players, GameAreas, Units based on PRESTATE."""
         # Create a unique slug for each test run
-        game_slug = f"datc-{case_data['name'].replace(' ', '-').replace('.', '_').lower()}-{os.urandom(4).hex()}"
+        game_slug = "datc-{case_data['name'].replace(' ', '-').replace('.', '_').lower()}-{os.urandom(4).hex()}"
 
         game = Game.objects.create(
             slug=game_slug,
@@ -255,7 +255,7 @@ class DATCAdjudicatorTests(TestCase):
                  game.phase = phase_map.get(phase_str, PHORDERS)
                  game.save()
              except Exception as e:
-                 raise ValueError(f"Could not parse PRESTATE_SETPHASE '{case_data['pre_phase']}': {e}")
+                 raise ValueError("Could not parse PRESTATE_SETPHASE '{case_data['pre_phase']}': {e}")
 
 
         # Create GameAreas for all Diplomacy areas (PKs 101+)
@@ -274,7 +274,7 @@ class DATCAdjudicatorTests(TestCase):
             country = self.countries.get(country_name) # Use cls.countries with new PKs
             area = self.areas.get(area_code)           # Use cls.areas with new PKs
             if not country or not area:
-                raise ValueError(f"Fixture Error: Unknown country '{country_name}' or area '{area_code}' in line: {unit_line}")
+                raise ValueError("Fixture Error: Unknown country '{country_name}' or area '{area_code}' in line: {unit_line}")
 
             player = players.get(country_name)
             if not player:
@@ -283,7 +283,7 @@ class DATCAdjudicatorTests(TestCase):
 
             game_area = game_areas_map.get(area.pk) # Get GameArea using Area PK
             if not game_area:
-                 raise ValueError(f"Could not find GameArea for Area {area_code} in game {game.id}")
+                 raise ValueError("Could not find GameArea for Area {area_code} in game {game.id}")
 
             # TODO: Handle coast specification if your Unit model supports it
             unit = Unit.objects.create(
@@ -295,7 +295,7 @@ class DATCAdjudicatorTests(TestCase):
                 paid=True
             )
             # Use lower() for area code consistency in key
-            unit_key = f"{country_name}: {unit_type} {area_code.lower()}" + (f"/{coast}" if coast else "")
+            unit_key = "{country_name}: {unit_type} {area_code.lower()}" + ("/{coast}" if coast else "")
             units[unit_key.strip()] = unit
 
         # Handle PRESTATE_DISLODGED for retreat phase tests
@@ -303,14 +303,14 @@ class DATCAdjudicatorTests(TestCase):
             for unit_line in case_data['pre_dislodged']:
                  # Find the corresponding unit created above and set must_retreat
                  country_name, unit_type, area_code, coast = self._parse_unit_string(unit_line)
-                 unit_key = f"{country_name}: {unit_type} {area_code.lower()}" + (f"/{coast}" if coast else "")
+                 unit_key = "{country_name}: {unit_type} {area_code.lower()}" + ("/{coast}" if coast else "")
                  unit_obj = units.get(unit_key.strip())
                  if unit_obj:
                      # DATC doesn't specify *where* attack came from, use a placeholder
                      unit_obj.must_retreat = "UNKNOWN" # Adjudicator needs to handle this if needed
                      unit_obj.save()
                  else:
-                      print(f"Warning: Could not find unit '{unit_key}' to mark as dislodged.")
+                      print("Warning: Could not find unit '{unit_key}' to mark as dislodged.")
 
 
         # Handle PRESTATE_SUPPLYCENTER_OWNERS for build phase tests if needed
@@ -331,14 +331,14 @@ class DATCAdjudicatorTests(TestCase):
                     continue # Skip orders for countries not in PRESTATE
 
                 # Find the specific Unit object
-                unit_key = f"{country_name}: {unit_type} {unit_area_code.lower()}" + (f"/{unit_coast}" if unit_coast else "")
+                unit_key = "{country_name}: {unit_type} {unit_area_code.lower()}" + ("/{unit_coast}" if unit_coast else "")
                 unit_obj = units_map.get(unit_key.strip())
                 if not unit_obj: # Try without coast as fallback
-                     unit_key_base = f"{country_name}: {unit_type} {unit_area_code.lower()}"
+                     unit_key_base = "{country_name}: {unit_type} {unit_area_code.lower()}"
                      unit_obj = units_map.get(unit_key_base.strip())
 
                 if not unit_obj:
-                    raise ValueError(f"Could not find unit '{unit_key}' from PRESTATE for order: {order_line}")
+                    raise ValueError("Could not find unit '{unit_key}' from PRESTATE for order: {order_line}")
 
                 # --- Parse Order Details ---
                 order_data = {'unit': unit_obj, 'player': player, 'confirmed': True}
@@ -353,7 +353,7 @@ class DATCAdjudicatorTests(TestCase):
                         dest_area_code, dest_coast = details[0].split('/', 1)
                         dest_area_code = dest_area_code.upper()
                     dest_game_area = game_areas.get(dest_area_code)
-                    if not dest_game_area: raise ValueError(f"Unknown destination area code '{dest_area_code}'")
+                    if not dest_game_area: raise ValueError("Unknown destination area code '{dest_area_code}'")
                     order_data['code'] = '-'
                     order_data['destination'] = dest_game_area
                     # TODO: Handle coast in destination if model supports it
@@ -372,7 +372,7 @@ class DATCAdjudicatorTests(TestCase):
                     supported_unit_obj = Unit.objects.filter(
                         player__game=game, type=sup_unit_type, area__board_area__code=sup_unit_area_code
                     ).first() # Simple match, might need coast refinement
-                    if not supported_unit_obj: raise ValueError(f"Cannot find supported unit {sup_unit_type} {sup_unit_area_code}")
+                    if not supported_unit_obj: raise ValueError("Cannot find supported unit {sup_unit_type} {sup_unit_area_code}")
                     order_data['subunit'] = supported_unit_obj
 
                     # Parse supported action
@@ -386,7 +386,7 @@ class DATCAdjudicatorTests(TestCase):
                                 sup_dest_area_code, sup_dest_coast = details[4].split('/', 1)
                                 sup_dest_area_code = sup_dest_area_code.upper()
                             sup_dest_game_area = game_areas.get(sup_dest_area_code)
-                            if not sup_dest_game_area: raise ValueError(f"Unknown support destination '{sup_dest_area_code}'")
+                            if not sup_dest_game_area: raise ValueError("Unknown support destination '{sup_dest_area_code}'")
                             order_data['subdestination'] = sup_dest_game_area
                             # TODO: Handle coast in subdestination
                         else: # Assume Support Hold if action is not '-'
@@ -403,7 +403,7 @@ class DATCAdjudicatorTests(TestCase):
                     convoyed_unit_obj = Unit.objects.filter(
                         player__game=game, type=conv_unit_type, area__board_area__code=conv_unit_area_code
                     ).first()
-                    if not convoyed_unit_obj: raise ValueError(f"Cannot find convoyed unit {conv_unit_type} {conv_unit_area_code}")
+                    if not convoyed_unit_obj: raise ValueError("Cannot find convoyed unit {conv_unit_type} {conv_unit_area_code}")
                     order_data['subunit'] = convoyed_unit_obj
 
                     if details[3] != '-': raise ValueError("Expected '-' in convoy order")
@@ -414,7 +414,7 @@ class DATCAdjudicatorTests(TestCase):
                         conv_dest_area_code, conv_dest_coast = details[4].split('/', 1)
                         conv_dest_area_code = conv_dest_area_code.upper()
                     conv_dest_game_area = game_areas.get(conv_dest_area_code)
-                    if not conv_dest_game_area: raise ValueError(f"Unknown convoy destination '{conv_dest_area_code}'")
+                    if not conv_dest_game_area: raise ValueError("Unknown convoy destination '{conv_dest_area_code}'")
                     order_data['subdestination'] = conv_dest_game_area
                     order_data['subcode'] = '-' # Implicitly convoying an advance
                     # TODO: Handle coast in subdestination
@@ -422,11 +422,11 @@ class DATCAdjudicatorTests(TestCase):
                 # Add other verbs if needed (Build, Remove, Retreat)
                 elif verb == 'BUILD':
                      # Requires Adjustment phase logic - Skip for movement tests
-                     print(f"Skipping BUILD order: {order_line}")
+                     print("Skipping BUILD order: {order_line}")
                      continue
                 elif verb == 'REMOVE' or verb == 'DISBAND':
                      # Requires Adjustment phase logic - Skip for movement tests
-                     print(f"Skipping REMOVE/DISBAND order: {order_line}")
+                     print("Skipping REMOVE/DISBAND order: {order_line}")
                      continue
                 elif verb == 'RETREAT': # Handle retreat orders if phase is Retreat
                      if game.phase == PHRETREATS:
@@ -437,13 +437,13 @@ class DATCAdjudicatorTests(TestCase):
                              retreat_dest_code, retreat_dest_coast = details[1].split('/', 1)
                              retreat_dest_code = retreat_dest_code.upper()
                          retreat_dest_game_area = game_areas.get(retreat_dest_code)
-                         if not retreat_dest_game_area: raise ValueError(f"Unknown retreat destination '{retreat_dest_code}'")
+                         if not retreat_dest_game_area: raise ValueError("Unknown retreat destination '{retreat_dest_code}'")
                          # Create RetreatOrder instead of Order
                          RetreatOrder.objects.create(unit=unit_obj, area=retreat_dest_game_area)
-                         print(f"Created RetreatOrder: {unit_obj} -> {retreat_dest_game_area}")
+                         print("Created RetreatOrder: {unit_obj} -> {retreat_dest_game_area}")
                          continue # Skip creating regular Order
                      else:
-                         print(f"Skipping RETREAT order in non-retreat phase: {order_line}")
+                         print("Skipping RETREAT order in non-retreat phase: {order_line}")
                          continue
 
                 else: # Unrecognized verb, treat as move if possible, else hold
@@ -466,7 +466,7 @@ class DATCAdjudicatorTests(TestCase):
                 orders_created.append(order)
 
             except Exception as e:
-                print(f"Error processing order line: '{order_line}' - {e}")
+                print("Error processing order line: '{order_line}' - {e}")
                 # Decide whether to raise error or just skip the order for the test
                 raise # Re-raise to fail the test clearly
 
@@ -474,7 +474,7 @@ class DATCAdjudicatorTests(TestCase):
 
     def _run_datc_test(self, case_data):
         """Executes a single DATC test case."""
-        print(f"\nRunning DATC Case: {case_data['name']}")
+        print("\nRunning DATC Case: {case_data['name']}")
 
         # 1. Setup Game State
         game, players, units_map = self._create_game_state(case_data)
@@ -489,14 +489,14 @@ class DATCAdjudicatorTests(TestCase):
                 # If order creation fails due to parsing/validation, check if POSTSTATE is SAME
                 is_poststate_same = any(l.strip() == 'POSTSTATE_SAME' for l in case_data.get('raw_lines', []))
                 if is_poststate_same:
-                     print(f"Order creation failed as expected for invalid order test: {e}")
+                     print("Order creation failed as expected for invalid order test: {e}")
                      actual_units, actual_dislodged = self._get_actual_poststate(game)
                      expected_units = self._parse_poststate_lines(case_data['pre_units'])
                      self.assertSetEqual(actual_units, expected_units, "State changed unexpectedly after invalid order.")
                      self.assertEqual(len(actual_dislodged), 0, "Dislodgements occurred unexpectedly after invalid order.")
                      return # Test passes
                 else:
-                     raise AssertionError(f"Order creation failed unexpectedly for case {case_data['name']}: {e}")
+                     raise AssertionError("Order creation failed unexpectedly for case {case_data['name']}: {e}")
         elif game.phase == PHRETREATS:
              # Create RetreatOrder objects directly
              game_areas = {ga.board_area.code: ga for ga in GameArea.objects.filter(game=game)}
@@ -511,13 +511,13 @@ class DATCAdjudicatorTests(TestCase):
                      if '/' in parts[1]: unit_area_code, unit_coast = parts[1].split('/', 1); unit_area_code = unit_area_code.upper()
                      action = parts[2].upper()
 
-                     unit_key = f"{country_str.strip()}: {unit_type} {unit_area_code.lower()}" + (f"/{unit_coast}" if unit_coast else "")
+                     unit_key = "{country_str.strip()}: {unit_type} {unit_area_code.lower()}" + ("/{unit_coast}" if unit_coast else "")
                      unit_obj = units_map.get(unit_key.strip())
                      if not unit_obj: # Fallback without coast
-                          unit_key_base = f"{country_str.strip()}: {unit_type} {unit_area_code.lower()}"
+                          unit_key_base = "{country_str.strip()}: {unit_type} {unit_area_code.lower()}"
                           unit_obj = units_map.get(unit_key_base.strip())
 
-                     if not unit_obj: raise ValueError(f"Cannot find unit '{unit_key}' for retreat.")
+                     if not unit_obj: raise ValueError("Cannot find unit '{unit_key}' for retreat.")
 
                      if action == 'DISBAND':
                          RetreatOrder.objects.create(unit=unit_obj, area=None)
@@ -526,11 +526,11 @@ class DATCAdjudicatorTests(TestCase):
                          dest_coast = None
                          if '/' in action: dest_code, dest_coast = action.split('/', 1); dest_code = dest_code.upper()
                          dest_game_area = game_areas.get(dest_code)
-                         if not dest_game_area: raise ValueError(f"Unknown retreat destination '{dest_code}'")
+                         if not dest_game_area: raise ValueError("Unknown retreat destination '{dest_code}'")
                          RetreatOrder.objects.create(unit=unit_obj, area=dest_game_area)
                          # TODO: Handle retreat coast if model supports it
                  except Exception as e:
-                     print(f"Error processing RETREAT order line: '{order_line}' - {e}")
+                     print("Error processing RETREAT order line: '{order_line}' - {e}")
                      raise
 
         # 3. Adjudicate
@@ -574,13 +574,13 @@ try:
     all_datc_cases = list(parse_datc_file(DATC_FILE_PATH))
     # Dynamically create test methods on the TestCase class
     for case_data in all_datc_cases:
-        test_method_name = f"test_case_{case_data['name'].replace('.', '_').replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').lower()}"
+        test_method_name = "test_case_{case_data['name'].replace('.', '_').replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').lower()}"
         def create_test_method(data):
             def test_method(self):
                 self._run_datc_test(data)
             return test_method
         setattr(DATCAdjudicatorTests, test_method_name, create_test_method(case_data))
 except IOError:
-    print(f"Warning: DATC file not found at {DATC_FILE_PATH}. Skipping DATC tests.")
+    print("Warning: DATC file not found at {DATC_FILE_PATH}. Skipping DATC tests.")
 except Exception as e:
-    print(f"Error setting up DATC tests: {e}")
+    print("Error setting up DATC tests: {e}")

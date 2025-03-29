@@ -39,19 +39,19 @@ from django.conf import settings
 from django.template.defaultfilters import capfirst, truncatewords, timesince, force_escape
 
 if "notification" in settings.INSTALLED_APPS:
-	from notification import models as notification
+    from notification import models as notification
 else:
-	notification = None
+    notification = None
 
 if "jogging" in settings.INSTALLED_APPS:
-	from jogging import logging
+    from jogging import logging
 else:
-	logging = None
+    logging = None
 
 if "condottieri_messages" in settings.INSTALLED_APPS:
-	import condottieri_messages as condottieri_messages
+    import condottieri_messages as condottieri_messages
 else:
-	condottieri_messages = None
+    condottieri_messages = None
 
 ## machiavelli
 from machiavelli.fields import AutoTranslateField
@@ -67,23 +67,23 @@ from condottieri_profiles.models import CondottieriProfile
 
 ## condottieri_events
 if "condottieri_events" in settings.INSTALLED_APPS:
-	import machiavelli.signals as signals
+    import machiavelli.signals as signals
 else:
-	signals = None
+    signals = None
 
 try:
-	settings.TWITTER_USER
+    settings.TWITTER_USER
 except:
-	twitter_api = None
+    twitter_api = None
 else:
-	import twitter
-	twitter_api = twitter.Api(username=settings.TWITTER_USER,
-							  password=settings.TWITTER_PASSWORD)
+    import twitter
+    twitter_api = twitter.Api(username=settings.TWITTER_USER,
+                              password=settings.TWITTER_PASSWORD)
 
 UNIT_TYPES = (('A', _('Army')),
               ('F', _('Fleet')),
               ('G', _('Garrison'))
-			  )
+              )
 
 SEASONS = ((1, _('Spring')),
            (2, _('Summer')),
@@ -138,22 +138,22 @@ ORDER_CODES = (('H', _('Hold')),
                 )
 
 ORDER_SUBCODES = (
-				('H', _('Hold')),
-				('-', _('Advance')),
-				('=', _('Conversion'))
+                ('H', _('Hold')),
+                ('-', _('Advance')),
+                ('=', _('Conversion'))
 )
 
 ## time limit in seconds for a game phase
 FAST_LIMITS = (15*60, )
 
 TIME_LIMITS = (
-			#(5*24*60*60, _('5 days')),
-			#(4*24*60*60, _('4 days')),
-			(3*24*60*60, _('3 days')),
-			(2*24*60*60, _('2 days')),
-			(24*60*60, _('1 day')),
-			(12*60*60, _('1/2 day')),
-			(15*60, _('15 min')),
+            #(5*24*60*60, _('5 days')),
+            #(4*24*60*60, _('4 days')),
+            (3*24*60*60, _('3 days')),
+            (2*24*60*60, _('2 days')),
+            (24*60*60, _('1 day')),
+            (12*60*60, _('1/2 day')),
+            (15*60, _('15 min')),
 )
 
 ## SCORES
@@ -176,7 +176,7 @@ def is_strait_blocked(area1_code, area2_code, game, convoying_player):
             messina_ga = GameArea.objects.get(game=game, board_area__code='MES')
             # Check if an *enemy* fleet is in Messina
             if messina_ga.unit_set.filter(type='F').exclude(player=convoying_player).exists():
-                if logging: logging.debug(f"Convoy path blocked: Messina Strait ({area1_code}<->{area2_code}) blocked by enemy fleet.")
+                if logging: logging.debug("Convoy path blocked: Messina Strait (%s<->%s) blocked by enemy fleet." % (area1_code, area2_code))
                 return True
         except GameArea.DoesNotExist:
             pass # Messina area doesn't exist in this game/scenario
@@ -198,7 +198,7 @@ def is_strait_blocked(area1_code, area2_code, game, convoying_player):
              # Rule VII.D.1 says it controls straits between mainland and Elba, part of ETS.
              # It blocks hostile fleets moving Pisa <-> ETS. Let's assume it blocks convoy path GOL<->ETS.
              if {area1_code, area2_code} == {'GOL', 'ETS'}:
-                  if logging: logging.debug(f"Convoy path blocked: Piombino Strait ({area1_code}<->{area2_code}) blocked by enemy fleet in PIO.")
+                  if logging: logging.debug("Convoy path blocked: Piombino Strait (%s<->%s) blocked by enemy fleet in PIO." % (area1_code, area2_code))
                   return True
     except GameArea.DoesNotExist:
          pass # Piombino area doesn't exist
@@ -207,81 +207,81 @@ def is_strait_blocked(area1_code, area2_code, game, convoying_player):
 
 
 class Invasion(object):
-	""" This class is used in conflicts resolution for conditioned invasions.
-	Invasion objects are not persistent (i.e. not stored in the database).
-	"""
+    """ This class is used in conflicts resolution for conditioned invasions.
+    Invasion objects are not persistent (i.e. not stored in the database).
+    """
 
-	def __init__(self, unit, area, conv=''):
-		assert isinstance(unit, Unit), u"%s is not a Unit" % unit
-		assert isinstance(area, GameArea), u"%s is not a GameArea" % area
-		assert conv in ['', 'A', 'F', 'G'], u"%s is not a valid conversion" % conv # Added G
-		self.unit = unit
-		self.area = area
-		self.conversion = conv
+    def __init__(self, unit, area, conv=''):
+        assert isinstance(unit, Unit), u"%s is not a Unit" % unit
+        assert isinstance(area, GameArea), u"%s is not a GameArea" % area
+        assert conv in ['', 'A', 'F', 'G'], u"%s is not a valid conversion" % conv # Added G
+        self.unit = unit
+        self.area = area
+        self.conversion = conv
 
 class Scenario(models.Model):
-	""" This class defines a Machiavelli scenario basic data. """
+    """ This class defines a Machiavelli scenario basic data. """
 
-	name = models.CharField(max_length=16, unique=True)
-	title = AutoTranslateField(max_length=128)
-	start_year = models.PositiveIntegerField()
-	## this field is added to improve the performance of some queries
-	number_of_players = models.PositiveIntegerField(default=0)
-	# cities_to_win is now handled in Game model, scenario provides default if needed
-	# cities_to_win = models.PositiveIntegerField(default=15)
-	enabled = models.BooleanField(default=False) # this allows me to create the new setups in the admin
+    name = models.CharField(max_length=16, unique=True)
+    title = AutoTranslateField(max_length=128)
+    start_year = models.PositiveIntegerField()
+    ## this field is added to improve the performance of some queries
+    number_of_players = models.PositiveIntegerField(default=0)
+    # cities_to_win is now handled in Game model, scenario provides default if needed
+    # cities_to_win = models.PositiveIntegerField(default=15)
+    enabled = models.BooleanField(default=False) # this allows me to create the new setups in the admin
 
-	def get_slots(self):
-		# Exclude the autonomous player if present
-		return self.setup_set.exclude(country__isnull=True).values('country').distinct().count()
+    def get_slots(self):
+        # Exclude the autonomous player if present
+        return self.setup_set.exclude(country__isnull=True).values('country').distinct().count()
 
-	def __unicode__(self):
-		return self.title
+    def __unicode__(self):
+        return self.title
 
-	def get_absolute_url(self):
-		return "scenario/%s" % self.id
+    def get_absolute_url(self):
+        return "scenario/%s" % self.id
 
-	def get_countries(self):
-		return Country.objects.filter(home__scenario=self).distinct()
+    def get_countries(self):
+        return Country.objects.filter(home__scenario=self).distinct()
 
 if twitter_api and settings.TWEET_NEW_SCENARIO:
-	def tweet_new_scenario(sender, instance, created, **kw):
-		if twitter_api and isinstance(instance, Scenario):
-			if created == True:
-				message = "A new scenario has been created: %s" % instance.title
-				twitter_api.PostUpdate(message)
+    def tweet_new_scenario(sender, instance, created, **kw):
+        if twitter_api and isinstance(instance, Scenario):
+            if created == True:
+                message = "A new scenario has been created: %s" % instance.title
+                twitter_api.PostUpdate(message)
 
-	models.signals.post_save.connect(tweet_new_scenario, sender=Scenario)
+    models.signals.post_save.connect(tweet_new_scenario, sender=Scenario)
 
 class SpecialUnit(models.Model):
-	""" A SpecialUnit describes the attributes of a unit that costs more ducats than usual
-	and can be more powerful or more loyal """
-	static_title = models.CharField(max_length=50)
-	title = AutoTranslateField(max_length=50)
-	cost = models.PositiveIntegerField()
-	power = models.PositiveIntegerField()
-	loyalty = models.PositiveIntegerField()
+    """ A SpecialUnit describes the attributes of a unit that costs more ducats than usual
+    and can be more powerful or more loyal """
+    static_title = models.CharField(max_length=50)
+    title = AutoTranslateField(max_length=50)
+    cost = models.PositiveIntegerField()
+    power = models.PositiveIntegerField()
+    loyalty = models.PositiveIntegerField()
 
-	def __unicode__(self):
-		return _("%(title)s (%(cost)sd)") % {'title': self.title,
-											'cost': self.cost}
+    def __unicode__(self):
+        return _("%(title)s (%(cost)sd)") % {'title': self.title,
+                                            'cost': self.cost}
 
-	def describe(self):
-		return _("Costs %(cost)s; Strength %(power)s; Loyalty %(loyalty)s") % {'cost': self.cost,
-																	'power': self.power,
-																	'loyalty': self.loyalty}
+    def describe(self):
+        return _("Costs %(cost)s; Strength %(power)s; Loyalty %(loyalty)s") % {'cost': self.cost,
+                                                                    'power': self.power,
+                                                                    'loyalty': self.loyalty}
 
 class Country(models.Model):
-	""" This class defines a Machiavelly country. """
+    """ This class defines a Machiavelly country. """
 
-	name = AutoTranslateField(max_length=20, unique=True)
-	css_class = models.CharField(max_length=20, unique=True)
-	can_excommunicate = models.BooleanField(default=False)
-	static_name = models.CharField(max_length=20, default="")
-	special_units = models.ManyToManyField(SpecialUnit)
+    name = AutoTranslateField(max_length=20, unique=True)
+    css_class = models.CharField(max_length=20, unique=True)
+    can_excommunicate = models.BooleanField(default=False)
+    static_name = models.CharField(max_length=20, default="")
+    special_units = models.ManyToManyField(SpecialUnit)
 
-	def __unicode__(self):
-		return self.name
+    def __unicode__(self):
+        return self.name
 
 class Area(models.Model):
     """ This class describes **only** the area features in the board. The game is
@@ -312,7 +312,7 @@ actually played in GameArea objects.
     def has_multiple_coasts(self):
         """Checks if the area has more than one defined coast."""
         return bool(self.coast_names and ',' in self.coast_names)
-	
+    
     def is_adjacent(self, target_area, fleet=False, source_unit_coast=None, target_order_coast=None):
         """
         Checks adjacency between self and target_area.
@@ -401,7 +401,7 @@ actually played in GameArea objects.
         # Ensure self is actually multi-coast and a valid coast was provided
         if not self.has_multiple_coasts() or not coast_code or coast_code not in self.get_coast_list():
             # Fall back to standard physical border check if not multi-coast or invalid coast given
-            # logger.debug(f"Falling back to standard border check for {self.code} coast '{coast_code}' -> {target_area.code}")
+            # logger.debug("Falling back to standard border check for {self.code} coast '{coast_code}' -> {target_area.code}")
             return self.borders.filter(pk=target_area.pk).exists()
 
         target_code = target_area.code
@@ -471,7 +471,7 @@ actually played in GameArea objects.
 
         # --- Fallback for Unhandled Multi-Coast Areas ---
         else:
-            logger.warning(f"Adjacency check for unhandled multi-coast area '{self.code}' coast '{coast_code}' to '{target_code}'. Falling back to standard border check.")
+            logger.warning("Adjacency check for unhandled multi-coast area '%s' coast '%s' to '%s'. Falling back to standard border check." % (self.code, coast_code, target_code))
             return self.borders.filter(pk=target_area.pk).exists()
 
     def accepts_type(self, type):
@@ -489,128 +489,128 @@ actually played in GameArea objects.
     def __unicode__(self):
         # Use capfirst for better display
         from django.template.defaultfilters import capfirst
-        return f"{self.code} - {capfirst(self.name)}"
+        return "{self.code} - {capfirst(self.name)}"
 
     class Meta:
         ordering = ('code',)
 
 class DisabledArea(models.Model):
-	""" A DisabledArea is an Area that is not used in a given Scenario. """
-	scenario = models.ForeignKey(Scenario)
-	area = models.ForeignKey(Area)
+    """ A DisabledArea is an Area that is not used in a given Scenario. """
+    scenario = models.ForeignKey(Scenario)
+    area = models.ForeignKey(Area)
 
-	def __unicode__(self):
-		return "%(area)s disabled in %(scenario)s" % {'area': self.area,
-													'scenario': self.scenario}
+    def __unicode__(self):
+        return "%(area)s disabled in %(scenario)s" % {'area': self.area,
+                                                    'scenario': self.scenario}
 
-	class Meta:
-		unique_together = (('scenario', 'area'),)
+    class Meta:
+        unique_together = (('scenario', 'area'),)
 
 class Home(models.Model):
-	""" This class defines which Country controls each Area in a given Scenario,
-	at the beginning of a game.
+    """ This class defines which Country controls each Area in a given Scenario,
+    at the beginning of a game.
 
-	Note that, in some special cases, a province controlled by a country does
-	not belong to the **home country** of this country. The ``is_home``
-	attribute controls that.
-	"""
+    Note that, in some special cases, a province controlled by a country does
+    not belong to the **home country** of this country. The ``is_home``
+    attribute controls that.
+    """
 
-	scenario = models.ForeignKey(Scenario)
-	country = models.ForeignKey(Country)
-	area = models.ForeignKey(Area)
-	is_home = models.BooleanField(default=True) # Rule V.D.3
+    scenario = models.ForeignKey(Scenario)
+    country = models.ForeignKey(Country)
+    area = models.ForeignKey(Area)
+    is_home = models.BooleanField(default=True) # Rule V.D.3
 
-	def __unicode__(self):
-		return "%s" % self.area.name
+    def __unicode__(self):
+        return "%s" % self.area.name
 
-	class Meta:
-		unique_together = (("scenario", "country", "area"),)
+    class Meta:
+        unique_together = (("scenario", "country", "area"),)
 
 class Setup(models.Model):
-	""" This class defines the initial setup of a unit in a given Scenario. """
+    """ This class defines the initial setup of a unit in a given Scenario. """
 
-	scenario = models.ForeignKey(Scenario)
-	country = models.ForeignKey(Country, blank=True, null=True) # Null for Autonomous
-	area = models.ForeignKey(Area)
-	unit_type = models.CharField(max_length=1, choices=UNIT_TYPES)
+    scenario = models.ForeignKey(Scenario)
+    country = models.ForeignKey(Country, blank=True, null=True) # Null for Autonomous
+    area = models.ForeignKey(Area)
+    unit_type = models.CharField(max_length=1, choices=UNIT_TYPES)
 
-	def __unicode__(self):
-		return _("%(unit)s in %(area)s") % { 'unit': self.get_unit_type_display(),
-											'area': self.area.name }
+    def __unicode__(self):
+        return _("%(unit)s in %(area)s") % { 'unit': self.get_unit_type_display(),
+                                            'area': self.area.name }
 
-	class Meta:
-		unique_together = (("scenario", "area", "unit_type"),) # Should allow multiple units if area allows? No, rule VII.B.1.b
+    class Meta:
+        unique_together = (("scenario", "area", "unit_type"),) # Should allow multiple units if area allows? No, rule VII.B.1.b
 
 class Treasury(models.Model):
-	""" This class represents the initial amount of ducats that a Country starts
-	each Scenario with """
+    """ This class represents the initial amount of ducats that a Country starts
+    each Scenario with """
 
-	scenario = models.ForeignKey(Scenario)
-	country = models.ForeignKey(Country)
-	ducats = models.PositiveIntegerField(default=0)
-	double = models.BooleanField(default=False) # Relates to variable income rolls? Rule V.B.1.d
+    scenario = models.ForeignKey(Scenario)
+    country = models.ForeignKey(Country)
+    ducats = models.PositiveIntegerField(default=0)
+    double = models.BooleanField(default=False) # Relates to variable income rolls? Rule V.B.1.d
 
-	def __unicode__(self):
-		return "%s starts %s with %s ducats" % (self.country, self.scenario, self.ducats)
+    def __unicode__(self):
+        return "%s starts %s with %s ducats" % (self.country, self.scenario, self.ducats)
 
-	class Meta:
-		unique_together = (("scenario", "country"),)
+    class Meta:
+        unique_together = (("scenario", "country"),)
 
 
 class CityIncome(models.Model):
-	""" This class represents a City that generates an income in a given
-	Scenario"""
-	# This seems redundant if Area.major_city_income is used.
-	# Keeping for now, but consider consolidating.
-	city = models.ForeignKey(Area)
-	scenario = models.ForeignKey(Scenario)
+    """ This class represents a City that generates an income in a given
+    Scenario"""
+    # This seems redundant if Area.major_city_income is used.
+    # Keeping for now, but consider consolidating.
+    city = models.ForeignKey(Area)
+    scenario = models.ForeignKey(Scenario)
 
-	def __unicode__(self):
-		return "%s" % self.city.name
+    def __unicode__(self):
+        return "%s" % self.city.name
 
-	class Meta:
-		unique_together = (("city", "scenario"),)
+    class Meta:
+        unique_together = (("city", "scenario"),)
 
 
 class Game(models.Model):
-	""" This is the main class of the machiavelli application. It includes all the
-	logic to control the flow of the game, and to resolve conflicts.
+    """ This is the main class of the machiavelli application. It includes all the
+    logic to control the flow of the game, and to resolve conflicts.
 
-	The attributes year, season and field are null when the game is first created
-	and will be populated when the game is started, from the scenario data.
-	"""
+    The attributes year, season and field are null when the game is first created
+    and will be populated when the game is started, from the scenario data.
+    """
 
-	slug = models.SlugField(max_length=20, unique=True,
-				help_text=_("4-20 characters, only letters, numbers, hyphens and underscores"))
-	year = models.PositiveIntegerField(blank=True, null=True)
-	season = models.PositiveIntegerField(blank=True, null=True,
-					     choices=SEASONS)
-	phase = models.PositiveIntegerField(blank=True, null=True,
-					    choices=GAME_PHASES, default=PHINACTIVE) # Default to inactive
-	slots = models.SmallIntegerField(null=False, default=0)
-	scenario = models.ForeignKey(Scenario)
-	created_by = models.ForeignKey(User, editable=False)
-	## whether the player of each country is visible
-	visible = models.BooleanField(default=0,
-				help_text=_("if checked, it will be known who controls each country"))
-	map_outdated = models.BooleanField(default=0)
-	time_limit = models.PositiveIntegerField(choices=TIME_LIMITS,
-				help_text=_("time available to play a turn"))
-	## the time and date of the last phase change
-	last_phase_change = models.DateTimeField(blank=True, null=True)
-	created = models.DateTimeField(blank=True, null=True, auto_now_add=True)
-	started = models.DateTimeField(blank=True, null=True)
-	finished = models.DateTimeField(blank=True, null=True)
+    slug = models.SlugField(max_length=20, unique=True,
+                help_text=_("4-20 characters, only letters, numbers, hyphens and underscores"))
+    year = models.PositiveIntegerField(blank=True, null=True)
+    season = models.PositiveIntegerField(blank=True, null=True,
+                         choices=SEASONS)
+    phase = models.PositiveIntegerField(blank=True, null=True,
+                        choices=GAME_PHASES, default=PHINACTIVE) # Default to inactive
+    slots = models.SmallIntegerField(null=False, default=0)
+    scenario = models.ForeignKey(Scenario)
+    created_by = models.ForeignKey(User, editable=False)
+    ## whether the player of each country is visible
+    visible = models.BooleanField(default=0,
+                help_text=_("if checked, it will be known who controls each country"))
+    map_outdated = models.BooleanField(default=0)
+    time_limit = models.PositiveIntegerField(choices=TIME_LIMITS,
+                help_text=_("time available to play a turn"))
+    ## the time and date of the last phase change
+    last_phase_change = models.DateTimeField(blank=True, null=True)
+    created = models.DateTimeField(blank=True, null=True, auto_now_add=True)
+    started = models.DateTimeField(blank=True, null=True)
+    finished = models.DateTimeField(blank=True, null=True)
     # Store the *type* of victory condition chosen (e.g., 'basic', 'advanced_15', 'advanced_18', 'ultimate')
     victory_condition_type = models.CharField(max_length=15, default='basic') # Increased max_length
     # Store the actual number required for the chosen type
     cities_to_win = models.PositiveIntegerField(default=12, # Default to Basic Game
                 help_text=_("cities that must be controlled to win a game"))
-	fast = models.BooleanField(default=0)
-	private = models.BooleanField(default=0,
-				help_text=_("only invited users can join the game"))
-	comment = models.TextField(max_length=255, blank=True, null=True,
-				help_text=_("optional comment for joining users"))
+    fast = models.BooleanField(default=0)
+    private = models.BooleanField(default=0,
+                help_text=_("only invited users can join the game"))
+    comment = models.TextField(max_length=255, blank=True, null=True,
+                help_text=_("optional comment for joining users"))
 
     def save(self, *args, **kwargs):
         is_new = not self.pk
@@ -650,384 +650,384 @@ class Game(models.Model):
         if is_new:
             Configuration.objects.get_or_create(game=self)
 
-	##------------------------
-	## representation methods
-	##------------------------
-	def __unicode__(self):
-		return "%d" % (self.pk)
+    ##------------------------
+    ## representation methods
+    ##------------------------
+    def __unicode__(self):
+        return "%d" % (self.pk)
 
-	def get_map_url(self):
-		if self.slots > 0:  # If game is pending
-			return "scenario-%s.png" % self.scenario.pk
-		return "map-%s.png?t=%s" % (self.id, self.last_phase_change.strftime('%s') if self.last_phase_change else '0')
-	
-	def get_absolute_url(self):
-		return ('show-game', None, {'slug': self.slug})
-	get_absolute_url = models.permalink(get_absolute_url)
+    def get_map_url(self):
+        if self.slots > 0:  # If game is pending
+            return "scenario-%s.png" % self.scenario.pk
+        return "map-%s.png?t=%s" % (self.id, self.last_phase_change.strftime('%s') if self.last_phase_change else '0')
+    
+    def get_absolute_url(self):
+        return ('show-game', None, {'slug': self.slug})
+    get_absolute_url = models.permalink(get_absolute_url)
 
-	def reset_players_cache(self):
-		""" Deletes the player list from the cache """
-		key = "game-%s_player-list" % self.pk
-		cache.delete(key)
-	
-	def player_list_ordered_by_cities(self):
-		key = "game-%s_player-list" % self.pk
-		result_list = cache.get(key)
-		if result_list is None:
-			from django.db import connection
-			cursor = connection.cursor()
-			cursor.execute("SELECT machiavelli_player.*, COUNT(machiavelli_gamearea.id) \
-			AS cities \
-			FROM machiavelli_player \
-			LEFT JOIN (machiavelli_gamearea \
-			INNER JOIN machiavelli_area \
-			ON machiavelli_gamearea.board_area_id=machiavelli_area.id) \
-			ON machiavelli_gamearea.player_id=machiavelli_player.id \
-			WHERE (machiavelli_player.game_id=%s AND machiavelli_player.country_id \
-			AND (machiavelli_area.has_city=1 OR machiavelli_gamearea.id IS NULL)) \
-			GROUP BY machiavelli_player.id \
-			ORDER BY cities DESC, machiavelli_player.id;" % self.id)
-			result_list = []
-			for row in cursor.fetchall():
-				result_list.append(Player.objects.get(id=row[0]))
-			cache.set(key, result_list)
-		return result_list
+    def reset_players_cache(self):
+        """ Deletes the player list from the cache """
+        key = "game-%s_player-list" % self.pk
+        cache.delete(key)
+    
+    def player_list_ordered_by_cities(self):
+        key = "game-%s_player-list" % self.pk
+        result_list = cache.get(key)
+        if result_list is None:
+            from django.db import connection
+            cursor = connection.cursor()
+            cursor.execute("SELECT machiavelli_player.*, COUNT(machiavelli_gamearea.id) \
+            AS cities \
+            FROM machiavelli_player \
+            LEFT JOIN (machiavelli_gamearea \
+            INNER JOIN machiavelli_area \
+            ON machiavelli_gamearea.board_area_id=machiavelli_area.id) \
+            ON machiavelli_gamearea.player_id=machiavelli_player.id \
+            WHERE (machiavelli_player.game_id=%s AND machiavelli_player.country_id \
+            AND (machiavelli_area.has_city=1 OR machiavelli_gamearea.id IS NULL)) \
+            GROUP BY machiavelli_player.id \
+            ORDER BY cities DESC, machiavelli_player.id;" % self.id)
+            result_list = []
+            for row in cursor.fetchall():
+                result_list.append(Player.objects.get(id=row[0]))
+            cache.set(key, result_list)
+        return result_list
 
-	def highest_score(self):
-		""" Returns the Score with the highest points value. """
+    def highest_score(self):
+        """ Returns the Score with the highest points value. """
 
-		if self.slots > 0 or self.phase != PHINACTIVE:
-			return Score.objects.none()
-		scores = self.score_set.all().order_by('-points')
-		return scores[0]
-	
-	def get_average_score(self):
-		""" Returns the average score of the current list of players """
-		
-		result = CondottieriProfile.objects.filter(user__player__game=self).aggregate(average_score=Avg('total_score'))
-		return result['average_score']
+        if self.slots > 0 or self.phase != PHINACTIVE:
+            return Score.objects.none()
+        scores = self.score_set.all().order_by('-points')
+        return scores[0]
+    
+    def get_average_score(self):
+        """ Returns the average score of the current list of players """
+        
+        result = CondottieriProfile.objects.filter(user__player__game=self).aggregate(average_score=Avg('total_score'))
+        return result['average_score']
 
-	def get_average_karma(self):
-		""" Returns the average karma of the current list of players """
-		
-		result = CondottieriProfile.objects.filter(user__player__game=self).aggregate(average_karma=Avg('karma'))
-		return result['average_karma']
+    def get_average_karma(self):
+        """ Returns the average karma of the current list of players """
+        
+        result = CondottieriProfile.objects.filter(user__player__game=self).aggregate(average_karma=Avg('karma'))
+        return result['average_karma']
 
-	def get_all_units(self):
-		""" Returns a queryset with all the units in the board. """
-		key = "game-%s_all-units" % self.pk
-		all_units = cache.get(key)
-		if all_units is None:
-			all_units = Unit.objects.select_related().filter(player__game=self).order_by('area__board_area__name')
-			cache.set(key, all_units)
-		return all_units
+    def get_all_units(self):
+        """ Returns a queryset with all the units in the board. """
+        key = "game-%s_all-units" % self.pk
+        all_units = cache.get(key)
+        if all_units is None:
+            all_units = Unit.objects.select_related().filter(player__game=self).order_by('area__board_area__name')
+            cache.set(key, all_units)
+        return all_units
 
-	def get_all_gameareas(self):
-		""" Returns a queryset with all the game areas in the board. """
-		key = "game-%s_all-areas" % self.pk
-		all_areas = cache.get(key)
-		if all_areas is None:
-			all_areas = self.gamearea_set.select_related().order_by('board_area__code')
-			cache.set(key, all_areas)
-		return all_areas
+    def get_all_gameareas(self):
+        """ Returns a queryset with all the game areas in the board. """
+        key = "game-%s_all-areas" % self.pk
+        all_areas = cache.get(key)
+        if all_areas is None:
+            all_areas = self.gamearea_set.select_related().order_by('board_area__code')
+            cache.set(key, all_areas)
+        return all_areas
 
-	##------------------------
-	## map methods
-	##------------------------
-	
-	def make_map(self):
-		make_map(self)
-		#thread.start_new_thread(make_map, (self,))
-		return True
+    ##------------------------
+    ## map methods
+    ##------------------------
+    
+    def make_map(self):
+        make_map(self)
+        #thread.start_new_thread(make_map, (self,))
+        return True
 
-	def map_changed(self):
-		if self.map_outdated == False:
-			self.map_outdated = True
-			self.save()
-	
-	def map_saved(self):
-		if self.map_outdated == True:
-			self.map_outdated = False
-			self.save()
+    def map_changed(self):
+        if self.map_outdated == False:
+            self.map_outdated = True
+            self.save()
+    
+    def map_saved(self):
+        if self.map_outdated == True:
+            self.map_outdated = False
+            self.save()
 
-	##------------------------
-	## game starting methods
-	##------------------------
+    ##------------------------
+    ## game starting methods
+    ##------------------------
 
-	def player_joined(self):
-		self.slots -= 1
-		#self.map_outdated = True
-		if self.slots == 0:
-			#the game has all its players and should start
-			if logging:
-				logging.info("Starting game %s" % self.id)
-			if self.private:
-				self.invitation_set.all().delete()
-			self.year = self.scenario.start_year
-			self.season = 1
-			self.phase = PHORDERS
-			self.create_game_board()
-			self.shuffle_countries()
-			self.copy_country_data()
-			self.home_control_markers()
-			self.place_initial_units()
-			if self.configuration.finances:
-				self.assign_initial_income()
-			if self.configuration.assassinations:
-				self.create_assassins()
-			#self.map_outdated = True
-			self.make_map()
-			self.started = datetime.now()
-			self.last_phase_change = datetime.now()
-			self.notify_players("game_started", {"game": self})
-		self.save()
-		#if self.map_outdated == True:
-		#	self.make_map()
-	
-	def shuffle_countries(self):
-		""" Assign a Country of the Scenario to each Player, randomly. """
+    def player_joined(self):
+        self.slots -= 1
+        #self.map_outdated = True
+        if self.slots == 0:
+            #the game has all its players and should start
+            if logging:
+                logging.info("Starting game %s" % self.id)
+            if self.private:
+                self.invitation_set.all().delete()
+            self.year = self.scenario.start_year
+            self.season = 1
+            self.phase = PHORDERS
+            self.create_game_board()
+            self.shuffle_countries()
+            self.copy_country_data()
+            self.home_control_markers()
+            self.place_initial_units()
+            if self.configuration.finances:
+                self.assign_initial_income()
+            if self.configuration.assassinations:
+                self.create_assassins()
+            #self.map_outdated = True
+            self.make_map()
+            self.started = datetime.now()
+            self.last_phase_change = datetime.now()
+            self.notify_players("game_started", {"game": self})
+        self.save()
+        #if self.map_outdated == True:
+        #	self.make_map()
+    
+    def shuffle_countries(self):
+        """ Assign a Country of the Scenario to each Player, randomly. """
 
-		countries_dict = self.scenario.setup_set.values('country').distinct()
-		countries = []
-		for c in countries_dict:
-			for v in c.values():
-				if v:
-					countries.append(v)
-		## the number of players and countries should be the same
-		assert len(countries) == len(self.player_set.filter(user__isnull=False)), "Number of players should be the same as number of countries"
-		## a list of tuples will be returned
-		assignment = []
-		## shuffle the list of countries
-		random.shuffle(countries)
-		for player in self.player_set.filter(user__isnull=False):
-			assignment.append((player, countries.pop()))
-		for t in assignment:
-			t[0].country = Country.objects.get(id=t[1])
-			t[0].save()
+        countries_dict = self.scenario.setup_set.values('country').distinct()
+        countries = []
+        for c in countries_dict:
+            for v in c.values():
+                if v:
+                    countries.append(v)
+        ## the number of players and countries should be the same
+        assert len(countries) == len(self.player_set.filter(user__isnull=False)), "Number of players should be the same as number of countries"
+        ## a list of tuples will be returned
+        assignment = []
+        ## shuffle the list of countries
+        random.shuffle(countries)
+        for player in self.player_set.filter(user__isnull=False):
+            assignment.append((player, countries.pop()))
+        for t in assignment:
+            t[0].country = Country.objects.get(id=t[1])
+            t[0].save()
 
-	def copy_country_data(self):
-		""" Copies to the player objects some properties that will never change during the game.
-		This way, I hope to save some hits to the database """
-		excom = self.configuration.excommunication
-		finances = self.configuration.finances
+    def copy_country_data(self):
+        """ Copies to the player objects some properties that will never change during the game.
+        This way, I hope to save some hits to the database """
+        excom = self.configuration.excommunication
+        finances = self.configuration.finances
 
-		for p in self.player_set.filter(user__isnull=False):
-			p.static_name = p.country.static_name
-			if excom:
-				p.may_excommunicate = p.country.can_excommunicate
-			if finances:
-				t = Treasury.objects.get(scenario=self.scenario, country=p.country)
-				p.double_income = t.double
-			p.save()
+        for p in self.player_set.filter(user__isnull=False):
+            p.static_name = p.country.static_name
+            if excom:
+                p.may_excommunicate = p.country.can_excommunicate
+            if finances:
+                t = Treasury.objects.get(scenario=self.scenario, country=p.country)
+                p.double_income = t.double
+            p.save()
 
-	def get_disabled_areas(self):
-		""" Returns the disabled Areas in the game scenario """
-		return Area.objects.filter(disabledarea__scenario=self.scenario)
+    def get_disabled_areas(self):
+        """ Returns the disabled Areas in the game scenario """
+        return Area.objects.filter(disabledarea__scenario=self.scenario)
 
-	def create_game_board(self):
-		""" Creates the GameAreas for the Game.	"""
-		disabled_ids = Area.objects.filter(disabledarea__scenario=self.scenario).values_list('id', flat=True)
-		for a in Area.objects.all():
-			if not a.id in disabled_ids:
-				ga = GameArea(game=self, board_area=a)
-				ga.save()
+    def create_game_board(self):
+        """ Creates the GameAreas for the Game.	"""
+        disabled_ids = Area.objects.filter(disabledarea__scenario=self.scenario).values_list('id', flat=True)
+        for a in Area.objects.all():
+            if not a.id in disabled_ids:
+                ga = GameArea(game=self, board_area=a)
+                ga.save()
 
-	def get_autonomous_setups(self):
-		return Setup.objects.filter(scenario=self.scenario,
-				country__isnull=True).select_related()
-	
-	def place_initial_garrisons(self):
-		""" Creates the Autonomous Player, and places the autonomous garrisons at the
-		start of the game.
-		"""
+    def get_autonomous_setups(self):
+        return Setup.objects.filter(scenario=self.scenario,
+                country__isnull=True).select_related()
+    
+    def place_initial_garrisons(self):
+        """ Creates the Autonomous Player, and places the autonomous garrisons at the
+        start of the game.
+        """
 
-		## create the autonomous player
-		autonomous = Player(game=self, done=True)
-		autonomous.save()
-		for s in self.get_autonomous_setups():
-			try:
-				a = GameArea.objects.get(game=self, board_area=s.area)
-			except:
-				print "Error 1: Area not found!"
-			else:	
-				if s.unit_type:
-					new_unit = Unit(type='G', area=a, player=autonomous)
-					new_unit.save()
+        ## create the autonomous player
+        autonomous = Player(game=self, done=True)
+        autonomous.save()
+        for s in self.get_autonomous_setups():
+            try:
+                a = GameArea.objects.get(game=self, board_area=s.area)
+            except:
+                print("Error 1: Area not found!")
+            else:	
+                if s.unit_type:
+                    new_unit = Unit(type='G', area=a, player=autonomous)
+                    new_unit.save()
 
-	def home_control_markers(self):
-		for p in self.player_set.filter(user__isnull=False):
-			p.home_control_markers()
+    def home_control_markers(self):
+        for p in self.player_set.filter(user__isnull=False):
+            p.home_control_markers()
 
-	def place_initial_units(self):
-		for p in self.player_set.filter(user__isnull=False):
-			p.place_initial_units()
-		self.place_initial_garrisons()
+    def place_initial_units(self):
+        for p in self.player_set.filter(user__isnull=False):
+            p.place_initial_units()
+        self.place_initial_garrisons()
 
-	def assign_initial_income(self):
-		for p in self.player_set.filter(user__isnull=False):
-			t = Treasury.objects.get(scenario=self.scenario, country=p.country)
-			p.ducats = t.ducats
-			p.save()
+    def assign_initial_income(self):
+        for p in self.player_set.filter(user__isnull=False):
+            t = Treasury.objects.get(scenario=self.scenario, country=p.country)
+            p.ducats = t.ducats
+            p.save()
 
-	def create_assassins(self):
-		""" Assign each player an assassination counter for each of the other players """
-		for p in self.player_set.filter(user__isnull=False):
-			for q in self.player_set.filter(user__isnull=False):
-				if q == p:
-					continue
-				assassin = Assassin()
-				assassin.owner = p
-				assassin.target = q.country
-				assassin.save()
+    def create_assassins(self):
+        """ Assign each player an assassination counter for each of the other players """
+        for p in self.player_set.filter(user__isnull=False):
+            for q in self.player_set.filter(user__isnull=False):
+                if q == p:
+                    continue
+                assassin = Assassin()
+                assassin.owner = p
+                assassin.target = q.country
+                assassin.save()
 
-	##--------------------------
-	## time controlling methods
-	##--------------------------
+    ##--------------------------
+    ## time controlling methods
+    ##--------------------------
 
-	def clear_phase_cache(self):
-		cache_keys = [
-			"game-%s_player_list" % self.pk,
-			"game-%s_all-units" % self.pk,
-			"game-%s_all-areas" % self.pk,
-		]
-		for k in cache_keys:
-			cache.delete(k)
+    def clear_phase_cache(self):
+        cache_keys = [
+            "game-%s_player_list" % self.pk,
+            "game-%s_all-units" % self.pk,
+            "game-%s_all-areas" % self.pk,
+        ]
+        for k in cache_keys:
+            cache.delete(k)
 
-	def get_highest_karma(self):
-		""" Returns the karma of the non-finished player with the highest value.
-			
-			Returns 0 if all the players have finished.
-		"""
+    def get_highest_karma(self):
+        """ Returns the karma of the non-finished player with the highest value.
+            
+            Returns 0 if all the players have finished.
+        """
 
-		players = CondottieriProfile.objects.filter(user__player__game=self,
-								user__player__done=False).order_by('-karma')
-		if len(players) > 0:
-			return float(players[0].karma)
-		return 0
+        players = CondottieriProfile.objects.filter(user__player__game=self,
+                                user__player__done=False).order_by('-karma')
+        if len(players) > 0:
+            return float(players[0].karma)
+        return 0
 
 
-	def next_phase_change(self):
-		""" Returns the Time of the next compulsory phase change. """
-		if self.phase == PHINACTIVE :
-			return False	
-		if self.fast:
-			## do not use karma
-			time_limit = self.time_limit
-		else:
-			## get the player with the highest karma, and not done
-			highest = self.get_highest_karma()
-			if highest > 100:
-				if self.phase == PHORDERS:
-					k = 1 + (highest - 100) / 200
-				else:
-					k = 1
-			else:
-				k = highest / 100
-			time_limit = self.time_limit * k
-		
-		duration = timedelta(0, time_limit)
+    def next_phase_change(self):
+        """ Returns the Time of the next compulsory phase change. """
+        if self.phase == PHINACTIVE :
+            return False	
+        if self.fast:
+            ## do not use karma
+            time_limit = self.time_limit
+        else:
+            ## get the player with the highest karma, and not done
+            highest = self.get_highest_karma()
+            if highest > 100:
+                if self.phase == PHORDERS:
+                    k = 1 + (highest - 100) / 200
+                else:
+                    k = 1
+            else:
+                k = highest / 100
+            time_limit = self.time_limit * k
+        
+        duration = timedelta(0, time_limit)
 
-		return self.last_phase_change + duration
-	
+        return self.last_phase_change + duration
+    
 
-	def force_phase_change(self):
-		""" When the time limit is reached and one or more of the players are not
-		done, a phase change is forced.
-		"""
+    def force_phase_change(self):
+        """ When the time limit is reached and one or more of the players are not
+        done, a phase change is forced.
+        """
 
-		for p in self.player_set.all():
-			if p.done:
-				continue
-			else:
-				if self.phase == PHREINFORCE:
-					if self.configuration.finances:
-						units = Unit.objects.filter(player=p).order_by('id')
-						ducats = p.ducats
-						payable = ducats / 3
-						cost = 0
-						if payable > 0:
-							for u in units[:payable]:
-								u.paid = True
-								u.save()
-								cost += 3
-						p.ducats = ducats - cost
-						p.save()
-					else:
-						units = Unit.objects.filter(player=p).order_by('-id')
-						reinforce = p.units_to_place()
-						if reinforce < 0:
-							## delete the newest units
-							for u in units[:-reinforce]:
-								u.delete()
-				elif self.phase == PHORDERS:
-					pass
-				elif self.phase == PHRETREATS:
-					## disband the units that should retreat
-					Unit.objects.filter(player=p).exclude(must_retreat__exact='').delete()
-				p.end_phase(forced=True)
-		
-	def time_to_limit(self):
-		""" Calculates the time to the next phase change and returns it as a
-		timedelta.
-		"""
-		if not self.phase == PHINACTIVE:
-			limit = self.next_phase_change()
-			return limit - datetime.now()
-	
-	def time_is_exceeded(self):
-		"""
-		Checks if the time limit has been reached. If yes, return True
-		"""
-		return self.time_to_limit() <= timedelta(0, 0)
+        for p in self.player_set.all():
+            if p.done:
+                continue
+            else:
+                if self.phase == PHREINFORCE:
+                    if self.configuration.finances:
+                        units = Unit.objects.filter(player=p).order_by('id')
+                        ducats = p.ducats
+                        payable = ducats / 3
+                        cost = 0
+                        if payable > 0:
+                            for u in units[:payable]:
+                                u.paid = True
+                                u.save()
+                                cost += 3
+                        p.ducats = ducats - cost
+                        p.save()
+                    else:
+                        units = Unit.objects.filter(player=p).order_by('-id')
+                        reinforce = p.units_to_place()
+                        if reinforce < 0:
+                            ## delete the newest units
+                            for u in units[:-reinforce]:
+                                u.delete()
+                elif self.phase == PHORDERS:
+                    pass
+                elif self.phase == PHRETREATS:
+                    ## disband the units that should retreat
+                    Unit.objects.filter(player=p).exclude(must_retreat__exact='').delete()
+                p.end_phase(forced=True)
+        
+    def time_to_limit(self):
+        """ Calculates the time to the next phase change and returns it as a
+        timedelta.
+        """
+        if not self.phase == PHINACTIVE:
+            limit = self.next_phase_change()
+            return limit - datetime.now()
+    
+    def time_is_exceeded(self):
+        """
+        Checks if the time limit has been reached. If yes, return True
+        """
+        return self.time_to_limit() <= timedelta(0, 0)
 
-	def check_finished_phase(self):
-		""" Checks if all players are done or time limit exceeded, then processes the phase. """
-		# Check if game is already finished
-		if self.phase == PHINACTIVE:
-			return False # Nothing to check
+    def check_finished_phase(self):
+        """ Checks if all players are done or time limit exceeded, then processes the phase. """
+        # Check if game is already finished
+        if self.phase == PHINACTIVE:
+            return False # Nothing to check
 
-		players_not_done = self.player_set.filter(user__isnull=False, eliminated=False, done=False)
-		all_done = not players_not_done.exists()
-		time_exceeded = self.time_is_exceeded()
+        players_not_done = self.player_set.filter(user__isnull=False, eliminated=False, done=False)
+        all_done = not players_not_done.exists()
+        time_exceeded = self.time_is_exceeded()
 
-		msg = f"Checking phase change in game {self.pk} (Phase: {self.get_phase_display()}, All Done: {all_done}, Time Exceeded: {time_exceeded})\n"
+        msg = "Checking phase change in game %s (Phase: %s, All Done: %s, Time Exceeded: %s)\n" % (self.pk, self.get_phase_display(), all_done, time_exceeded)
 
-		if time_exceeded and not all_done:
-			msg += "Time exceeded. Forcing phase change.\n"
-			self.force_phase_change() # Force remaining players
-			all_done = True # Now consider all done for processing
+        if time_exceeded and not all_done:
+            msg += "Time exceeded. Forcing phase change.\n"
+            self.force_phase_change() # Force remaining players
+            all_done = True # Now consider all done for processing
 
-		if all_done:
-			msg += "All players done or forced. Processing phase.\n"
-			if logging: logging.info(msg)
+        if all_done:
+            msg += "All players done or forced. Processing phase.\n"
+            if logging: logging.info(msg)
 
-			self.process_current_phase() # Execute actions for the completed phase
+            self.process_current_phase() # Execute actions for the completed phase
 
-			# Check for winner *after* processing the phase's actions
-			if self.phase != PHINACTIVE and self.check_winner(): # Avoid check if game_over already triggered
-				msg += "Winner found after processing phase.\n"
-				if logging: logging.info(msg)
-				self.make_map()
-				self.assign_scores()
-				self.game_over()
-				return True # Game ended
+            # Check for winner *after* processing the phase's actions
+            if self.phase != PHINACTIVE and self.check_winner(): # Avoid check if game_over already triggered
+                msg += "Winner found after processing phase.\n"
+                if logging: logging.info(msg)
+                self.make_map()
+                self.assign_scores()
+                self.game_over()
+                return True # Game ended
 
-			# If game didn't end, advance to the next phase
-			if self.phase != PHINACTIVE:
-			    self.advance_to_next_phase()
-			    self.clear_phase_cache()
-			    # Reset player 'done' status for the new phase
-			    self.player_set.filter(user__isnull=False, eliminated=False).update(done=False)
-			    # Call new_phase logic for each player (check if they need to act)
-			    for p in self.player_set.filter(user__isnull=False, eliminated=False):
-			        p.new_phase() # Let player model determine if 'done' should be true for new phase
-			    self.notify_players("new_phase", {"game": self})
-			    self.make_map() # Update map for new phase
-			return True # Phase advanced
-		else:
-			msg += "At least one player is not done and time remains.\n"
-			if logging: logging.debug(msg) # Use debug for routine checks
-			return False # Phase not finished yet
+            # If game didn't end, advance to the next phase
+            if self.phase != PHINACTIVE:
+                self.advance_to_next_phase()
+                self.clear_phase_cache()
+                # Reset player 'done' status for the new phase
+                self.player_set.filter(user__isnull=False, eliminated=False).update(done=False)
+                # Call new_phase logic for each player (check if they need to act)
+                for p in self.player_set.filter(user__isnull=False, eliminated=False):
+                    p.new_phase() # Let player model determine if 'done' should be true for new phase
+                self.notify_players("new_phase", {"game": self})
+                self.make_map() # Update map for new phase
+            return True # Phase advanced
+        else:
+            msg += "At least one player is not done and time remains.\n"
+            if logging: logging.debug(msg) # Use debug for routine checks
+            return False # Phase not finished yet
 
     def process_current_phase(self):
         """ Executes the logic associated with the *current* game phase. """
@@ -1037,7 +1037,7 @@ class Game(models.Model):
         is_summer = (self.season == 2)
         # is_fall = (self.season == 3) # Not needed for current logic
 
-        if logging: logging.info(f"Game {self.id}: Processing phase {phase} ({self.get_phase_display()}) for {self.year} {self.get_season_display()}")
+        if logging: logging.info("Game %s: Processing phase %s (%s) for %s %s" % (self.id, phase, self.get_phase_display(), self.year, self.get_season_display()))
 
         if phase == PHREINFORCE: # Spring Adjustments & Income
             # Optional Disasters (Rule III.A/B - Spring only)
@@ -1081,7 +1081,7 @@ class Game(models.Model):
                     ).distinct()
                     for garrison in besieged_garrisons:
                         besieger = Unit.objects.filter(area=garrison.area, siege_stage__gt=0).first()
-                        if logging: logging.info(f"Assassination: Garrison {garrison} surrenders to {besieger if besieger else 'siege'}.")
+                        if logging: logging.info("Assassination: Garrison %s surrenders to %s." % (garrison, besieger if besieger else 'siege'))
                         if signals: signals.unit_surrendered.send(sender=garrison, context="assassination")
                         garrison.delete()
                         if besieger:
@@ -1107,7 +1107,7 @@ class Game(models.Model):
                 # The actual processing of RetreatOrder objects happens when the *next*
                 # phase transition occurs (or manually triggered by check_turns).
                 # For now, we just note that retreats are pending.
-                if logging: logging.info(f"Game {self.id}: Retreats are required.")
+                if logging: logging.info("Game %s: Retreats are required." % self.id)
                 # We don't call self.process_retreats() here.
             else:
                  # If no retreats, clear any leftover RetreatOrder objects just in case
@@ -1132,7 +1132,7 @@ class Game(models.Model):
             # Check if retreats are needed before moving to execution
             if Unit.objects.filter(player__game=self).exclude(must_retreat__exact='').exists():
                  # This case shouldn't happen if process_orders clears must_retreat before phase advance
-                 if logging: logging.warning(f"Game {self.id}: must_retreat flags found unexpectedly before PHRETREATS phase.")
+                 if logging: logging.warning("Game {self.id}: must_retreat flags found unexpectedly before PHRETREATS phase.")
                  next_phase = PHRETREATS # Go to retreats if needed
             else:
                  # If finances are on, potentially go through Expense/Assassination steps conceptually
@@ -1165,55 +1165,55 @@ class Game(models.Model):
             self.player_set.filter(has_sentenced=True).update(has_sentenced=False)
 
             self.save()
-            if logging: logging.info(f"Game {self.id}: Advanced to {self.year} {self.get_season_display()} - {self.get_phase_display()}")
+            if logging: logging.info("Game {self.id}: Advanced to {self.year} {self.get_season_display()} - {self.get_phase_display()}")
         # else: Game ended, phase remains PHINACTIVE (set by check_winner/game_over)
 
-	
-	def check_bonus_time(self):
-		""" Returns true if, when the function is called, the first BONUS_TIME% of the
-		duration has not been reached.
-		"""
+    
+    def check_bonus_time(self):
+        """ Returns true if, when the function is called, the first BONUS_TIME% of the
+        duration has not been reached.
+        """
 
-		duration = timedelta(0, self.time_limit * BONUS_TIME)
-		limit = self.last_phase_change + duration
-		to_limit = limit - datetime.now()
-		if to_limit >= timedelta(0, 0):
-			return True
-		else:
-			return False
+        duration = timedelta(0, self.time_limit * BONUS_TIME)
+        limit = self.last_phase_change + duration
+        to_limit = limit - datetime.now()
+        if to_limit >= timedelta(0, 0):
+            return True
+        else:
+            return False
 
-	def get_bonus_deadline(self):
-		""" Returns the latest time when karma is bonified """
-		duration = timedelta(0, self.time_limit * BONUS_TIME)
-		return self.last_phase_change + duration
-	
-	def _next_season(self):
-	    # This method is now largely replaced by advance_to_next_phase
-	    # Kept for reference or potential specific season logic if needed outside phase advancement
-	    save_snapshot(self)
-	    if self.season == 3:
-	        self.season = 1
-	        self.year += 1
-	    else:
-	        self.season += 1
-	    # Cleanup that happens *every* turn transition (if any)
-	    Unit.objects.filter(player__game=self).update(must_retreat='')
-	    GameArea.objects.filter(game=self).update(standoff=False)
-	    # Resetting assassinated/has_sentenced moved to advance_to_next_phase
-	    # self.player_set.all().update(assassinated=False, has_sentenced=False)
-	    self.save()
+    def get_bonus_deadline(self):
+        """ Returns the latest time when karma is bonified """
+        duration = timedelta(0, self.time_limit * BONUS_TIME)
+        return self.last_phase_change + duration
+    
+    def _next_season(self):
+        # This method is now largely replaced by advance_to_next_phase
+        # Kept for reference or potential specific season logic if needed outside phase advancement
+        save_snapshot(self)
+        if self.season == 3:
+            self.season = 1
+            self.year += 1
+        else:
+            self.season += 1
+        # Cleanup that happens *every* turn transition (if any)
+        Unit.objects.filter(player__game=self).update(must_retreat='')
+        GameArea.objects.filter(game=self).update(standoff=False)
+        # Resetting assassinated/has_sentenced moved to advance_to_next_phase
+        # self.player_set.all().update(assassinated=False, has_sentenced=False)
+        self.save()
 
 
-	def all_players_done(self):
-	    # This method is now deprecated. Logic moved to check_finished_phase.
-	    pass
+    def all_players_done(self):
+        # This method is now deprecated. Logic moved to check_finished_phase.
+        pass
 
 
 
     def end_of_season_checks(self, season_ended):
         """ Performs checks that happen at the end of a specific season,
             AFTER orders and retreats for that season are fully resolved. """
-        if logging: logging.info(f"Game {self.id}: Performing end-of-season checks for season {season_ended}")
+        if logging: logging.info("Game {self.id}: Performing end-of-season checks for season {season_ended}")
         config = self.configuration
 
         # --- Actions at End of ANY Season ---
@@ -1230,7 +1230,7 @@ class Game(models.Model):
             if config.famine:
                 famine_units = Unit.objects.filter(player__game=self, area__famine=True)
                 if famine_units.exists():
-                    if logging: logging.info(f"Game {self.id} (End of Spring): Removing {famine_units.count()} units due to famine.")
+                    if logging: logging.info("Game {self.id} (End of Spring): Removing {famine_units.count()} units due to famine.")
                     # Log which units are removed before deleting
                     for unit in famine_units:
                          if signals: signals.unit_disbanded.send(sender=unit, context="famine")
@@ -1252,7 +1252,7 @@ class Game(models.Model):
             if config.storms:
                 storm_units = Unit.objects.filter(player__game=self, area__storm=True)
                 if storm_units.exists():
-                     if logging: logging.info(f"Game {self.id} (End of Fall): Removing {storm_units.count()} units due to storms.")
+                     if logging: logging.info("Game {self.id} (End of Fall): Removing {storm_units.count()} units due to storms.")
                      for unit in storm_units:
                           if signals: signals.unit_disbanded.send(sender=unit, context="storm")
                      storm_units.delete()
@@ -1274,449 +1274,448 @@ class Game(models.Model):
 
             # Check for winner AFTER all end-of-fall actions (Rule III.A)
             if self.check_winner():
-                if logging: logging.info(f"Game {self.id}: Winner found at end of Fall {self.year}.")
+                if logging: logging.info("Game {self.id}: Winner found at end of Fall {self.year}.")
                 # Game ends here, set phase to inactive to stop further advancement
                 self.phase = PHINACTIVE
                 self.save(update_fields=['phase'])
                 # Winner processing (scores, etc.) happens in the calling function (check_finished_phase)
 
-	def adjust_units(self):
-		""" Places new units and disbands the ones that are not paid (Finance rules).
-		    Or adjusts units based on city count (Basic rules). """
-		if self.configuration.finances:
-		    # Disband unpaid units
-		    to_disband = Unit.objects.filter(player__game=self, placed=True, paid=False).exclude(player__user__isnull=True) # Exclude autonomous
-		    if to_disband.exists():
-		        if logging: logging.info(f"Game {self.id}: Disbanding {to_disband.count()} unpaid units.")
-		        to_disband.delete()
-		    # Place newly built units
-		    to_place = Unit.objects.filter(player__game=self, placed=False)
-		    if to_place.exists():
-		         if logging: logging.info(f"Game {self.id}: Placing {to_place.count()} new units.")
-		         for u in to_place: u.place() # Calls signal etc.
-		    # Mark all remaining non-autonomous units as unpaid for the *next* Spring
-		    Unit.objects.filter(player__game=self).exclude(player__user__isnull=True).update(paid=False)
-		else: # Basic Game Logic
-		    # Units marked paid=False by view logic need disbanding
-		    to_disband = Unit.objects.filter(player__game=self, placed=True, paid=False).exclude(player__user__isnull=True)
-		    if to_disband.exists():
-		        if logging: logging.info(f"Game {self.id}: Disbanding {to_disband.count()} excess units (Basic).")
-		        to_disband.delete()
-		    # Units marked placed=False by view logic need placing
-		    to_place = Unit.objects.filter(player__game=self, placed=False)
-		    if to_place.exists():
-		        if logging: logging.info(f"Game {self.id}: Placing {to_place.count()} new units (Basic).")
-		        for u in to_place: u.place()
-		    # No concept of payment in basic, reset flags? Or rely on view logic setting them correctly each Spring.
-		    # Let's assume view logic handles it.
+    def adjust_units(self):
+        """ Places new units and disbands the ones that are not paid (Finance rules).
+            Or adjusts units based on city count (Basic rules). """
+        if self.configuration.finances:
+            # Disband unpaid units
+            to_disband = Unit.objects.filter(player__game=self, placed=True, paid=False).exclude(player__user__isnull=True) # Exclude autonomous
+            if to_disband.exists():
+                if logging: logging.info("Game {self.id}: Disbanding {to_disband.count()} unpaid units.")
+                to_disband.delete()
+            # Place newly built units
+            to_place = Unit.objects.filter(player__game=self, placed=False)
+            if to_place.exists():
+                 if logging: logging.info("Game {self.id}: Placing {to_place.count()} new units.")
+                 for u in to_place: u.place() # Calls signal etc.
+            # Mark all remaining non-autonomous units as unpaid for the *next* Spring
+            Unit.objects.filter(player__game=self).exclude(player__user__isnull=True).update(paid=False)
+        else: # Basic Game Logic
+            # Units marked paid=False by view logic need disbanding
+            to_disband = Unit.objects.filter(player__game=self, placed=True, paid=False).exclude(player__user__isnull=True)
+            if to_disband.exists():
+                if logging: logging.info("Game {self.id}: Disbanding {to_disband.count()} excess units (Basic).")
+                to_disband.delete()
+            # Units marked placed=False by view logic need placing
+            to_place = Unit.objects.filter(player__game=self, placed=False)
+            if to_place.exists():
+                if logging: logging.info("Game {self.id}: Placing {to_place.count()} new units (Basic).")
+                for u in to_place: u.place()
+            # No concept of payment in basic, reset flags? Or rely on view logic setting them correctly each Spring.
+            # Let's assume view logic handles it.
 
 
-	## deprecated because of check_finished_phase
-	#def check_next_phase(self):
-	#	""" When a player ends its phase, send a signal to the game. This function
-	#	checks if all the players have finished.
-	#	"""
-	#
-	#	for p in self.player_set.all():
-	#		if not p.done:
-	#			return False
-	#	self.all_players_done()
-	#	for p in self.player_set.all():
-	#		p.new_phase()
+    ## deprecated because of check_finished_phase
+    #def check_next_phase(self):
+    #	""" When a player ends its phase, send a signal to the game. This function
+    #	checks if all the players have finished.
+    #	"""
+    #
+    #	for p in self.player_set.all():
+    #		if not p.done:
+    #			return False
+    #	self.all_players_done()
+    #	for p in self.player_set.all():
+    #		p.new_phase()
 
-	##------------------------
-	## optional rules methods
-	##------------------------
-	def check_conquerings(self):
-		if not self.configuration.conquering:
-			return
-		## a player can only be conquered if he is eliminated
-		for p in self.player_set.filter(eliminated=True):
-			## try fo find a home province that is not controlled by any player
-			neutral = GameArea.objects.filter(game=self,
-									board_area__home__country=p.country,
-									board_area__home__scenario=self.scenario,
-									board_area__home__is_home=True,
-									player__isnull=True).count()
-			if neutral > 0:
-				continue
-			## get the players that control part of this player's home country
-			controllers = self.player_set.filter(gamearea__board_area__home__country=p.country,
-									gamearea__board_area__home__scenario=self.scenario,
-									gamearea__board_area__home__is_home=True).distinct()
-			if len(controllers) == 1:
-				## all the areas in home country belong to the same player
-				if p != controllers[0] and p.conqueror != controllers[0]:
-					## controllers[0] conquers p
-					p.set_conqueror(controllers[0])
+    ##------------------------
+    ## optional rules methods
+    ##------------------------
+    def check_conquerings(self):
+        if not self.configuration.conquering:
+            return
+        ## a player can only be conquered if he is eliminated
+        for p in self.player_set.filter(eliminated=True):
+            ## try fo find a home province that is not controlled by any player
+            neutral = GameArea.objects.filter(game=self,
+                                    board_area__home__country=p.country,
+                                    board_area__home__scenario=self.scenario,
+                                    board_area__home__is_home=True,
+                                    player__isnull=True).count()
+            if neutral > 0:
+                continue
+            ## get the players that control part of this player's home country
+            controllers = self.player_set.filter(gamearea__board_area__home__country=p.country,
+                                    gamearea__board_area__home__scenario=self.scenario,
+                                    gamearea__board_area__home__is_home=True).distinct()
+            if len(controllers) == 1:
+                ## all the areas in home country belong to the same player
+                if p != controllers[0] and p.conqueror != controllers[0]:
+                    ## controllers[0] conquers p
+                    p.set_conqueror(controllers[0])
 
-	def mark_famine_areas(self):
-		if not self.configuration.famine:
-			return
-		codes = disasters.get_famine()
-		famine_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
-		for f in famine_areas:
-			f.famine=True
-			f.save()
-			signals.famine_marker_placed.send(sender=f)
-	
-	def mark_storm_areas(self):
-		if not self.configuration.storms:
-			return
-		codes = disasters.get_storms()
-		storm_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
-		for f in storm_areas:
-			f.storm=True
-			f.save()
-			signals.storm_marker_placed.send(sender=f)
-	
-	def kill_plague_units(self):
-		if not self.configuration.plague:
-			return
-		codes = disasters.get_plague()
-		plague_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
-		for p in plague_areas:
-			# Check if a plague event already exists for this area
-			from condottieri_events.models import DisasterEvent
-			existing_plague = DisasterEvent.objects.filter(
-				game=self,
-				area=p.board_area,
-				message=1  # 1 is the message type for plague
-			).exists()
-			
-			if not existing_plague:
-				signals.plague_placed.send(sender=p)
-			for u in p.unit_set.all():
-				u.delete()
+    def mark_famine_areas(self):
+        if not self.configuration.famine:
+            return
+        codes = disasters.get_famine()
+        famine_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
+        for f in famine_areas:
+            f.famine=True
+            f.save()
+            signals.famine_marker_placed.send(sender=f)
+    
+    def mark_storm_areas(self):
+        if not self.configuration.storms:
+            return
+        codes = disasters.get_storms()
+        storm_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
+        for f in storm_areas:
+            f.storm=True
+            f.save()
+            signals.storm_marker_placed.send(sender=f)
+    
+    def kill_plague_units(self):
+        if not self.configuration.plague:
+            return
+        codes = disasters.get_plague()
+        plague_areas = GameArea.objects.filter(game=self, board_area__code__in=codes)
+        for p in plague_areas:
+            # Check if a plague event already exists for this area
+            from condottieri_events.models import DisasterEvent
+            existing_plague = DisasterEvent.objects.filter(
+                game=self,
+                area=p.board_area,
+                message=1  # 1 is the message type for plague
+            ).exists()
+            
+            if not existing_plague:
+                signals.plague_placed.send(sender=p)
+            for u in p.unit_set.all():
+                u.delete()
 
-	def assign_incomes(self):
-		""" Gets each player's income and add it to the player's treasury (Advanced V.B). """
-		if not self.configuration.finances or self.season != 1: # Only in Spring with Finances
-		    return
+    def assign_incomes(self):
+        """ Gets each player's income and add it to the player's treasury (Advanced V.B). """
+        if not self.configuration.finances or self.season != 1: # Only in Spring with Finances
+            return
 
-		die = dice.roll_1d6() # Rule V.B.1.d
-		if logging: logging.info(f"Game {self.id}: Variable income roll (Spring {self.year}): {die}")
+        die = dice.roll_1d6() # Rule V.B.1.d
+        if logging: logging.info("Game {self.id}: Variable income roll (Spring {self.year}): {die}")
 
-		# Get IDs of major cities for this scenario (Rule V.B.1.c.2)
-		# Use Area.major_city_income if populated, otherwise CityIncome model
-		major_city_ids_area = Area.objects.filter(major_city_income__isnull=False).values_list('id', flat=True)
-		major_city_ids_model = CityIncome.objects.filter(scenario=self.scenario).values_list('city_id', flat=True)
-		all_major_city_ids = set(list(major_city_ids_area) + list(major_city_ids_model))
-
-
-		players = self.player_set.filter(user__isnull=False, eliminated=False)
-		for p in players:
-			income = p.get_income(die, all_major_city_ids) # Pass die roll and major city IDs
-			if income > 0:
-				p.add_ducats(income) # Handles F() expression and logging
-
-	def check_loans(self):
-		""" Check if any loans have exceeded their terms. If so, apply the
-		penalties. """
-		loans = Loan.objects.filter(player__game=self)
-		for loan in loans:
-			if self.year >= loan.year and self.season >= loan.season:
-				## the loan has exceeded its term
-				if logging:
-					msg = "%s defaulted" % loan.player
-					logging.info(msg)
-				loan.player.defaulted = True
-				loan.player.save()
-				loan.player.assassinate()
-				loan.delete()
-	
-	def process_expenses(self):
-		## undo unconfirmed expenses
-		invalid_expenses = Expense.objects.filter(player__game=self, confirmed=False)
-		for e in invalid_expenses:
-			e.undo()
-		## log expenses
-		if signals:
-			for e in Expense.objects.filter(player__game=self, confirmed=True):
-				signals.expense_paid.send(sender=e)
-		## then, process famine reliefs
-		for e in Expense.objects.filter(player__game=self, type=0):
-			e.area.famine = False
-			e.area.save()
-		## then, delete the rebellions
-		for e in Expense.objects.filter(player__game=self, type=1):
-			Rebellion.objects.filter(area=e.area).delete()
-		## then, place new rebellions
-		for e in Expense.objects.filter(player__game=self, type__in=(2,3)):
-			try:
-				rebellion = Rebellion(area=e.area)
-				rebellion.save()
-			except:
-				continue
-		## then, delete bribes that are countered
-		expenses = Expense.objects.filter(player__game=self)
-		for e in expenses:
-			if e.is_bribe():
-				## get the sum of counter-bribes
-				cb = Expense.objects.filter(player__game=self, type=4, unit=e.unit).aggregate(Sum('ducats'))
-				if not cb['ducats__sum']:
-					cb['ducats__sum'] = 0
-				total_cost = get_expense_cost(e.type, e.unit) + cb['ducats__sum']
-				if total_cost > e.ducats:
-					e.delete()
-		## then, resolve the bribes for each bribed unit
-		bribed_ids = Expense.objects.filter(unit__player__game=self, type__in=(5,6,7,8,9)).values_list('unit', flat=True).distinct()
-		chosen = []
-		## TODO: if two bribes have the same value, decide randomly between them
-		for i in bribed_ids:
-			bribes = Expense.objects.filter(type__in=(5,6,7,8,9), unit__id=i).order_by('-ducats')
-			chosen.append(bribes[0])
-		## all bribes in 'chosen' are successful, and executed
-		for c in chosen:
-			if c.type in (5, 8): #disband unit
-				c.unit.delete()
-			elif c.type in (6, 9): #buy unit
-				c.unit.change_player(c.player)
-			elif c.type == 7: #to autonomous
-				c.unit.to_autonomous()
-		## finally, delete all the expenses
-		Expense.objects.filter(player__game=self).delete()
-
-	def get_rebellions(self):
-		""" Returns a queryset with all the rebellions in this game """
-		return Rebellion.objects.filter(area__game=self)
-
-	def process_assassinations(self):
-		""" Resolves all the assassination attempts """
-		attempts = Assassination.objects.filter(killer__game=self)
-		victims = []
-		msg = u"Processing assassinations in game %s:\n" % self
-		for a in attempts:
-			msg += u"\n%s spends %s ducats to kill %s\n" % (a.killer, a.ducats, a.target)
-			if a.target in victims:
-				msg += u"%s already killed\n" % a.target
-				continue
-			dice_rolled = int(a.ducats / 12)
-			if dice_rolled < 1:
-				msg += u"%s are not enough" % a.ducats
-				continue
-			msg += u"%s dice will be rolled\n" % dice_rolled
-			if dice.check_one_six(dice_rolled):
-				msg += u"Attempt is successful\n"
-				## attempt is successful
-				a.target.assassinate()
-				victims.append(a.target)
-			else:
-				msg += u"Attempt fails\n"
-		attempts.delete()
-		if logging:
-			logging.info(msg)
+        # Get IDs of major cities for this scenario (Rule V.B.1.c.2)
+        # Use Area.major_city_income if populated, otherwise CityIncome model
+        major_city_ids_area = Area.objects.filter(major_city_income__isnull=False).values_list('id', flat=True)
+        major_city_ids_model = CityIncome.objects.filter(scenario=self.scenario).values_list('city_id', flat=True)
+        all_major_city_ids = set(list(major_city_ids_area) + list(major_city_ids_model))
 
 
-	##------------------------
-	## turn processing methods
-	##------------------------
+        players = self.player_set.filter(user__isnull=False, eliminated=False)
+        for p in players:
+            income = p.get_income(die, all_major_city_ids) # Pass die roll and major city IDs
+            if income > 0:
+                p.add_ducats(income) # Handles F() expression and logging
 
-	def get_conflict_areas(self):
-		""" Returns the orders that could result in a possible conflict these are the
-		advancing units and the units that try to convert into A or F.
-		"""
+    def check_loans(self):
+        """ Check if any loans have exceeded their terms. If so, apply the
+        penalties. """
+        loans = Loan.objects.filter(player__game=self)
+        for loan in loans:
+            if self.year >= loan.year and self.season >= loan.season:
+                ## the loan has exceeded its term
+                if logging:
+                    msg = "%s defaulted" % loan.player
+                    logging.info(msg)
+                loan.player.defaulted = True
+                loan.player.save()
+                loan.player.assassinate()
+                loan.delete()
+    
+    def process_expenses(self):
+        ## undo unconfirmed expenses
+        invalid_expenses = Expense.objects.filter(player__game=self, confirmed=False)
+        for e in invalid_expenses:
+            e.undo()
+        ## log expenses
+        if signals:
+            for e in Expense.objects.filter(player__game=self, confirmed=True):
+                signals.expense_paid.send(sender=e)
+        ## then, process famine reliefs
+        for e in Expense.objects.filter(player__game=self, type=0):
+            e.area.famine = False
+            e.area.save()
+        ## then, delete the rebellions
+        for e in Expense.objects.filter(player__game=self, type=1):
+            Rebellion.objects.filter(area=e.area).delete()
+        ## then, place new rebellions
+        for e in Expense.objects.filter(player__game=self, type__in=(2,3)):
+            try:
+                rebellion = Rebellion(area=e.area)
+                rebellion.save()
+            except:
+                continue
+        ## then, delete bribes that are countered
+        expenses = Expense.objects.filter(player__game=self)
+        for e in expenses:
+            if e.is_bribe():
+                ## get the sum of counter-bribes
+                cb = Expense.objects.filter(player__game=self, type=4, unit=e.unit).aggregate(Sum('ducats'))
+                if not cb['ducats__sum']:
+                    cb['ducats__sum'] = 0
+                total_cost = get_expense_cost(e.type, e.unit) + cb['ducats__sum']
+                if total_cost > e.ducats:
+                    e.delete()
+        ## then, resolve the bribes for each bribed unit
+        bribed_ids = Expense.objects.filter(unit__player__game=self, type__in=(5,6,7,8,9)).values_list('unit', flat=True).distinct()
+        chosen = []
+        ## TODO: if two bribes have the same value, decide randomly between them
+        for i in bribed_ids:
+            bribes = Expense.objects.filter(type__in=(5,6,7,8,9), unit__id=i).order_by('-ducats')
+            chosen.append(bribes[0])
+        ## all bribes in 'chosen' are successful, and executed
+        for c in chosen:
+            if c.type in (5, 8): #disband unit
+                c.unit.delete()
+            elif c.type in (6, 9): #buy unit
+                c.unit.change_player(c.player)
+            elif c.type == 7: #to autonomous
+                c.unit.to_autonomous()
+        ## finally, delete all the expenses
+        Expense.objects.filter(player__game=self).delete()
 
-		conflict_orders = Order.objects.filter(unit__player__game=self, code__in=['-', '=']).exclude(type__exact='G')
-		conflict_areas = []
-		for o in conflict_orders:
-			if o.code == '-':
-				if o.unit.area.board_area.is_adjacent(o.destination.board_area, fleet=(o.unit.type=='F')) or \
-					o.find_convoy_line():
-						area = o.destination
-				else:
-					continue
-			else:
-				## unit trying to convert into A or F
-				area = o.unit.area
-			conflict_areas.append(area)
-		return conflict_areas
+    def get_rebellions(self):
+        """ Returns a queryset with all the rebellions in this game """
+        return Rebellion.objects.filter(area__game=self)
 
-	def 
-	def filter_supports(self):
-		""" Checks which Units with support orders are being attacked and delete their
-		orders if the attack is not from the supported direction (Rule VIII.B.3.d).
-		"""
-		info = u"Step 2: Cancel supports from units under attack.\n"
-		support_orders = Order.objects.filter(unit__player__game=self, code='S', confirmed=True) # Process confirmed orders
-		# Get all potential attacking orders targeting areas with supporting units
-		supporter_areas = support_orders.values_list('unit__area', flat=True).distinct()
-		attacking_orders = Order.objects.filter(
-		    Q(unit__player__game=self, confirmed=True) &
-		    ( # Advance into supporter's area
-		      (Q(code='-') & Q(destination__in=supporter_areas)) |
-		      # Convert G->A/F in supporter's area
-		      (Q(code='=') & ~Q(type='G') & Q(unit__area__in=supporter_areas))
-		    )
-		)
-
-		orders_to_delete = []
-		for s_order in support_orders:
-			supporter = s_order.unit
-			info += f"Checking support order {s_order.id} from {supporter}.\n"
-			# Find attacks specifically targeting this supporter's area
-			attacks_on_supporter = attacking_orders.filter(
-			    ~Q(unit__player=supporter.player) & # Must be enemy attack
-			    (Q(destination=supporter.area) | Q(unit__area=supporter.area)) # Target area matches
-			)
-
-			if attacks_on_supporter.exists():
-				info += f"Supporting unit {supporter} is being attacked.\n"
-				support_cut = False
-				# Determine the area the support is directed *into*
-				support_target_area = None
-				if s_order.subcode == 'H': support_target_area = s_order.subunit.area
-				elif s_order.subcode == '-': support_target_area = s_order.subdestination
-				# elif s_order.subcode == '=': support_target_area = s_order.subunit.area # Support conversion
-
-				if not support_target_area:
-				    info += "Invalid support target area, support likely invalid.\n"
-				    # This case should ideally be caught by form validation
-				    continue
-
-				for attack_order in attacks_on_supporter:
-					# Rule VIII.B.3.d: Support is NOT cut if attack comes FROM the area support was directed TO.
-					if attack_order.unit.area == support_target_area:
-						info += f"Attack from {attack_order.unit} is from the supported area ({support_target_area.board_area.code}). Support NOT cut.\n"
-						continue # This attack doesn't cut support
-					else:
-						info += f"Attack from {attack_order.unit} (in {attack_order.unit.area.board_area.code}) cuts support into {support_target_area.board_area.code}.\n"
-						support_cut = True
-						break # One cutting attack is enough
-
-				if support_cut:
-					if signals: signals.support_broken.send(sender=supporter)
-					orders_to_delete.append(s_order.id)
-
-		if orders_to_delete:
-		     Order.objects.filter(id__in=orders_to_delete).delete()
-		     info += f"Deleted {len(orders_to_delete)} cut support orders.\n"
-
-		return info
-
-	def filter_convoys(self):
-		""" Checks which convoying Fleets are dislodged and cancels their convoy. (Rule VIII.B.6.f implies convoy fails if fleet retreats) """
-		# This is complex because dislodging depends on the full conflict resolution.
-		# A simpler approach (as likely intended by original code) is to check if the fleet *loses* a direct conflict.
-		info = u"Step 3: Cancel convoys by fleets likely to be dislodged.\n"
-		convoy_orders = Order.objects.filter(unit__player__game=self, code='C', confirmed=True)
-		orders_to_delete = []
-
-		for c_order in convoy_orders:
-		    fleet = c_order.unit
-		    info += f"Checking convoy order {c_order.id} by {fleet}.\n"
-		    # Check attacks targeting the fleet's area
-		    attacks_on_fleet = Order.objects.filter(
-		        ~Q(unit__player=fleet.player) & Q(unit__player__game=self, confirmed=True) &
-		        (Q(code='-', destination=fleet.area) | Q(code='=', unit__area=fleet.area, type__in=['A','F']))
-		    )
-		    if not attacks_on_fleet.exists():
-		        continue # Fleet not attacked
-
-		    info += f"Convoying fleet {fleet} is under attack.\n"
-		    fleet_strength_obj = Unit.objects.get_with_strength(self.game, id=fleet.id)
-		    fleet_strength = fleet_strength_obj.strength
-
-		    dislodged = False
-		    for attack_order in attacks_on_fleet:
-		        attacker_strength_obj = Unit.objects.get_with_strength(self.game, id=attack_order.unit.id)
-		        attacker_strength = attacker_strength_obj.strength
-		        info += f"Attacked by {attack_order.unit} (Strength: {attacker_strength}). Fleet strength: {fleet_strength}.\n"
-		        # If any single attacker has > strength, fleet is dislodged
-		        # If attacker has == strength, it's a standoff, fleet holds, convoy proceeds.
-		        if attacker_strength > fleet_strength:
-		            info += f"Fleet {fleet} will be dislodged by {attack_order.unit}. Cancelling convoy.\n"
-		            dislodged = True
-		            break # One successful dislodge is enough
-
-		    if dislodged:
-		        orders_to_delete.append(c_order.id)
-		        # Also cancel the corresponding army's advance order if it relied solely on this convoy
-		        army_order = Order.objects.filter(unit=c_order.subunit, code='-', destination=c_order.subdestination, confirmed=True).first()
-		        if army_order:
-		            # Check if other convoys exist for this army move (complex)
-		            # Simplification: Assume if the main convoy fails, the move fails.
-		            info += f"Cancelling advance order for convoyed army {c_order.subunit}.\n"
-		            orders_to_delete.append(army_order.id)
+    def process_assassinations(self):
+        """ Resolves all the assassination attempts """
+        attempts = Assassination.objects.filter(killer__game=self)
+        victims = []
+        msg = u"Processing assassinations in game %s:\n" % self
+        for a in attempts:
+            msg += u"\n%s spends %s ducats to kill %s\n" % (a.killer, a.ducats, a.target)
+            if a.target in victims:
+                msg += u"%s already killed\n" % a.target
+                continue
+            dice_rolled = int(a.ducats / 12)
+            if dice_rolled < 1:
+                msg += u"%s are not enough" % a.ducats
+                continue
+            msg += u"%s dice will be rolled\n" % dice_rolled
+            if dice.check_one_six(dice_rolled):
+                msg += u"Attempt is successful\n"
+                ## attempt is successful
+                a.target.assassinate()
+                victims.append(a.target)
+            else:
+                msg += u"Attempt fails\n"
+        attempts.delete()
+        if logging:
+            logging.info(msg)
 
 
-		if orders_to_delete:
-		     Order.objects.filter(id__in=orders_to_delete).delete()
-		     info += f"Deleted {len(orders_to_delete)} orders due to disrupted convoys.\n"
+    ##------------------------
+    ## turn processing methods
+    ##------------------------
 
-		return info
+    def get_conflict_areas(self):
+        """ Returns the orders that could result in a possible conflict these are the
+        advancing units and the units that try to convert into A or F.
+        """
 
-	def filter_unreachable_attacks(self):
-		""" Delete advance orders to non-adjacent areas without a valid convoy line. """
-		info = u"Step 4: Cancel attacks to unreachable areas.\n"
-		advance_orders = Order.objects.filter(unit__player__game=self, code='-', confirmed=True)
-		orders_to_delete = []
+        conflict_orders = Order.objects.filter(unit__player__game=self, code__in=['-', '=']).exclude(type__exact='G')
+        conflict_areas = []
+        for o in conflict_orders:
+            if o.code == '-':
+                if o.unit.area.board_area.is_adjacent(o.destination.board_area, fleet=(o.unit.type=='F')) or \
+                    o.find_convoy_line():
+                        area = o.destination
+                else:
+                    continue
+            else:
+                ## unit trying to convert into A or F
+                area = o.unit.area
+            conflict_areas.append(area)
+        return conflict_areas
 
-		for order in advance_orders:
-		    unit = order.unit
-		    destination = order.destination
-		    is_fleet = (unit.type == 'F')
-		    is_directly_adjacent = unit.area.board_area.is_adjacent(destination.board_area, fleet=is_fleet)
+    def filter_supports(self):
+        """ Checks which Units with support orders are being attacked and delete their
+        orders if the attack is not from the supported direction (Rule VIII.B.3.d).
+        """
+        info = u"Step 2: Cancel supports from units under attack.\n"
+        support_orders = Order.objects.filter(unit__player__game=self, code='S', confirmed=True) # Process confirmed orders
+        # Get all potential attacking orders targeting areas with supporting units
+        supporter_areas = support_orders.values_list('unit__area', flat=True).distinct()
+        attacking_orders = Order.objects.filter(
+            Q(unit__player__game=self, confirmed=True) &
+            ( # Advance into supporter's area
+              (Q(code='-') & Q(destination__in=supporter_areas)) |
+              # Convert G->A/F in supporter's area
+              (Q(code='=') & ~Q(type='G') & Q(unit__area__in=supporter_areas))
+            )
+        )
 
-		    if not is_directly_adjacent:
-		        # If not adjacent, check for convoy possibility
-		        is_convoy_possible = False
-		        if unit.type == 'A' and unit.area.board_area.is_coast and destination.board_area.is_coast:
-		            # Check if ANY fleet is ordered to convoy this unit to this destination
-		            if Order.objects.filter(
-		                unit__player__game=self, code='C', confirmed=True,
-		                subunit=unit, subdestination=destination
-		            ).exists():
-		                 # Basic check: At least one fleet is trying. Full path check is complex.
-		                 # Assume possible if at least one convoy order exists.
-		                 is_convoy_possible = True
-		                 # TODO: Implement full find_convoy_line check here if needed for stricter validation.
+        orders_to_delete = []
+        for s_order in support_orders:
+            supporter = s_order.unit
+            info += "Checking support order {s_order.id} from {supporter}.\n"
+            # Find attacks specifically targeting this supporter's area
+            attacks_on_supporter = attacking_orders.filter(
+                ~Q(unit__player=supporter.player) & # Must be enemy attack
+                (Q(destination=supporter.area) | Q(unit__area=supporter.area)) # Target area matches
+            )
 
-		        if not is_convoy_possible:
-		            info += f"Impossible attack: {order}. Area not adjacent and no valid convoy.\n"
-		            orders_to_delete.append(order.id)
+            if attacks_on_supporter.exists():
+                info += "Supporting unit {supporter} is being attacked.\n"
+                support_cut = False
+                # Determine the area the support is directed *into*
+                support_target_area = None
+                if s_order.subcode == 'H': support_target_area = s_order.subunit.area
+                elif s_order.subcode == '-': support_target_area = s_order.subdestination
+                # elif s_order.subcode == '=': support_target_area = s_order.subunit.area # Support conversion
 
-		if orders_to_delete:
-		    Order.objects.filter(id__in=orders_to_delete).delete()
-		    info += f"Deleted {len(orders_to_delete)} unreachable attack orders.\n"
-		return info
+                if not support_target_area:
+                    info += "Invalid support target area, support likely invalid.\n"
+                    # This case should ideally be caught by form validation
+                    continue
+
+                for attack_order in attacks_on_supporter:
+                    # Rule VIII.B.3.d: Support is NOT cut if attack comes FROM the area support was directed TO.
+                    if attack_order.unit.area == support_target_area:
+                        info += "Attack from {attack_order.unit} is from the supported area ({support_target_area.board_area.code}). Support NOT cut.\n"
+                        continue # This attack doesn't cut support
+                    else:
+                        info += "Attack from {attack_order.unit} (in {attack_order.unit.area.board_area.code}) cuts support into {support_target_area.board_area.code}.\n"
+                        support_cut = True
+                        break # One cutting attack is enough
+
+                if support_cut:
+                    if signals: signals.support_broken.send(sender=supporter)
+                    orders_to_delete.append(s_order.id)
+
+        if orders_to_delete:
+             Order.objects.filter(id__in=orders_to_delete).delete()
+             info += "Deleted {len(orders_to_delete)} cut support orders.\n"
+
+        return info
+
+    def filter_convoys(self):
+        """ Checks which convoying Fleets are dislodged and cancels their convoy. (Rule VIII.B.6.f implies convoy fails if fleet retreats) """
+        # This is complex because dislodging depends on the full conflict resolution.
+        # A simpler approach (as likely intended by original code) is to check if the fleet *loses* a direct conflict.
+        info = u"Step 3: Cancel convoys by fleets likely to be dislodged.\n"
+        convoy_orders = Order.objects.filter(unit__player__game=self, code='C', confirmed=True)
+        orders_to_delete = []
+
+        for c_order in convoy_orders:
+            fleet = c_order.unit
+            info += "Checking convoy order {c_order.id} by {fleet}.\n"
+            # Check attacks targeting the fleet's area
+            attacks_on_fleet = Order.objects.filter(
+                ~Q(unit__player=fleet.player) & Q(unit__player__game=self, confirmed=True) &
+                (Q(code='-', destination=fleet.area) | Q(code='=', unit__area=fleet.area, type__in=['A','F']))
+            )
+            if not attacks_on_fleet.exists():
+                continue # Fleet not attacked
+
+            info += "Convoying fleet {fleet} is under attack.\n"
+            fleet_strength_obj = Unit.objects.get_with_strength(self.game, id=fleet.id)
+            fleet_strength = fleet_strength_obj.strength
+
+            dislodged = False
+            for attack_order in attacks_on_fleet:
+                attacker_strength_obj = Unit.objects.get_with_strength(self.game, id=attack_order.unit.id)
+                attacker_strength = attacker_strength_obj.strength
+                info += "Attacked by {attack_order.unit} (Strength: {attacker_strength}). Fleet strength: {fleet_strength}.\n"
+                # If any single attacker has > strength, fleet is dislodged
+                # If attacker has == strength, it's a standoff, fleet holds, convoy proceeds.
+                if attacker_strength > fleet_strength:
+                    info += "Fleet {fleet} will be dislodged by {attack_order.unit}. Cancelling convoy.\n"
+                    dislodged = True
+                    break # One successful dislodge is enough
+
+            if dislodged:
+                orders_to_delete.append(c_order.id)
+                # Also cancel the corresponding army's advance order if it relied solely on this convoy
+                army_order = Order.objects.filter(unit=c_order.subunit, code='-', destination=c_order.subdestination, confirmed=True).first()
+                if army_order:
+                    # Check if other convoys exist for this army move (complex)
+                    # Simplification: Assume if the main convoy fails, the move fails.
+                    info += "Cancelling advance order for convoyed army {c_order.subunit}.\n"
+                    orders_to_delete.append(army_order.id)
 
 
-	def resolve_auto_garrisons(self):
-		""" Units with '= G' orders in areas without a garrison, convert into garrison. """
-		info = u"Step 1: Process unopposed conversions to Garrison.\n"
-		garrisoning_orders = Order.objects.filter(unit__player__game=self, code='=', type='G', confirmed=True)
-		orders_to_delete = []
-		units_converted = []
+        if orders_to_delete:
+             Order.objects.filter(id__in=orders_to_delete).delete()
+             info += "Deleted {len(orders_to_delete)} orders due to disrupted convoys.\n"
 
-		for g_order in garrisoning_orders:
-		    unit = g_order.unit
-		    info += f"{unit} tries to convert into garrison in {unit.area}.\n"
-		    # Check if city already has a garrison
-		    if Unit.objects.filter(area=unit.area, type='G').exists():
-		        info += f"Fail: Garrison already exists in {unit.area}.\n"
-		        orders_to_delete.append(g_order.id) # Order fails
-		    else:
-		        # Check if another unit is trying to convert to G in the same area
-		        competing_conversions = garrisoning_orders.filter(unit__area=unit.area).exclude(id=g_order.id)
-		        if competing_conversions.exists():
-		             info += f"Fail: Competing conversion to Garrison in {unit.area}.\n"
-		             # Both fail? Or highest strength wins? Rules don't specify. Assume both fail.
-		             orders_to_delete.append(g_order.id)
-		             for comp_order in competing_conversions:
-		                 if comp_order.id not in orders_to_delete: orders_to_delete.append(comp_order.id)
-		        else:
-		            # Conversion successful
-		            info += f"Success! {unit} converts to Garrison.\n"
-		            unit.convert('G') # Update unit type
-		            units_converted.append(unit.id)
-		            orders_to_delete.append(g_order.id) # Order completed
+        return info
 
-		if orders_to_delete:
-		    Order.objects.filter(id__in=orders_to_delete).delete()
-		    info += f"Processed {len(garrisoning_orders)} Garrison conversion orders.\n"
+    def filter_unreachable_attacks(self):
+        """ Delete advance orders to non-adjacent areas without a valid convoy line. """
+        info = u"Step 4: Cancel attacks to unreachable areas.\n"
+        advance_orders = Order.objects.filter(unit__player__game=self, code='-', confirmed=True)
+        orders_to_delete = []
 
-		return info
+        for order in advance_orders:
+            unit = order.unit
+            destination = order.destination
+            is_fleet = (unit.type == 'F')
+            is_directly_adjacent = unit.area.board_area.is_adjacent(destination.board_area, fleet=is_fleet)
+
+            if not is_directly_adjacent:
+                # If not adjacent, check for convoy possibility
+                is_convoy_possible = False
+                if unit.type == 'A' and unit.area.board_area.is_coast and destination.board_area.is_coast:
+                    # Check if ANY fleet is ordered to convoy this unit to this destination
+                    if Order.objects.filter(
+                        unit__player__game=self, code='C', confirmed=True,
+                        subunit=unit, subdestination=destination
+                    ).exists():
+                         # Basic check: At least one fleet is trying. Full path check is complex.
+                         # Assume possible if at least one convoy order exists.
+                         is_convoy_possible = True
+                         # TODO: Implement full find_convoy_line check here if needed for stricter validation.
+
+                if not is_convoy_possible:
+                    info += "Impossible attack: {order}. Area not adjacent and no valid convoy.\n"
+                    orders_to_delete.append(order.id)
+
+        if orders_to_delete:
+            Order.objects.filter(id__in=orders_to_delete).delete()
+            info += "Deleted {len(orders_to_delete)} unreachable attack orders.\n"
+        return info
+
+
+    def resolve_auto_garrisons(self):
+        """ Units with '= G' orders in areas without a garrison, convert into garrison. """
+        info = u"Step 1: Process unopposed conversions to Garrison.\n"
+        garrisoning_orders = Order.objects.filter(unit__player__game=self, code='=', type='G', confirmed=True)
+        orders_to_delete = []
+        units_converted = []
+
+        for g_order in garrisoning_orders:
+            unit = g_order.unit
+            info += "{unit} tries to convert into garrison in {unit.area}.\n"
+            # Check if city already has a garrison
+            if Unit.objects.filter(area=unit.area, type='G').exists():
+                info += "Fail: Garrison already exists in {unit.area}.\n"
+                orders_to_delete.append(g_order.id) # Order fails
+            else:
+                # Check if another unit is trying to convert to G in the same area
+                competing_conversions = garrisoning_orders.filter(unit__area=unit.area).exclude(id=g_order.id)
+                if competing_conversions.exists():
+                     info += "Fail: Competing conversion to Garrison in {unit.area}.\n"
+                     # Both fail? Or highest strength wins? Rules don't specify. Assume both fail.
+                     orders_to_delete.append(g_order.id)
+                     for comp_order in competing_conversions:
+                         if comp_order.id not in orders_to_delete: orders_to_delete.append(comp_order.id)
+                else:
+                    # Conversion successful
+                    info += "Success! {unit} converts to Garrison.\n"
+                    unit.convert('G') # Update unit type
+                    units_converted.append(unit.id)
+                    orders_to_delete.append(g_order.id) # Order completed
+
+        if orders_to_delete:
+            Order.objects.filter(id__in=orders_to_delete).delete()
+            info += "Processed {len(garrisoning_orders)} Garrison conversion orders.\n"
+
+        return info
 
 
     def resolve_conflicts(self):
@@ -1740,7 +1739,7 @@ class Game(models.Model):
         retreating_units = {} # {unit_id: source_area_code}
 
         for area in target_game_areas:
-            info += f"\nResolving conflicts for area: {area.board_area.code}\n"
+            info += "\nResolving conflicts for area: {area.board_area.code}\n"
             area.standoff = False # Reset standoff for this resolution step
 
             # Units trying to ENTER this area
@@ -1782,7 +1781,7 @@ class Game(models.Model):
                     is_possible_now = order.is_possible() # Use the order's check
 
                 if not is_possible_now:
-                    info += f"Order impossible/unreachable now: {order}. Deleting.\n"
+                    info += "Order impossible/unreachable now: {order}. Deleting.\n"
                     processed_units.add(order.unit.id)
                     order.delete()
                     continue # Skip this order
@@ -1792,9 +1791,9 @@ class Game(models.Model):
                     strength_obj = Unit.objects.get_with_strength(self.game, id=order.unit.id)
                     invader_strengths[order.id] = strength_obj.strength
                     valid_invading_orders.append(order) # Add to list of valid invaders
-                    info += f"Invader: {order.unit} (Strength: {strength_obj.strength})\n"
+                    info += "Invader: {order.unit} (Strength: {strength_obj.strength})\n"
                 except Unit.DoesNotExist:
-                    info += f"Error: Unit for order {order.id} not found during strength calc.\n"
+                    info += "Error: Unit for order {order.id} not found during strength calc.\n"
                     order.delete() # Clean up invalid order
 
 
@@ -1804,9 +1803,9 @@ class Game(models.Model):
                     # Occupier strength includes support for HOLDING
                     strength_obj = Unit.objects.get_with_strength(self.game, id=occupier.id)
                     occupier_strength = strength_obj.strength # get_with_strength handles hold support
-                    info += f"Occupier: {occupier} (Strength: {occupier_strength})\n"
+                    info += "Occupier: {occupier} (Strength: {occupier_strength})\n"
                 except Unit.DoesNotExist:
-                     info += f"Error: Occupier unit {occupier.id} not found during strength calc.\n"
+                     info += "Error: Occupier unit {occupier.id} not found during strength calc.\n"
                      occupier = None # Treat as non-existent
 
 
@@ -1818,7 +1817,7 @@ class Game(models.Model):
                 winners = [oid for oid, s in invader_strengths.items() if s == max_invader_strength]
 
             if len(winners) > 1: # Standoff among invaders
-                info += f"Standoff among invaders for {area.board_area.code} (Strength: {max_invader_strength}).\n"
+                info += "Standoff among invaders for {area.board_area.code} (Strength: {max_invader_strength}).\n"
                 area.standoff = True
                 # All involved invaders fail and hold
                 for order_id in invader_strengths.keys():
@@ -1838,11 +1837,11 @@ class Game(models.Model):
                 try:
                     winning_order = Order.objects.get(id=winners[0])
                     winning_strength = max_invader_strength
-                    info += f"Winning invader: {winning_order.unit} (Strength: {winning_strength})\n"
+                    info += "Winning invader: {winning_order.unit} (Strength: {winning_strength})\n"
 
                     if occupier:
                         if winning_strength > occupier_strength: # Invader wins, occupier retreats
-                            info += f"{winning_order.unit} dislodges {occupier}.\n"
+                            info += "{winning_order.unit} dislodges {occupier}.\n"
                             retreating_units[occupier.id] = winning_order.unit.area.board_area.code
                             processed_units.add(occupier.id)
                             if occupying_order: occupying_order.delete()
@@ -1854,18 +1853,18 @@ class Game(models.Model):
                             processed_units.add(winning_order.unit.id)
                             winning_order.delete()
                         elif winning_strength == occupier_strength: # Bounce / Standoff
-                            info += f"Bounce between {winning_order.unit} and {occupier}.\n"
+                            info += "Bounce between {winning_order.unit} and {occupier}.\n"
                             area.standoff = True
                             processed_units.add(winning_order.unit.id)
                             winning_order.delete()
                             processed_units.add(occupier.id)
                         else: # Occupier wins, invader holds
-                            info += f"{occupier} holds against {winning_order.unit}.\n"
+                            info += "{occupier} holds against {winning_order.unit}.\n"
                             processed_units.add(winning_order.unit.id)
                             winning_order.delete()
                             processed_units.add(occupier.id)
                     else: # No occupier, invader succeeds
-                        info += f"{winning_order.unit} successfully enters empty {area.board_area.code}.\n"
+                        info += "{winning_order.unit} successfully enters empty {area.board_area.code}.\n"
                         # Execute winning order, passing coast
                         if winning_order.code == '-':
                             winning_order.unit.invade_area(area, target_coast=winning_order.destination_coast)
@@ -1875,16 +1874,16 @@ class Game(models.Model):
                         winning_order.delete()
 
                 except Order.DoesNotExist:
-                    info += f"Error: Winning order {winners[0]} not found.\n"
+                    info += "Error: Winning order {winners[0]} not found.\n"
 
             elif not winners and occupier: # No valid invaders, occupier holds
-                 info += f"Occupier {occupier} holds uncontested.\n"
+                 info += "Occupier {occupier} holds uncontested.\n"
                  processed_units.add(occupier.id)
                  # Occupier executes original order only if it wasn't just holding/supporting hold
                  if occupying_order and occupying_order.code not in ['H', 'S'] : # If it was moving/convoying etc.
                       # This order should have been processed when resolving *its* target area.
                       # If it's still here, it likely failed. Delete it.
-                      info += f"Deleting occupier's non-hold order {occupying_order.id} as it likely failed elsewhere.\n"
+                      info += "Deleting occupier's non-hold order {occupying_order.id} as it likely failed elsewhere.\n"
                       occupying_order.delete()
 
             # Save standoff status for the area after all checks
@@ -1909,20 +1908,20 @@ class Game(models.Model):
                      order.unit.siege_stage = 0
                      order.unit.besieging = False
                      order.unit.save(update_fields=['siege_stage', 'besieging'])
-                     info += f"{order.unit} lifts siege.\n"
+                     info += "{order.unit} lifts siege.\n"
                  orders_to_delete_ids.append(order.id)
              elif order.code == '0':
-                 info += f"{order.unit} disbands.\n"
+                 info += "{order.unit} disbands.\n"
                  units_to_disband_ids.append(order.unit.id)
                  # Order deleted with unit
              elif order.code == 'C':
-                 info += f"{order.unit} provides convoy (holds position).\n"
+                 info += "{order.unit} provides convoy (holds position).\n"
                  orders_to_delete_ids.append(order.id)
              elif order.code == 'S':
-                 info += f"{order.unit} provides support (holds position).\n"
+                 info += "{order.unit} provides support (holds position).\n"
                  orders_to_delete_ids.append(order.id)
              elif order.code == 'H':
-                 info += f"{order.unit} holds.\n"
+                 info += "{order.unit} holds.\n"
                  orders_to_delete_ids.append(order.id)
              # Besiege ('B') orders are handled in resolve_sieges
 
@@ -1945,7 +1944,7 @@ class Game(models.Model):
         disband_units_ids = retreat_orders.filter(area__isnull=True).values_list('unit_id', flat=True)
         if disband_units_ids:
             units_to_delete = Unit.objects.filter(id__in=disband_units_ids)
-            info += f"Disbanding units: {', '.join(str(u) for u in units_to_delete)}\n"
+            info += "Disbanding units: {', '.join(str(u) for u in units_to_delete)}\n"
             units_to_delete.delete()
 
         # Units ordered to retreat to a specific area
@@ -1964,8 +1963,8 @@ class Game(models.Model):
                 # Conflict: Multiple units targeting same area/coast -> all disband
                 area_id, coast = target_key
                 dest_ga = GameArea.objects.get(id=area_id) # For logging
-                coast_str = f"/{coast}" if coast else ""
-                info += f"Retreat conflict: Units {unit_ids} targeting {dest_ga}{coast_str}. All disband.\n"
+                coast_str = "/{coast}" if coast else ""
+                info += "Retreat conflict: Units {unit_ids} targeting {dest_ga}{coast_str}. All disband.\n"
                 units_to_disband_conflict.update(unit_ids)
             else:
                 # Potential valid retreat, store details
@@ -1986,25 +1985,25 @@ class Game(models.Model):
                 dest_area = GameArea.objects.get(id=destination.id)
                 can_retreat_here = True
                 if dest_area.standoff:
-                    info += f"Cannot retreat {unit} to {destination}: Area became standoff.\n"
+                    info += "Cannot retreat {unit} to {destination}: Area became standoff.\n"
                     can_retreat_here = False
                 # Check for A/F units that might have moved *into* the destination *after* conflicts were resolved
                 # This check might be complex/redundant if conflict resolution is perfect.
                 # Let's assume conflict resolution correctly cleared the path or marked standoff.
                 # if Unit.objects.filter(area=dest_area, type__in=['A','F']).exists():
-                #     info += f"Cannot retreat {unit} to {destination}: Area became occupied.\n"
+                #     info += "Cannot retreat {unit} to {destination}: Area became occupied.\n"
                 #     can_retreat_here = False
 
                 if can_retreat_here:
-                    coast_str = f"/{retreat_coast}" if retreat_coast else ""
-                    info += f"{unit} retreats to {destination}{coast_str}.\n"
+                    coast_str = "/{retreat_coast}" if retreat_coast else ""
+                    info += "{unit} retreats to {destination}{coast_str}.\n"
                     unit.retreat(destination, target_coast=retreat_coast) # Pass coast
                 else:
-                     info += f"No valid retreat for {unit} to {destination}. Unit disbands.\n"
+                     info += "No valid retreat for {unit} to {destination}. Unit disbands.\n"
                      unit.delete()
 
             except GameArea.DoesNotExist:
-                 info += f"Retreat destination {destination.id} not found for {unit}. Unit disbands.\n"
+                 info += "Retreat destination {destination.id} not found for {unit}. Unit disbands.\n"
                  try: unit.delete()
                  except Unit.DoesNotExist: pass # Already deleted
             except Unit.DoesNotExist:
@@ -2028,7 +2027,7 @@ class Game(models.Model):
 
             b = b_order.unit
             area = b.area
-            info += f"{b} ordered to besiege in {area.board_area.code}. "
+            info += "{b} ordered to besiege in {area.board_area.code}. "
             target_unit = None
             target_rebellion = None
 
@@ -2042,7 +2041,7 @@ class Game(models.Model):
             try:
                 target_unit = Unit.objects.get(area=area, type='G')
                 if target_unit.player == b.player: target_unit = None # Cannot besiege self
-                else: info += f"Target: Garrison {target_unit}. "
+                else: info += "Target: Garrison {target_unit}. "
             except Unit.DoesNotExist:
                 target_rebellion = area.has_rebellion(b.player, same=False) # Target enemy rebellion
                 if target_rebellion and target_rebellion.garrisoned:
@@ -2072,7 +2071,7 @@ class Game(models.Model):
             elif b.siege_stage == 2: # Siege successful (End of Stage 2)
                 info += "Siege successful! "
                 if target_unit:
-                    info += f"Garrison {target_unit} removed.\n"
+                    info += "Garrison {target_unit} removed.\n"
                     if signals: signals.unit_surrendered.send(sender=target_unit, context="siege")
                     target_unit.delete()
                 elif target_rebellion:
@@ -2101,24 +2100,24 @@ class Game(models.Model):
         )
 
         for b in broken_sieges:
-            info += f"Siege by {b} broken (no Besiege order or forced retreat).\n"
+            info += "Siege by {b} broken (no Besiege order or forced retreat).\n"
             b.siege_stage = 0
             # b.besieging = False # Removed field
             b.save(update_fields=['siege_stage'])
 
         return info
 
-	def announce_retreats(self):
-		""" Logs units that must retreat. """
-		info = u"Step 7: Announce Retreats\n"
-		retreating = Unit.objects.filter(player__game=self).exclude(must_retreat__exact='')
-		if retreating.exists():
-		    for u in retreating:
-		        info += f"{u} must retreat from {u.area} (attack from {u.must_retreat}).\n"
-		        if signals: signals.forced_to_retreat.send(sender=u)
-		else:
-		    info += "No retreats required this turn.\n"
-		return info
+    def announce_retreats(self):
+        """ Logs units that must retreat. """
+        info = u"Step 7: Announce Retreats\n"
+        retreating = Unit.objects.filter(player__game=self).exclude(must_retreat__exact='')
+        if retreating.exists():
+            for u in retreating:
+                info += "{u} must retreat from {u.area} (attack from {u.must_retreat}).\n"
+                if signals: signals.forced_to_retreat.send(sender=u)
+        else:
+            info += "No retreats required this turn.\n"
+        return info
 
 # Example in models.py Game class
 def adjudicate_movement_phase(self):
@@ -2139,7 +2138,7 @@ def adjudicate_movement_phase(self):
 
     # DO NOT delete orders here if _get_actual_poststate needs them
     # DO NOT change game phase/season/year
-    if logging: logging.debug(f"DATC Adjudication Log Game {self.id}:\n{info}") # Use debug level
+    if logging: logging.debug("DATC Adjudication Log Game {self.id}:\n{info}") # Use debug level
 
     def preprocess_orders(self):
         """
@@ -2152,7 +2151,7 @@ def adjudicate_movement_phase(self):
         if not self.configuration.finances: # Basic game: only owner can order
              orders_to_delete = Order.objects.filter(player__game=self, confirmed=True).exclude(player=F('unit__player'))
              if orders_to_delete.exists():
-                  if logging: logging.warning(f"Game {self.id}: Deleting {orders_to_delete.count()} confirmed orders from non-owning players (Basic Game).")
+                  if logging: logging.warning("Game {self.id}: Deleting {orders_to_delete.count()} confirmed orders from non-owning players (Basic Game).")
                   orders_to_delete.delete()
         # else: Advanced game allows ordering bought units, validation happens later.
 
@@ -2165,7 +2164,7 @@ def adjudicate_movement_phase(self):
         """ Run a batch of methods in the correct order to process all the orders. """
         self.preprocess_orders() # Clean up unconfirmed/invalid orders first
 
-        info = f"Processing orders in game {self.slug} ({self.year} {self.get_season_display()})\n"
+        info = "Processing orders in game {self.slug} ({self.year} {self.get_season_display()})\n"
         info += "------------------------------\n\n"
 
         # Adjudication Steps (Based on Diplomacy Adjudication Test Cases order)
@@ -2198,116 +2197,116 @@ def adjudicate_movement_phase(self):
         # Note: Retreat processing (handling RetreatOrder objects) happens *after* this,
         # typically triggered by advancing the phase if retreats are needed.
 
-	def process_retreats(self):
-		""" Processes RetreatOrder objects created by the view. (Rule VIII.B.6) """
-		info = u"Processing Retreats:\n"
-		retreat_orders = RetreatOrder.objects.filter(unit__player__game=self)
+    def process_retreats(self):
+        """ Processes RetreatOrder objects created by the view. (Rule VIII.B.6) """
+        info = u"Processing Retreats:\n"
+        retreat_orders = RetreatOrder.objects.filter(unit__player__game=self)
 
-		# Units ordered to disband
-		disband_units = retreat_orders.filter(area__isnull=True).values_list('unit', flat=True)
-		if disband_units:
-		    units_to_delete = Unit.objects.filter(id__in=disband_units)
-		    info += f"Disbanding units: {', '.join(map(str, units_to_delete))}\n"
-		    units_to_delete.delete()
+        # Units ordered to disband
+        disband_units = retreat_orders.filter(area__isnull=True).values_list('unit', flat=True)
+        if disband_units:
+            units_to_delete = Unit.objects.filter(id__in=disband_units)
+            info += "Disbanding units: {', '.join(map(str, units_to_delete))}\n"
+            units_to_delete.delete()
 
-		# Units ordered to retreat to a specific area
-		move_orders = retreat_orders.exclude(area__isnull=True)
-		area_counts = move_orders.values('area').annotate(count=Count('id'))
+        # Units ordered to retreat to a specific area
+        move_orders = retreat_orders.exclude(area__isnull=True)
+        area_counts = move_orders.values('area').annotate(count=Count('id'))
 
-		orders_to_process = list(move_orders) # Process individually
+        orders_to_process = list(move_orders) # Process individually
 
-		for order in orders_to_process:
-		    unit = order.unit
-		    destination = order.area
-		    area_conflict = False
-		    for area_count in area_counts:
-		        if area_count['area'] == destination.id and area_count['count'] > 1:
-		            area_conflict = True
-		            break
+        for order in orders_to_process:
+            unit = order.unit
+            destination = order.area
+            area_conflict = False
+            for area_count in area_counts:
+                if area_count['area'] == destination.id and area_count['count'] > 1:
+                    area_conflict = True
+                    break
 
-		    if area_conflict:
-		        # Multiple units trying to retreat to the same spot -> all disband (Rule VIII.B.6.e implies this?)
-		        # Rule doesn't explicitly state multiple retreats cause disband, only if *no* place is available.
-		        # Let's follow common Diplomacy interpretation: retreat conflict = disband.
-		        info += f"Retreat conflict for {unit} targeting {destination}. Unit disbands.\n"
-		        try: unit.delete()
-		        except Unit.DoesNotExist: pass # Might already be deleted if involved in multiple conflicts
-		    else:
-		        # Check if destination is still valid (not standoff, not occupied by A/F)
-		        try:
-		            dest_area = GameArea.objects.get(id=destination.id)
-		            can_retreat_here = True
-		            if dest_area.standoff: # Rule VIII.B.6.c.1
-		                info += f"Cannot retreat {unit} to {destination}: Area is standoff.\n"
-		                can_retreat_here = False
-		            if Unit.objects.filter(area=dest_area, type__in=['A','F']).exists():
-		                info += f"Cannot retreat {unit} to {destination}: Area occupied.\n"
-		                can_retreat_here = False
-		            # Cannot retreat where attacker came from (already filtered in get_possible_retreats)
+            if area_conflict:
+                # Multiple units trying to retreat to the same spot -> all disband (Rule VIII.B.6.e implies this?)
+                # Rule doesn't explicitly state multiple retreats cause disband, only if *no* place is available.
+                # Let's follow common Diplomacy interpretation: retreat conflict = disband.
+                info += "Retreat conflict for {unit} targeting {destination}. Unit disbands.\n"
+                try: unit.delete()
+                except Unit.DoesNotExist: pass # Might already be deleted if involved in multiple conflicts
+            else:
+                # Check if destination is still valid (not standoff, not occupied by A/F)
+                try:
+                    dest_area = GameArea.objects.get(id=destination.id)
+                    can_retreat_here = True
+                    if dest_area.standoff: # Rule VIII.B.6.c.1
+                        info += "Cannot retreat {unit} to {destination}: Area is standoff.\n"
+                        can_retreat_here = False
+                    if Unit.objects.filter(area=dest_area, type__in=['A','F']).exists():
+                        info += "Cannot retreat {unit} to {destination}: Area occupied.\n"
+                        can_retreat_here = False
+                    # Cannot retreat where attacker came from (already filtered in get_possible_retreats)
 
-		            if can_retreat_here:
-		                info += f"{unit} retreats to {destination}.\n"
-		                unit.retreat(destination) # Handles conversion if retreating to own city
-		            else:
-		                 info += f"No valid retreat for {unit}. Unit disbands.\n"
-		                 unit.delete()
+                    if can_retreat_here:
+                        info += "{unit} retreats to {destination}.\n"
+                        unit.retreat(destination) # Handles conversion if retreating to own city
+                    else:
+                         info += "No valid retreat for {unit}. Unit disbands.\n"
+                         unit.delete()
 
-		        except GameArea.DoesNotExist:
-		             info += f"Retreat destination {destination.id} not found for {unit}. Unit disbands.\n"
-		             try: unit.delete()
-		             except Unit.DoesNotExist: pass
-		        except Unit.DoesNotExist:
-		             pass # Unit already deleted
+                except GameArea.DoesNotExist:
+                     info += "Retreat destination {destination.id} not found for {unit}. Unit disbands.\n"
+                     try: unit.delete()
+                     except Unit.DoesNotExist: pass
+                except Unit.DoesNotExist:
+                     pass # Unit already deleted
 
-		# Clean up processed RetreatOrder objects
-		retreat_orders.delete()
-		info += "Retreat processing complete.\n"
-		if logging: logging.info(info)
-
-
-	def update_controls(self):
-		""" Updates area control based on unit presence at end of Fall. (Rule V.C) """
-		if self.season != 3: return # Only happens end of Fall
-
-		info = u"Updating Controls (End of Fall):\n"
-		# Areas are controlled by the player with a unit (A/F/G) unless contested.
-		# Control persists even if unit leaves, until another player's unit enters.
-
-		for area in GameArea.objects.filter(game=self).exclude(board_area__is_sea=True):
-		    units_in_area = area.unit_set.all()
-		    players_present = set(u.player for u in units_in_area if u.player.user is not None) # Get unique players (excluding autonomous)
-
-		    if len(players_present) == 1:
-		        new_controller = players_present.pop()
-		        if area.player != new_controller:
-		            old_controller_name = area.player.country.name if area.player else "Neutral"
-		            info += f"Area {area.board_area.code}: Control changed from {old_controller_name} to {new_controller.country.name}.\n"
-		            area.player = new_controller
-		            area.save()
-		            if signals: signals.area_controlled.send(sender=area)
-		    elif len(players_present) > 1:
-		        # Contested area, no one controls (Rule V.C.1.a)
-		        if area.player is not None:
-		            info += f"Area {area.board_area.code}: Control lost by {area.player.country.name} (contested).\n"
-		            area.player = None
-		            area.save()
-		    # If len(players_present) == 0, control remains with the last controller (area.player)
-		if logging: logging.info(info)
-
-	##---------------------
-	## logging methods
-	##---------------------
-
-	def log_event(self, e, **kwargs):
-		## TODO: CATCH ERRORS
-		#event = e(game=self, year=self.year, season=self.season, phase=self.phase, **kwargs)
-		#event.save()
-		pass
+        # Clean up processed RetreatOrder objects
+        retreat_orders.delete()
+        info += "Retreat processing complete.\n"
+        if logging: logging.info(info)
 
 
-	##------------------------
-	## game ending methods
-	##------------------------
+    def update_controls(self):
+        """ Updates area control based on unit presence at end of Fall. (Rule V.C) """
+        if self.season != 3: return # Only happens end of Fall
+
+        info = u"Updating Controls (End of Fall):\n"
+        # Areas are controlled by the player with a unit (A/F/G) unless contested.
+        # Control persists even if unit leaves, until another player's unit enters.
+
+        for area in GameArea.objects.filter(game=self).exclude(board_area__is_sea=True):
+            units_in_area = area.unit_set.all()
+            players_present = set(u.player for u in units_in_area if u.player.user is not None) # Get unique players (excluding autonomous)
+
+            if len(players_present) == 1:
+                new_controller = players_present.pop()
+                if area.player != new_controller:
+                    old_controller_name = area.player.country.name if area.player else "Neutral"
+                    info += "Area {area.board_area.code}: Control changed from {old_controller_name} to {new_controller.country.name}.\n"
+                    area.player = new_controller
+                    area.save()
+                    if signals: signals.area_controlled.send(sender=area)
+            elif len(players_present) > 1:
+                # Contested area, no one controls (Rule V.C.1.a)
+                if area.player is not None:
+                    info += "Area {area.board_area.code}: Control lost by {area.player.country.name} (contested).\n"
+                    area.player = None
+                    area.save()
+            # If len(players_present) == 0, control remains with the last controller (area.player)
+        if logging: logging.info(info)
+
+    ##---------------------
+    ## logging methods
+    ##---------------------
+
+    def log_event(self, e, **kwargs):
+        ## TODO: CATCH ERRORS
+        #event = e(game=self, year=self.year, season=self.season, phase=self.phase, **kwargs)
+        #event.save()
+        pass
+
+
+    ##------------------------
+    ## game ending methods
+    ##------------------------
 
     def check_winner(self):
         """ Returns True if at least one player has met the victory conditions. """
@@ -2322,7 +2321,7 @@ def adjudicate_movement_phase(self):
                     # Must control all original home cities
                     all_home_cities = p.home_country(original=True).filter(board_area__has_city=True)
                     if not all_home_cities.exists(): # Should not happen in valid setup
-                         if logging: logging.warning(f"Player {p} has no original home cities defined for basic win check.")
+                         if logging: logging.warning("Player {p} has no original home cities defined for basic win check.")
                          continue
                     if p.controlled_home_cities(original=True).count() != all_home_cities.count():
                          continue # Doesn't control all original home cities
@@ -2330,7 +2329,7 @@ def adjudicate_movement_phase(self):
                     # Must control at least 6 conquered cities
                     conquered_cities_count = num_cities - all_home_cities.count()
                     if conquered_cities_count >= 6:
-                        if logging: logging.info(f"Basic Victory: Player {p} controls {num_cities} cities (all home + {conquered_cities_count} conquered).")
+                        if logging: logging.info("Basic Victory: Player {p} controls {num_cities} cities (all home + {conquered_cities_count} conquered).")
                         return True # Basic win condition met
 
                 # Advanced/Ultimate condition check (Rule II.B, II.C, II.D)
@@ -2347,7 +2346,7 @@ def adjudicate_movement_phase(self):
                              conquered_homes_count += 1
 
                     if conquered_homes_count >= required_conquered_homes:
-                        if logging: logging.info(f"Advanced/Ultimate Victory: Player {p} controls {num_cities} cities and {conquered_homes_count} conquered home countries.")
+                        if logging: logging.info("Advanced/Ultimate Victory: Player {p} controls {num_cities} cities and {conquered_homes_count} conquered home countries.")
                         return True # Advanced/Ultimate win condition met
 
                 # Add check for custom victory conditions if needed
@@ -2357,320 +2356,320 @@ def adjudicate_movement_phase(self):
 
         return False # No winner found
 
-	def assign_scores(self):
-		qual = []
-		for p in self.player_set.filter(user__isnull=False):
-			qual.append((p, p.number_of_cities()))
-		## sort the players by their number of cities, less cities go first
-		qual.sort(cmp=lambda x,y: cmp(x[1], y[1]), reverse=False)
-		zeros = len(qual) - len(SCORES)
-		assignation = SCORES + [0] * zeros
-		for s in assignation:
-			try:
-				q = qual.pop()
-			except:
-				exit
-			else:
-				# add the number of cities to the score
-				score = Score(user=q[0].user, game=q[0].game,
-							country=q[0].country,
-							points = s + q[1],
-							cities = q[1])
-				score.save()
-				## add the points to the profile total_score
-				score.user.get_profile().total_score += score.points
-				score.user.get_profile().save()
-				## highest score = last score
-				while qual != [] and qual[-1][1] == q[1]:
-					tied = qual.pop()
-					score = Score(user=tied[0].user, game=tied[0].game,
-								country=tied[0].country,
-								points = s + tied[1],
-								cities = tied[1])
-					score.save()
-					## add the points to the profile total_score
-					score.user.get_profile().total_score += score.points
-					score.user.get_profile().save()
+    def assign_scores(self):
+        qual = []
+        for p in self.player_set.filter(user__isnull=False):
+            qual.append((p, p.number_of_cities()))
+        ## sort the players by their number of cities, less cities go first
+        qual.sort(cmp=lambda x,y: cmp(x[1], y[1]), reverse=False)
+        zeros = len(qual) - len(SCORES)
+        assignation = SCORES + [0] * zeros
+        for s in assignation:
+            try:
+                q = qual.pop()
+            except:
+                exit
+            else:
+                # add the number of cities to the score
+                score = Score(user=q[0].user, game=q[0].game,
+                            country=q[0].country,
+                            points = s + q[1],
+                            cities = q[1])
+                score.save()
+                ## add the points to the profile total_score
+                score.user.get_profile().total_score += score.points
+                score.user.get_profile().save()
+                ## highest score = last score
+                while qual != [] and qual[-1][1] == q[1]:
+                    tied = qual.pop()
+                    score = Score(user=tied[0].user, game=tied[0].game,
+                                country=tied[0].country,
+                                points = s + tied[1],
+                                cities = tied[1])
+                    score.save()
+                    ## add the points to the profile total_score
+                    score.user.get_profile().total_score += score.points
+                    score.user.get_profile().save()
 
-	def game_over(self):
-		self.phase = PHINACTIVE
-		self.finished = datetime.now()
-		self.save()
-		if signals:
-			signals.game_finished.send(sender=self)
-		self.notify_players("game_over", {"game": self})
-		self.tweet_message("The game %(game)s is over" % {'game': self.slug})
-		self.tweet_results()
-		self.clean_useless_data()
+    def game_over(self):
+        self.phase = PHINACTIVE
+        self.finished = datetime.now()
+        self.save()
+        if signals:
+            signals.game_finished.send(sender=self)
+        self.notify_players("game_over", {"game": self})
+        self.tweet_message("The game %(game)s is over" % {'game': self.slug})
+        self.tweet_results()
+        self.clean_useless_data()
 
-	def clean_useless_data(self):
-		""" In a finished game, delete all the data that is not going to be used
-		anymore. """
+    def clean_useless_data(self):
+        """ In a finished game, delete all the data that is not going to be used
+        anymore. """
 
-		self.player_set.all().delete()
-		self.gamearea_set.all().delete()
-		self.invitation_set.all().delete()
-		self.whisper_set.all().delete()
-	
-	##------------------------
-	## notification methods
-	##------------------------
+        self.player_set.all().delete()
+        self.gamearea_set.all().delete()
+        self.invitation_set.all().delete()
+        self.whisper_set.all().delete()
+    
+    ##------------------------
+    ## notification methods
+    ##------------------------
 
-	def notify_players(self, label, extra_context={}, on_site=True):
-		if notification:
-			users = User.objects.filter(player__game=self,
-										player__eliminated=False)
-			extra_context.update({'STATIC_URL': settings.STATIC_URL, })
-			if self.fast:
-				notification.send_now(users, label, extra_context, on_site)
-			else:
-				notification.send(users, label, extra_context, on_site)
+    def notify_players(self, label, extra_context={}, on_site=True):
+        if notification:
+            users = User.objects.filter(player__game=self,
+                                        player__eliminated=False)
+            extra_context.update({'STATIC_URL': settings.STATIC_URL, })
+            if self.fast:
+                notification.send_now(users, label, extra_context, on_site)
+            else:
+                notification.send(users, label, extra_context, on_site)
 
-	def tweet_message(self, message):
-		if twitter_api:
-			#thread.start_new_thread(twitter_api.PostUpdate, (message,))
-			twitter_api.PostUpdate(message)
+    def tweet_message(self, message):
+        if twitter_api:
+            #thread.start_new_thread(twitter_api.PostUpdate, (message,))
+            twitter_api.PostUpdate(message)
 
-	def tweet_results(self):
-		if twitter_api:
-			#winners = self.player_set.order_by('-score')
-			winners = self.score_set.order_by('-points')
-			message = "'%s' - Winner: %s; 2nd: %s; 3rd: %s" % (self.slug,
-							winners[0].user,
-							winners[1].user,
-							winners[2].user)
-			self.tweet_message(message)
+    def tweet_results(self):
+        if twitter_api:
+            #winners = self.player_set.order_by('-score')
+            winners = self.score_set.order_by('-points')
+            message = "'%s' - Winner: %s; 2nd: %s; 3rd: %s" % (self.slug,
+                            winners[0].user,
+                            winners[1].user,
+                            winners[2].user)
+            self.tweet_message(message)
 
 if twitter_api and settings.TWEET_NEW_GAME:
-	def tweet_new_game(sender, instance, created, **kw):
-		if twitter_api and isinstance(instance, Game):
-			if created == True:
-				message = "New game: http://www.condottierigame.com%s" % instance.get_absolute_url()
-				twitter_api.PostUpdate(message)
+    def tweet_new_game(sender, instance, created, **kw):
+        if twitter_api and isinstance(instance, Game):
+            if created == True:
+                message = "New game: http://www.condottierigame.com%s" % instance.get_absolute_url()
+                twitter_api.PostUpdate(message)
 
-	models.signals.post_save.connect(tweet_new_game, sender=Game)
+    models.signals.post_save.connect(tweet_new_game, sender=Game)
 
 class GameArea(models.Model):
-	""" This class defines the actual game areas where each game is played. """
+    """ This class defines the actual game areas where each game is played. """
 
-	game = models.ForeignKey(Game)
-	board_area = models.ForeignKey(Area)
-	## player is who controls the area, if any
-	player = models.ForeignKey('Player', blank=True, null=True)
-	standoff = models.BooleanField(default=False)
-	famine = models.BooleanField(default=False) # Optional Rule III.B
-	storm = models.BooleanField(default=False)  # Optional Rule III.C
+    game = models.ForeignKey(Game)
+    board_area = models.ForeignKey(Area)
+    ## player is who controls the area, if any
+    player = models.ForeignKey('Player', blank=True, null=True)
+    standoff = models.BooleanField(default=False)
+    famine = models.BooleanField(default=False) # Optional Rule III.B
+    storm = models.BooleanField(default=False)  # Optional Rule III.C
 
-	def abbr(self):
-		return "%s (%s)" % (self.board_area.code, self.board_area.name)
+    def abbr(self):
+        return "%s (%s)" % (self.board_area.code, self.board_area.name)
 
-	def __unicode__(self):
-		#return self.board_area.name
-		#return "(%(code)s) %(name)s" % {'name': self.board_area.name, 'code': self.board_area.code}
-		return unicode(self.board_area)
+    def __unicode__(self):
+        #return self.board_area.name
+        #return "(%(code)s) %(name)s" % {'name': self.board_area.name, 'code': self.board_area.code}
+        return unicode(self.board_area)
 
-	def accepts_type(self, type):
-		return self.board_area.accepts_type(type)
-	
-	def possible_reinforcements(self):
-		""" Returns a list of possible unit types for an area. """
+    def accepts_type(self, type):
+        return self.board_area.accepts_type(type)
+    
+    def possible_reinforcements(self):
+        """ Returns a list of possible unit types for an area. """
 
-		existing_types = []
-		result = []
-		units = self.unit_set.all()
-		for unit in units:
-	        	existing_types.append(unit.type)
-		if self.accepts_type('G') and not "G" in existing_types:
-			result.append('G')
-		if self.accepts_type('F') and not ("A" in existing_types or "F" in existing_types):
-			result.append('F')
-		if self.accepts_type('A') and not ("A" in existing_types or "F" in existing_types):
-			result.append('A')
-		return result
+        existing_types = []
+        result = []
+        units = self.unit_set.all()
+        for unit in units:
+                existing_types.append(unit.type)
+        if self.accepts_type('G') and not "G" in existing_types:
+            result.append('G')
+        if self.accepts_type('F') and not ("A" in existing_types or "F" in existing_types):
+            result.append('F')
+        if self.accepts_type('A') and not ("A" in existing_types or "F" in existing_types):
+            result.append('A')
+        return result
 
-	def mark_as_standoff(self):
-		if signals:
-			signals.standoff_happened.send(sender=self)
-		else:
-			self.game.log_event(StandoffEvent, area=self.board_area)
-		self.standoff = True
-		self.save()
+    def mark_as_standoff(self):
+        if signals:
+            signals.standoff_happened.send(sender=self)
+        else:
+            self.game.log_event(StandoffEvent, area=self.board_area)
+        self.standoff = True
+        self.save()
 
-	def province_is_empty(self):
-		return self.unit_set.exclude(type__exact='G').count() == 0
+    def province_is_empty(self):
+        return self.unit_set.exclude(type__exact='G').count() == 0
 
-	def get_adjacent_areas(self, include_self=False):
-		""" Returns a queryset with all the adjacent GameAreas """
-		if include_self:
-			cond = Q(board_area__borders=self.board_area, game=self.game) | Q(id=self.id)
-		else:
-			cond = Q(board_area__borders=self.board_area, game=self.game)
-		adj = GameArea.objects.filter(cond).distinct()
-		return adj
-	
-	def has_rebellion(self, player, same=True):
-		""" If there is a rebellion in the area, either against the player or
-		against any other player, returns the rebellion. """
-		try:
-			if same:
-				reb = Rebellion.objects.get(area=self, player=player)
-			else:
-				reb = Rebellion.objects.exclude(player=player).get(area=self)
-		except ObjectDoesNotExist:
-			return False
-		return reb
+    def get_adjacent_areas(self, include_self=False):
+        """ Returns a queryset with all the adjacent GameAreas """
+        if include_self:
+            cond = Q(board_area__borders=self.board_area, game=self.game) | Q(id=self.id)
+        else:
+            cond = Q(board_area__borders=self.board_area, game=self.game)
+        adj = GameArea.objects.filter(cond).distinct()
+        return adj
+    
+    def has_rebellion(self, player, same=True):
+        """ If there is a rebellion in the area, either against the player or
+        against any other player, returns the rebellion. """
+        try:
+            if same:
+                reb = Rebellion.objects.get(area=self, player=player)
+            else:
+                reb = Rebellion.objects.exclude(player=player).get(area=self)
+        except ObjectDoesNotExist:
+            return False
+        return reb
 
-	def check_assassination_rebellion(self):
-		""" When a player is assassinated this function checks if a new
-		rebellion appears in the game area, according to Rule VI.C.6.f. """
-		if not self.player or not self.player.assassinated: # Only if controlled by assassinated player
-		    return False
-		if self.board_area.is_sea:
-			return False
-		# Rule implies rebellion happens unless *another* player's unit is present.
-		if Unit.objects.filter(area=self).exclude(player=self.player).exists():
-			return False
-		if self.has_rebellion(self.player): # Already rebelling
-		    return False
+    def check_assassination_rebellion(self):
+        """ When a player is assassinated this function checks if a new
+        rebellion appears in the game area, according to Rule VI.C.6.f. """
+        if not self.player or not self.player.assassinated: # Only if controlled by assassinated player
+            return False
+        if self.board_area.is_sea:
+            return False
+        # Rule implies rebellion happens unless *another* player's unit is present.
+        if Unit.objects.filter(area=self).exclude(player=self.player).exists():
+            return False
+        if self.has_rebellion(self.player): # Already rebelling
+            return False
 
-		result = False
-		die = dice.roll_1d6()
-		is_occupied_by_owner = Unit.objects.filter(area=self, player=self.player).exists()
-		is_home_province = self in self.player.home_country() # Assumes home_country() is correct
+        result = False
+        die = dice.roll_1d6()
+        is_occupied_by_owner = Unit.objects.filter(area=self, player=self.player).exists()
+        is_home_province = self in self.player.home_country() # Assumes home_country() is correct
 
-		if is_home_province:
-			if is_occupied_by_owner and die == 1: result = True
-			elif not is_occupied_by_owner and die in (1, 2): result = True
-		else: # Conquered province
-			if is_occupied_by_owner and die in (1, 2, 3): result = True
-			elif not is_occupied_by_owner and die != 6: result = True
+        if is_home_province:
+            if is_occupied_by_owner and die == 1: result = True
+            elif not is_occupied_by_owner and die in (1, 2): result = True
+        else: # Conquered province
+            if is_occupied_by_owner and die in (1, 2, 3): result = True
+            elif not is_occupied_by_owner and die != 6: result = True
 
-		if result:
-			rebellion = Rebellion(area=self)
-			# Rebellion model needs to correctly determine player and garrisoned status on save
-			rebellion.save()
-			if logging: logging.info("Assassination rebellion in %s" % self)
-		return result
+        if result:
+            rebellion = Rebellion(area=self)
+            # Rebellion model needs to correctly determine player and garrisoned status on save
+            rebellion.save()
+            if logging: logging.info("Assassination rebellion in %s" % self)
+        return result
 
 
 def check_min_karma(sender, instance=None, **kwargs):
-	if isinstance(instance, CondottieriProfile):
-		if instance.karma < settings.KARMA_TO_JOIN:		
-			players = Player.objects.filter(user=instance.user,
-											game__slots__gt=0)
-			for p in players:
-				game = p.game
-				if not game.private:
-					p.delete()
-					game.slots += 1
-					game.save()
-	
+    if isinstance(instance, CondottieriProfile):
+        if instance.karma < settings.KARMA_TO_JOIN:		
+            players = Player.objects.filter(user=instance.user,
+                                            game__slots__gt=0)
+            for p in players:
+                game = p.game
+                if not game.private:
+                    p.delete()
+                    game.slots += 1
+                    game.save()
+    
 models.signals.post_save.connect(check_min_karma, sender=CondottieriProfile)
 
 
 class Score(models.Model):
-	""" This class defines the scores that a user got in a finished game. """
+    """ This class defines the scores that a user got in a finished game. """
 
-	user = models.ForeignKey(User)
-	game = models.ForeignKey(Game)
-	country = models.ForeignKey(Country)
-	points = models.PositiveIntegerField(default=0)
-	cities = models.PositiveIntegerField(default=0)
-	position = models.PositiveIntegerField(default=0)
-	""" Default value is added for compatibility with south, to be deleted after migration """
-	created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User)
+    game = models.ForeignKey(Game)
+    country = models.ForeignKey(Country)
+    points = models.PositiveIntegerField(default=0)
+    cities = models.PositiveIntegerField(default=0)
+    position = models.PositiveIntegerField(default=0)
+    """ Default value is added for compatibility with south, to be deleted after migration """
+    created_at = models.DateTimeField(auto_now_add=True)
 
-	def __unicode__(self):
-		return "%s (%s)" % (self.user, self.game)
+    def __unicode__(self):
+        return "%s (%s)" % (self.user, self.game)
 
 class Player(models.Model):
-	""" This class defines the relationship between a User and a Game. """
+    """ This class defines the relationship between a User and a Game. """
 
-	user = models.ForeignKey(User, blank=True, null=True) # Null for autonomous units
-	game = models.ForeignKey(Game)
-	country = models.ForeignKey(Country, blank=True, null=True)
-	done = models.BooleanField(default=False)
-	eliminated = models.BooleanField(default=False)
-	conqueror = models.ForeignKey('self', related_name='conquered', blank=True, null=True)
-	excommunicated = models.PositiveIntegerField(blank=True, null=True) # Seems unused?
-	assassinated = models.BooleanField(default=False) # Advanced VI.C.6
-	defaulted = models.BooleanField(default=False) # Optional X.B
-	ducats = models.PositiveIntegerField(default=0) # Advanced V
-	double_income = models.BooleanField(default=False) # Advanced V.B.1.d
-	may_excommunicate = models.BooleanField(default=False) # Implied Papacy ability
-	static_name = models.CharField(max_length=20, default="")
-	step = models.PositiveIntegerField(default=0)
-	has_sentenced = models.BooleanField(default=False) # Related to excommunication
-	is_excommunicated = models.BooleanField(default=False) # Related to excommunication
-	pope_excommunicated = models.BooleanField(default=False) # Related to excommunication
+    user = models.ForeignKey(User, blank=True, null=True) # Null for autonomous units
+    game = models.ForeignKey(Game)
+    country = models.ForeignKey(Country, blank=True, null=True)
+    done = models.BooleanField(default=False)
+    eliminated = models.BooleanField(default=False)
+    conqueror = models.ForeignKey('self', related_name='conquered', blank=True, null=True)
+    excommunicated = models.PositiveIntegerField(blank=True, null=True) # Seems unused?
+    assassinated = models.BooleanField(default=False) # Advanced VI.C.6
+    defaulted = models.BooleanField(default=False) # Optional X.B
+    ducats = models.PositiveIntegerField(default=0) # Advanced V
+    double_income = models.BooleanField(default=False) # Advanced V.B.1.d
+    may_excommunicate = models.BooleanField(default=False) # Implied Papacy ability
+    static_name = models.CharField(max_length=20, default="")
+    step = models.PositiveIntegerField(default=0)
+    has_sentenced = models.BooleanField(default=False) # Related to excommunication
+    is_excommunicated = models.BooleanField(default=False) # Related to excommunication
+    pope_excommunicated = models.BooleanField(default=False) # Related to excommunication
 
 
-	def __unicode__(self):
-		if self.user:
-			return "%s (%s)" % (self.user, self.game)
-		else:
-			return "Autonomous in %s" % self.game
+    def __unicode__(self):
+        if self.user:
+            return "%s (%s)" % (self.user, self.game)
+        else:
+            return "Autonomous in %s" % self.game
 
-	def get_language(self):
-		if self.user:
-			return self.user.account_set.all()[0].get_language_display()
-		else:
-			return ''
-	
-	def get_setups(self):
-		return Setup.objects.filter(scenario=self.game.scenario,
-				country=self.country).select_related()
-	
-	def home_control_markers(self):
-		""" Assigns each GameArea the player as owner. """
-		GameArea.objects.filter(game=self.game,
-								board_area__home__scenario=self.game.scenario,
-								board_area__home__country=self.country).update(player=self)
-	
-	def place_initial_units(self):
-		for s in self.get_setups():
-			try:
-				a = GameArea.objects.get(game=self.game, board_area=s.area)
-			except:
-				print "Error 2: Area not found!"
-			else:
-				#a.player = self
-				#a.save()
-				if s.unit_type:
-					new_unit = Unit(type=s.unit_type, area=a, player=self, paid=False)
-					new_unit.save()
-	
-	def number_of_cities(self):
-		""" Returns the number of cities controlled by the player. """
+    def get_language(self):
+        if self.user:
+            return self.user.account_set.all()[0].get_language_display()
+        else:
+            return ''
+    
+    def get_setups(self):
+        return Setup.objects.filter(scenario=self.game.scenario,
+                country=self.country).select_related()
+    
+    def home_control_markers(self):
+        """ Assigns each GameArea the player as owner. """
+        GameArea.objects.filter(game=self.game,
+                                board_area__home__scenario=self.game.scenario,
+                                board_area__home__country=self.country).update(player=self)
+    
+    def place_initial_units(self):
+        for s in self.get_setups():
+            try:
+                a = GameArea.objects.get(game=self.game, board_area=s.area)
+            except:
+                print("Error 2: Area not found!")
+            else:
+                #a.player = self
+                #a.save()
+                if s.unit_type:
+                    new_unit = Unit(type=s.unit_type, area=a, player=self, paid=False)
+                    new_unit.save()
+    
+    def number_of_cities(self):
+        """ Returns the number of cities controlled by the player. """
 
-		cities = GameArea.objects.filter(player=self, board_area__has_city=True)
-		return len(cities)
+        cities = GameArea.objects.filter(player=self, board_area__has_city=True)
+        return len(cities)
 
-	def number_of_units(self):
-		## this funcion is deprecated
-		return self.unit_set.all().count()
+    def number_of_units(self):
+        ## this funcion is deprecated
+        return self.unit_set.all().count()
 
-	def placed_units_count(self):
-		return self.unit_set.filter(placed=True).count()
-	
-	def units_to_place(self):
-		""" Return the number of units that the player must place. Negative if
-		the player has to remove units.
-		"""
+    def placed_units_count(self):
+        return self.unit_set.filter(placed=True).count()
+    
+    def units_to_place(self):
+        """ Return the number of units that the player must place. Negative if
+        the player has to remove units.
+        """
 
-		if not self.user:
-			return 0
-		cities = self.number_of_cities()
-		if self.game.configuration.famine:
-			famines = self.gamearea_set.filter(famine=True, board_area__has_city=True).exclude(unit__type__exact='G').count()
-			cities -= famines
-		units = len(self.unit_set.all())
-		place = cities - units
-		slots = len(self.get_areas_for_new_units())
-		if place > slots:
-			place = slots
-		return place
-	
+        if not self.user:
+            return 0
+        cities = self.number_of_cities()
+        if self.game.configuration.famine:
+            famines = self.gamearea_set.filter(famine=True, board_area__has_city=True).exclude(unit__type__exact='G').count()
+            cities -= famines
+        units = len(self.unit_set.all())
+        place = cities - units
+        slots = len(self.get_areas_for_new_units())
+        if place > slots:
+            place = slots
+        return place
+    
     def home_country(self, original=True):
         """ Returns a queryset with Game Areas in home country.
             If original=True, returns only the starting home country.
@@ -2693,11 +2692,11 @@ class Player(models.Model):
         q &= Q(board_area__home__country__in=valid_home_countries)
         return GameArea.objects.filter(q).select_related('board_area') # Optimize
 
-	def controlled_home_country(self):
-		""" Returns a queryset with GameAreas in home country controlled by player.
-		"""
+    def controlled_home_country(self):
+        """ Returns a queryset with GameAreas in home country controlled by player.
+        """
 
-		return self.home_country().filter(player=self)
+        return self.home_country().filter(player=self)
 
     def controlled_home_cities(self, original=True):
         """ Returns a queryset with GameAreas in home country (original or all),
@@ -2765,7 +2764,7 @@ class Player(models.Model):
         ).select_related('board_area') # Optimize
 
         if not original_home_provinces.exists():
-             if logging: logging.warning(f"Player {self} has no original home provinces defined for conquer check.")
+             if logging: logging.warning("Player {self} has no original home provinces defined for conquer check.")
              return False # Cannot be conquered if no home provinces defined
 
         # Check if *any* of these original home provinces are NOT controlled by the potential conqueror
@@ -2774,25 +2773,24 @@ class Player(models.Model):
         # If no uncontrolled provinces exist, the potential conqueror has full control
         return not uncontrolled_exists
 
-	def cancel_orders(self, hold=False):
-		""" Deletes all the player's orders, optionally changing them to Hold first (for assassination). """
-		if hold:
-		    # Change all non-hold orders to Hold
-		    # Note: This might conflict if a unit cannot legally Hold (e.g., mid-conversion?)
-		    # Rule VI.C.6.d just says "paralyzed" and orders become "hold".
-		    self.order_set.exclude(code='H').update(
-		        code='H',
-		        destination=None, type=None, subunit=None, subcode=None,
-		        subdestination=None, subtype=None, confirmed=True # Ensure they are processed as holds
-		    )
-		    # If assassination paralysis prevents putting down rebellions (Rule VI.C.6.d),
-		    # this needs handling in the rebellion resolution logic, not just changing order code.
-		else:
-		    self.order_set.all().delete()
+    def cancel_orders(self, hold=False):
+        """ Deletes all the player's orders, optionally changing them to Hold first (for assassination). """
+        if hold:
+            # Change all non-hold orders to Hold
+            # Note: This might conflict if a unit cannot legally Hold (e.g., mid-conversion?)
+            # Rule VI.C.6.d just says "paralyzed" and orders become "hold".
+            self.order_set.exclude(code='H').update(
+                code='H',
+                destination=None, type=None, subunit=None, subcode=None,
+                subdestination=None, subtype=None, confirmed=True # Ensure they are processed as holds
+            )
+            # If assassination paralysis prevents putting down rebellions (Rule VI.C.6.d),
+            # this needs handling in the rebellion resolution logic, not just changing order code.
+        else:
+            self.order_set.all().delete()
 
-	    def check_eliminated(self):
-        """ Checks if the player is eliminated based on Rule V.D.1 and V.D.2.c.
-            This check happens at the end of the Fall campaign. """
+    def check_eliminated(self):
+        """ Checks if the player is eliminated based on Rule V.D.1 and V.D.2.c. This check happens at the end of the Fall campaign. """
         if not self.user: return False # Autonomous players are not eliminated this way
 
         # Rule V.D.1: Check control of *any* original home city
@@ -2805,7 +2803,7 @@ class Player(models.Model):
         if not all_home_provinces_q.exists():
              # This case implies the player had no home country defined, shouldn't happen.
              # If they have no home provinces, are they eliminated? Rule implies yes if no original home cities.
-             if logging: logging.warning(f"Player {self} has no defined home provinces for elimination check.")
+             if logging: logging.warning("Player {self} has no defined home provinces for elimination check.")
              return True # Eliminated if no original home cities and no home provinces exist
 
         # Check if they control *any* province within their original OR conquered home countries
@@ -2813,13 +2811,13 @@ class Player(models.Model):
             return False # Still controls at least one province in the combined home territories
 
         # If no original home cities controlled AND no provinces controlled in *any* home territory (original+conquered) -> Eliminated
-        if logging: logging.info(f"Player {self} eliminated (lost all original home cities AND all provinces in combined home territories)")
+        if logging: logging.info("Player {self} eliminated (lost all original home cities AND all provinces in combined home territories)")
         return True
 
     def eliminate(self):
         """ Eliminates the player and removes units, controls, etc. (Rule V.D.1) """
         if self.user and not self.eliminated: # Prevent double elimination
-            if logging: logging.info(f"Game {self.game.id}: Eliminating player {self.user.username} ({self.country})")
+            if logging: logging.info("Game {self.game.id}: Eliminating player {self.user.username} ({self.country})")
             self.eliminated = True
             self.ducats = 0 # Lose all money
             self.is_excommunicated = False # Excommunication lifted on elimination
@@ -2848,7 +2846,7 @@ class Player(models.Model):
 
             # Clear excommunications *if* they were the Pope (Rule implies Papacy is unique)
             if self.game.configuration.excommunication and self.may_excommunicate:
-                if logging: logging.info(f"Game {self.game.id}: Eliminated Pope ({self.user.username}) lifts all excommunications.")
+                if logging: logging.info("Game {self.game.id}: Eliminated Pope ({self.user.username}) lifts all excommunications.")
                 self.game.player_set.all().update(is_excommunicated=False, pope_excommunicated=False)
 
             # Mark player as done for the current phase
@@ -2857,290 +2855,290 @@ class Player(models.Model):
             self.game.reset_players_cache() # Update cached player list
 
 
-	def set_conqueror(self, player):
-		if player != self:
-			signals.country_conquered.send(sender=self, country=self.country)
-			if logging:
-				msg = "Player %s conquered by player %s" % (self.pk, player.pk)
-				logging.info(msg)
-			self.conqueror = player
-			#if self.game.configuration.finances:
-			#	if self.ducats > 0:
-			#		player.ducats = F('ducats') + self.ducats
-			#		player.save()
-			#		self.ducats = 0
-			self.save()
+    def set_conqueror(self, player):
+        if player != self:
+            signals.country_conquered.send(sender=self, country=self.country)
+            if logging:
+                msg = "Player %s conquered by player %s" % (self.pk, player.pk)
+                logging.info(msg)
+            self.conqueror = player
+            #if self.game.configuration.finances:
+            #	if self.ducats > 0:
+            #		player.ducats = F('ducats') + self.ducats
+            #		player.save()
+            #		self.ducats = 0
+            self.save()
 
-	def can_excommunicate(self):
-		""" Returns true if player.may_excommunicate and the Player has not excommunicated or
-		forgiven anyone this turn and there is no other player explicitly excommunicated """
+    def can_excommunicate(self):
+        """ Returns true if player.may_excommunicate and the Player has not excommunicated or
+        forgiven anyone this turn and there is no other player explicitly excommunicated """
 
-		if self.eliminated:
-			return False
-		if self.game.configuration.excommunication:
-			if self.may_excommunicate and not self.has_sentenced:
-				try:
-					Player.objects.get(game=self.game, pope_excommunicated=True)
-				except ObjectDoesNotExist:
-					return True
-		return False
+        if self.eliminated:
+            return False
+        if self.game.configuration.excommunication:
+            if self.may_excommunicate and not self.has_sentenced:
+                try:
+                    Player.objects.get(game=self.game, pope_excommunicated=True)
+                except ObjectDoesNotExist:
+                    return True
+        return False
 
-	def can_forgive(self):
-		""" Returns true if player.may_excommunicate and the Player has not excommunicated or
-		forgiven anyone this turn. """
-		
-		if self.eliminated:
-			return False
-		if self.game.configuration.excommunication:
-			if self.may_excommunicate and not self.has_sentenced:
-				return True
-		return False
+    def can_forgive(self):
+        """ Returns true if player.may_excommunicate and the Player has not excommunicated or
+        forgiven anyone this turn. """
+        
+        if self.eliminated:
+            return False
+        if self.game.configuration.excommunication:
+            if self.may_excommunicate and not self.has_sentenced:
+                return True
+        return False
 
-	def set_excommunication(self, by_pope=False):
-		""" Excommunicates the player """
-		self.is_excommunicated = True
-		self.pope_excommunicated = by_pope
-		self.save()
-		self.game.reset_players_cache()
-		signals.country_excommunicated.send(sender=self)
-		if logging:
-			msg = "Player %s excommunicated" % self.pk
-			logging.info(msg)
-	
-	def unset_excommunication(self):
-		self.is_excommunicated = False
-		self.pope_excommunicated = False
-		self.save()
-		self.game.reset_players_cache()
-		signals.country_forgiven.send(sender=self)
-		if logging:
-			msg = "Player %s is forgiven" % self.pk
-			logging.info(msg)
+    def set_excommunication(self, by_pope=False):
+        """ Excommunicates the player """
+        self.is_excommunicated = True
+        self.pope_excommunicated = by_pope
+        self.save()
+        self.game.reset_players_cache()
+        signals.country_excommunicated.send(sender=self)
+        if logging:
+            msg = "Player %s excommunicated" % self.pk
+            logging.info(msg)
+    
+    def unset_excommunication(self):
+        self.is_excommunicated = False
+        self.pope_excommunicated = False
+        self.save()
+        self.game.reset_players_cache()
+        signals.country_forgiven.send(sender=self)
+        if logging:
+            msg = "Player %s is forgiven" % self.pk
+            logging.info(msg)
 
-	def assassinate(self):
-		self.assassinated = True
-		self.save()
-		signals.player_assassinated.send(sender=self)
+    def assassinate(self):
+        self.assassinated = True
+        self.save()
+        signals.player_assassinated.send(sender=self)
 
-	def has_special_unit(self):
-		try:
-			Unit.objects.get(player=self, paid=True, cost__gt=3)
-		except ObjectDoesNotExist:
-			return False
-		else:
-			return True
+    def has_special_unit(self):
+        try:
+            Unit.objects.get(player=self, paid=True, cost__gt=3)
+        except ObjectDoesNotExist:
+            return False
+        else:
+            return True
 
-	def end_phase(self, forced=False):
-		self.done = True
-		self.step = 0
-		self.save()
-		if not forced:
-			if not self.game.fast and self.game.check_bonus_time():
-				## get a karma bonus
-				#self.user.stats.adjust_karma(1)
-				self.user.get_profile().adjust_karma(1)
-			## delete possible revolutions
-			Revolution.objects.filter(government=self).delete()
-			msg = "Player %s ended phase" % self.pk
-		else:
-			self.force_phase_change()
-			msg = "Player %s forced to end phase" % self.pk
-		#self.game.check_next_phase()
-		if logging:
-			logging.info(msg)
+    def end_phase(self, forced=False):
+        self.done = True
+        self.step = 0
+        self.save()
+        if not forced:
+            if not self.game.fast and self.game.check_bonus_time():
+                ## get a karma bonus
+                #self.user.stats.adjust_karma(1)
+                self.user.get_profile().adjust_karma(1)
+            ## delete possible revolutions
+            Revolution.objects.filter(government=self).delete()
+            msg = "Player %s ended phase" % self.pk
+        else:
+            self.force_phase_change()
+            msg = "Player %s forced to end phase" % self.pk
+        #self.game.check_next_phase()
+        if logging:
+            logging.info(msg)
 
-	def new_phase(self):
-		## check that the player is not autonomous and is not eliminated
-		if self.user and not self.eliminated:
-			if self.game.phase == PHREINFORCE and not self.game.configuration.finances:
-				if self.units_to_place() == 0:
-					self.done = True
-				else:
-					self.done = False
-			elif self.game.phase == PHORDERS:
-				units = self.unit_set.all().count()
-				if units <= 0:
-					self.done = True
-				else:
-					self.done = False
-			elif self.game.phase == PHRETREATS:
-				retreats = self.unit_set.exclude(must_retreat__exact='').count()
-				if retreats == 0:
-					self.done = True
-				else:
-					self.done = False
-			else:
-				self.done = False
-			self.save()
+    def new_phase(self):
+        ## check that the player is not autonomous and is not eliminated
+        if self.user and not self.eliminated:
+            if self.game.phase == PHREINFORCE and not self.game.configuration.finances:
+                if self.units_to_place() == 0:
+                    self.done = True
+                else:
+                    self.done = False
+            elif self.game.phase == PHORDERS:
+                units = self.unit_set.all().count()
+                if units <= 0:
+                    self.done = True
+                else:
+                    self.done = False
+            elif self.game.phase == PHRETREATS:
+                retreats = self.unit_set.exclude(must_retreat__exact='').count()
+                if retreats == 0:
+                    self.done = True
+                else:
+                    self.done = False
+            else:
+                self.done = False
+            self.save()
 
-	def next_phase_change(self):
-		""" Returns the time that the next forced phase change would happen,
-		if this were the only player (i.e. only his own karma is considered)
-		"""
-		
-		if self.game.fast:
-			karma = 100.
-		else:
-			karma = float(self.user.get_profile().karma)
-		if karma > 100:
-			if self.game.phase == PHORDERS:
-				k = 1 + (karma - 100) / 200
-			else:
-				k = 1
-		else:
-			k = karma / 100
-		time_limit = self.game.time_limit * k
-		
-		duration = timedelta(0, time_limit)
+    def next_phase_change(self):
+        """ Returns the time that the next forced phase change would happen,
+        if this were the only player (i.e. only his own karma is considered)
+        """
+        
+        if self.game.fast:
+            karma = 100.
+        else:
+            karma = float(self.user.get_profile().karma)
+        if karma > 100:
+            if self.game.phase == PHORDERS:
+                k = 1 + (karma - 100) / 200
+            else:
+                k = 1
+        else:
+            k = karma / 100
+        time_limit = self.game.time_limit * k
+        
+        duration = timedelta(0, time_limit)
 
-		return self.game.last_phase_change + duration
-	
-	def time_to_limit(self):
-		"""
-		Calculates the time to the next phase change and returns it as a
-		timedelta.
-		"""
-		return self.next_phase_change() - datetime.now()
-	
-	def in_last_seconds(self):
-		"""
-		Returns True if the next phase change would happen in a few minutes.
-		"""
-		return self.time_to_limit() <= timedelta(seconds=settings.LAST_SECONDS)
-	
-	def time_exceeded(self):
-		""" Returns true if the player has exceeded his own time, and he is playing because
-		other players have not yet finished. """
+        return self.game.last_phase_change + duration
+    
+    def time_to_limit(self):
+        """
+        Calculates the time to the next phase change and returns it as a
+        timedelta.
+        """
+        return self.next_phase_change() - datetime.now()
+    
+    def in_last_seconds(self):
+        """
+        Returns True if the next phase change would happen in a few minutes.
+        """
+        return self.time_to_limit() <= timedelta(seconds=settings.LAST_SECONDS)
+    
+    def time_exceeded(self):
+        """ Returns true if the player has exceeded his own time, and he is playing because
+        other players have not yet finished. """
 
-		return self.next_phase_change() < datetime.now()
+        return self.next_phase_change() < datetime.now()
 
-	def get_time_status(self):
-		""" Returns a string describing the status of the player depending on the time limits.
-		This string is to be used as a css class to show the time """
-		now = datetime.now()
-		bonus = self.game.get_bonus_deadline()
-		if now <= bonus:
-			return 'bonus_time'
-		safe = self.next_phase_change()
-		if now <= safe:
-			return 'safe_time'
-		return 'unsafe_time'
-	
-	def force_phase_change(self):
-		## the player didn't take his actions, so he loses karma
-		if not self.game.fast:
-			self.user.get_profile().adjust_karma(-10)
-		## if there is a revolution with an overthrowing player, change users
-		try:
-			rev = Revolution.objects.get(government=self)
-		except ObjectDoesNotExist:
-			if not self.game.fast:
-				## create a new possible revolution
-				rev = Revolution(government=self)
-				rev.save()
-				logging.info("New revolution for player %s" % self)
-		else:
-			if rev.opposition:
-				if notification:
-					## notify the old player
-					user = [self.user,]
-					extra_context = {'game': self.game,}
-					notification.send(user, "lost_player", extra_context, on_site=True)
-					## notify the new player
-					user = [rev.opposition]
-					if self.game.fast:
-						notification.send_now(user, "got_player", extra_context)	
-					else:
-						notification.send(user, "got_player", extra_context)
-				logging.info("Government of %s is overthrown" % self.country)
-				if signals:
-					signals.government_overthrown.send(sender=self)
-				else:
-					self.game.log_event(CountryEvent,
-								country=self.country,
-								message=0)
-				self.user = rev.opposition
-				self.save()
-				rev.delete()
-				self.user.get_profile().adjust_karma(10)
+    def get_time_status(self):
+        """ Returns a string describing the status of the player depending on the time limits.
+        This string is to be used as a css class to show the time """
+        now = datetime.now()
+        bonus = self.game.get_bonus_deadline()
+        if now <= bonus:
+            return 'bonus_time'
+        safe = self.next_phase_change()
+        if now <= safe:
+            return 'safe_time'
+        return 'unsafe_time'
+    
+    def force_phase_change(self):
+        ## the player didn't take his actions, so he loses karma
+        if not self.game.fast:
+            self.user.get_profile().adjust_karma(-10)
+        ## if there is a revolution with an overthrowing player, change users
+        try:
+            rev = Revolution.objects.get(government=self)
+        except ObjectDoesNotExist:
+            if not self.game.fast:
+                ## create a new possible revolution
+                rev = Revolution(government=self)
+                rev.save()
+                logging.info("New revolution for player %s" % self)
+        else:
+            if rev.opposition:
+                if notification:
+                    ## notify the old player
+                    user = [self.user,]
+                    extra_context = {'game': self.game,}
+                    notification.send(user, "lost_player", extra_context, on_site=True)
+                    ## notify the new player
+                    user = [rev.opposition]
+                    if self.game.fast:
+                        notification.send_now(user, "got_player", extra_context)	
+                    else:
+                        notification.send(user, "got_player", extra_context)
+                logging.info("Government of %s is overthrown" % self.country)
+                if signals:
+                    signals.government_overthrown.send(sender=self)
+                else:
+                    self.game.log_event(CountryEvent,
+                                country=self.country,
+                                message=0)
+                self.user = rev.opposition
+                self.save()
+                rev.delete()
+                self.user.get_profile().adjust_karma(10)
 
-	def unread_count(self):
-		""" Gets the number of unread received letters """
-		
-		if condottieri_messages:
-			return condottieri_messages.models.Letter.objects.filter(recipient_player=self, read_at__isnull=True, recipient_deleted_at__isnull=True).count()
-		else:
-			return 0
-	
-	
-	##
-	## Income calculation
-	##
-	def get_control_income(self, die, majors_ids, rebellion_ids):
-		""" Gets the sum of the control income of all controlled AND empty
-		provinces. Note that provinces affected by plague don't genearate
-		any income"""
-		gamearea_ids = self.gamearea_set.filter(famine=False).exclude(id__in=rebellion_ids).values_list('board_area', flat=True)
-		income = Area.objects.filter(id__in = gamearea_ids).aggregate(Sum('control_income'))
+    def unread_count(self):
+        """ Gets the number of unread received letters """
+        
+        if condottieri_messages:
+            return condottieri_messages.models.Letter.objects.filter(recipient_player=self, read_at__isnull=True, recipient_deleted_at__isnull=True).count()
+        else:
+            return 0
+    
+    
+    ##
+    ## Income calculation
+    ##
+    def get_control_income(self, die, majors_ids, rebellion_ids):
+        """ Gets the sum of the control income of all controlled AND empty
+        provinces. Note that provinces affected by plague don't genearate
+        any income"""
+        gamearea_ids = self.gamearea_set.filter(famine=False).exclude(id__in=rebellion_ids).values_list('board_area', flat=True)
+        income = Area.objects.filter(id__in = gamearea_ids).aggregate(Sum('control_income'))
 
-		i =  income['control_income__sum']
-		if i is None:
-			return 0
-		
-		v = 0
-		for a in majors_ids:
-			if a in gamearea_ids:
-				city = Area.objects.get(id=a)
-				v += finances.get_ducats(city.code, die)
+        i =  income['control_income__sum']
+        if i is None:
+            return 0
+        
+        v = 0
+        for a in majors_ids:
+            if a in gamearea_ids:
+                city = Area.objects.get(id=a)
+                v += finances.get_ducats(city.code, die)
 
-		return income['control_income__sum'] + v
+        return income['control_income__sum'] + v
 
-	def get_occupation_income(self):
-		""" Gets the sum of the income of all the armies and fleets in not controlled areas """
-		units = self.unit_set.exclude(type="G").exclude(area__famine=True)
-		units = units.filter(~Q(area__player=self) | Q(area__player__isnull=True))
+    def get_occupation_income(self):
+        """ Gets the sum of the income of all the armies and fleets in not controlled areas """
+        units = self.unit_set.exclude(type="G").exclude(area__famine=True)
+        units = units.filter(~Q(area__player=self) | Q(area__player__isnull=True))
 
-		i = units.count()
-		if i > 0:
-			return i
-		return 0
+        i = units.count()
+        if i > 0:
+            return i
+        return 0
 
-	def get_garrisons_income(self, die, majors_ids, rebellion_ids):
-		""" Gets the sum of the income of all the non-besieged garrisons in non-controlled areas
-		"""
-		## get garrisons in non-controlled areas
-		cond = ~Q(area__player=self)
-		cond |= Q(area__player__isnull=True)
-		cond |= (Q(area__player=self, area__famine=True))
-		cond |= (Q(area__player=self, area__id__in=rebellion_ids))
-		garrisons = self.unit_set.filter(type="G")
-		garrisons = garrisons.filter(cond)
-		garrisons = garrisons.values_list('area__board_area__id', flat=True)
-		if len(garrisons) > 0:
-			## get ids of gameareas where garrisons are under siege
-			sieges = Unit.objects.filter(player__game=self.game, besieging=True)
-			sieges = sieges.values_list('area__board_area__id', flat=True)
-			## get the income
-			income = Area.objects.filter(id__in=garrisons).exclude(id__in=sieges)
-			if income.count() > 0:
-				v = 0
-				for a in income:
-					if a.id in majors_ids:
-						v += finances.get_ducats(a.code, die)
-				income = income.aggregate(Sum('garrison_income'))
-				return income['garrison_income__sum'] + v
-		return 0
+    def get_garrisons_income(self, die, majors_ids, rebellion_ids):
+        """ Gets the sum of the income of all the non-besieged garrisons in non-controlled areas
+        """
+        ## get garrisons in non-controlled areas
+        cond = ~Q(area__player=self)
+        cond |= Q(area__player__isnull=True)
+        cond |= (Q(area__player=self, area__famine=True))
+        cond |= (Q(area__player=self, area__id__in=rebellion_ids))
+        garrisons = self.unit_set.filter(type="G")
+        garrisons = garrisons.filter(cond)
+        garrisons = garrisons.values_list('area__board_area__id', flat=True)
+        if len(garrisons) > 0:
+            ## get ids of gameareas where garrisons are under siege
+            sieges = Unit.objects.filter(player__game=self.game, besieging=True)
+            sieges = sieges.values_list('area__board_area__id', flat=True)
+            ## get the income
+            income = Area.objects.filter(id__in=garrisons).exclude(id__in=sieges)
+            if income.count() > 0:
+                v = 0
+                for a in income:
+                    if a.id in majors_ids:
+                        v += finances.get_ducats(a.code, die)
+                income = income.aggregate(Sum('garrison_income'))
+                return income['garrison_income__sum'] + v
+        return 0
 
-	def get_variable_income(self, die):
-		""" Gets the variable income for the country """
-		v = finances.get_ducats(self.static_name, die, self.double_income)
-		## the player gets the variable income of conquered players
-		if self.game.configuration.conquering:
-			conquered = self.game.player_set.filter(conqueror=self)
-			for c in conquered:
-				v += finances.get_ducats(c.static_name, die, c.double_income)
+    def get_variable_income(self, die):
+        """ Gets the variable income for the country """
+        v = finances.get_ducats(self.static_name, die, self.double_income)
+        ## the player gets the variable income of conquered players
+        if self.game.configuration.conquering:
+            conquered = self.game.player_set.filter(conqueror=self)
+            for c in conquered:
+                v += finances.get_ducats(c.static_name, die, c.double_income)
 
-		return v
+        return v
 
     def get_income(self, die_roll, major_city_ids):
         """ Gets the total income in one Spring turn (Advanced Rule V.B). """
@@ -3240,47 +3238,47 @@ class Player(models.Model):
         return max(0, income) # Ensure income is not negative
 
 
-	def add_ducats(self, d):
-		""" Adds d to the ducats field of the player."""
-		self.ducats = F('ducats') + d
-		self.save()
-		signals.income_raised.send(sender=self, ducats=d)
-		if logging:
-			msg = "Player %s raised %s ducats." % (self.pk, d)
-			logging.info(msg)
+    def add_ducats(self, d):
+        """ Adds d to the ducats field of the player."""
+        self.ducats = F('ducats') + d
+        self.save()
+        signals.income_raised.send(sender=self, ducats=d)
+        if logging:
+            msg = "Player %s raised %s ducats." % (self.pk, d)
+            logging.info(msg)
 
-	def get_credit(self):
-		""" Returns the number of ducats that the player can borrow from the bank. """
-		if self.defaulted:
-			return 0
-		if self.game.configuration.unbalanced_loans:
-			credit = 25
-		else:
-			credit = self.gamearea_set.count() + self.unit_set.count()
-			if credit > 25:
-				credit = 25
-		return credit
+    def get_credit(self):
+        """ Returns the number of ducats that the player can borrow from the bank. """
+        if self.defaulted:
+            return 0
+        if self.game.configuration.unbalanced_loans:
+            credit = 25
+        else:
+            credit = self.gamearea_set.count() + self.unit_set.count()
+            if credit > 25:
+                credit = 25
+        return credit
 
-	def check_no_units(self):
-		""" Returns True if no players have any units left. """
-		return not Unit.objects.filter(player__game=self, player__user__isnull=False).exists()
+    def check_no_units(self):
+        """ Returns True if no players have any units left. """
+        return not Unit.objects.filter(player__game=self, player__user__isnull=False).exists()
 
 class Revolution(models.Model):
-	""" A Revolution instance means that ``government`` is not playing, and
-	``opposition`` is trying to replace it.
-	"""
+    """ A Revolution instance means that ``government`` is not playing, and
+    ``opposition`` is trying to replace it.
+    """
 
-	government = models.ForeignKey(Player)
-	opposition = models.ForeignKey(User, blank=True, null=True)
+    government = models.ForeignKey(Player)
+    opposition = models.ForeignKey(User, blank=True, null=True)
 
-	def __unicode__(self):
-		return "%s" % self.government
+    def __unicode__(self):
+        return "%s" % self.government
 
 def notify_overthrow_attempt(sender, instance, created, **kw):
-	if notification and isinstance(instance, Revolution) and not created:
-		user = [instance.government.user,]
-		extra_context = {'game': instance.government.game,}
-		notification.send(user, "overthrow_attempt", extra_context , on_site=True)
+    if notification and isinstance(instance, Revolution) and not created:
+        user = [instance.government.user,]
+        extra_context = {'game': instance.government.game,}
+        notification.send(user, "overthrow_attempt", extra_context , on_site=True)
 
 models.signals.post_save.connect(notify_overthrow_attempt, sender=Revolution)
 
@@ -3334,58 +3332,58 @@ class UnitManager(models.Manager):
         u.strength = strength
         return u
 
-	def list_with_strength(self, game):
-		from django.db import connection
-		cursor = connection.cursor()
-		cursor.execute("SELECT u.id, \
-							u.type, \
-							u.area_id, \
-							u.player_id, \
-							u.besieging, \
-							u.must_retreat, \
-							u.placed, \
-							u.paid, \
-							u.cost, \
-							u.power, \
-							u.loyalty, \
-							o.code, \
-							o.destination_id, \
-							o.type \
-		FROM (machiavelli_player p INNER JOIN machiavelli_unit u on p.id=u.player_id) \
-		LEFT JOIN machiavelli_order o ON u.id=o.unit_id \
-		WHERE p.game_id=%s" % game.id)
-		result_list = []
-		for row in cursor.fetchall():
-			holding = False
-			support_query = Q(unit__player__game=game,
-							  code__exact='S',
-							  subunit__pk=row[0])
-			if row[11] in (None, '', 'H', 'S', 'C', 'B'): #unit is holding
-				support_query &= Q(subcode__exact='H')
-				holding = True
-			elif row[11] == '=':
-				support_query &= Q(subcode__exact='=',
-						   		subtype__exact=row[13])
-			elif row[11] == '-':
-				support_query &= Q(subcode__exact='-',
-								subdestination__pk__exact=row[12])
-			#support = Order.objects.filter(support_query).count()
-			support_sum = Order.objects.filter(support_query).aggregate(Sum('unit__power'))
-			if support_sum['unit__power__sum'] is None:
-				support = 0
-			else:
-				support = int(support_sum['unit__power__sum'])
-			unit = self.model(id=row[0], type=row[1], area_id=row[2],
-							player_id=row[3], besieging=row[4],
-							must_retreat=row[5], placed=row[6], paid=row[7],
-							cost=row[8], power=row[9], loyalty=row[10])
-			if game.configuration.finances:
-				if holding and unit.area.has_rebellion(unit.player, same=True):
-					support -= 1
-			unit.strength = unit.power + support
-			result_list.append(unit)
-		result_list.sort(cmp=lambda x,y: cmp(x.strength, y.strength), reverse=True)
-		return result_list
+    def list_with_strength(self, game):
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute("SELECT u.id, \
+                            u.type, \
+                            u.area_id, \
+                            u.player_id, \
+                            u.besieging, \
+                            u.must_retreat, \
+                            u.placed, \
+                            u.paid, \
+                            u.cost, \
+                            u.power, \
+                            u.loyalty, \
+                            o.code, \
+                            o.destination_id, \
+                            o.type \
+        FROM (machiavelli_player p INNER JOIN machiavelli_unit u on p.id=u.player_id) \
+        LEFT JOIN machiavelli_order o ON u.id=o.unit_id \
+        WHERE p.game_id=%s" % game.id)
+        result_list = []
+        for row in cursor.fetchall():
+            holding = False
+            support_query = Q(unit__player__game=game,
+                              code__exact='S',
+                              subunit__pk=row[0])
+            if row[11] in (None, '', 'H', 'S', 'C', 'B'): #unit is holding
+                support_query &= Q(subcode__exact='H')
+                holding = True
+            elif row[11] == '=':
+                support_query &= Q(subcode__exact='=',
+                                   subtype__exact=row[13])
+            elif row[11] == '-':
+                support_query &= Q(subcode__exact='-',
+                                subdestination__pk__exact=row[12])
+            #support = Order.objects.filter(support_query).count()
+            support_sum = Order.objects.filter(support_query).aggregate(Sum('unit__power'))
+            if support_sum['unit__power__sum'] is None:
+                support = 0
+            else:
+                support = int(support_sum['unit__power__sum'])
+            unit = self.model(id=row[0], type=row[1], area_id=row[2],
+                            player_id=row[3], besieging=row[4],
+                            must_retreat=row[5], placed=row[6], paid=row[7],
+                            cost=row[8], power=row[9], loyalty=row[10])
+            if game.configuration.finances:
+                if holding and unit.area.has_rebellion(unit.player, same=True):
+                    support -= 1
+            unit.strength = unit.power + support
+            result_list.append(unit)
+        result_list.sort(cmp=lambda x,y: cmp(x.strength, y.strength), reverse=True)
+        return result_list
 
 class Unit(models.Model):
     """ This class defines a unit in a game, its location and status. """
@@ -3406,70 +3404,70 @@ class Unit(models.Model):
 
     objects = UnitManager()
 
-	def get_order(self):
-		""" If the unit has more than one order, raises an error. If not, return the order.
-		When this method is called, each unit should have 0 or 1 order """
-		try:
-			order = Order.objects.get(unit=self)
-		except MultipleObjectsReturned:
-			raise MultipleObjectsReturned
-		except:
-			return None
-		else:
-			return order
-	
-	def get_attacked_area(self):
-		""" If the unit has orders, get the attacked area, if any. This method is
-		only a proxy of the Order method with the same name.
-		"""
-		order = self.get_order()
-		if order:
-			return order.get_attacked_area()
-		else:
-			return GameArea.objects.none()
+    def get_order(self):
+        """ If the unit has more than one order, raises an error. If not, return the order.
+        When this method is called, each unit should have 0 or 1 order """
+        try:
+            order = Order.objects.get(unit=self)
+        except MultipleObjectsReturned:
+            raise MultipleObjectsReturned
+        except:
+            return None
+        else:
+            return order
+    
+    def get_attacked_area(self):
+        """ If the unit has orders, get the attacked area, if any. This method is
+        only a proxy of the Order method with the same name.
+        """
+        order = self.get_order()
+        if order:
+            return order.get_attacked_area()
+        else:
+            return GameArea.objects.none()
 
-	def supportable_order(self):
-		"""Returns a description of the unit for the support order dropdown."""
-		coast_str = f"/{self.coast}" if self.coast else ""
-		return _("%(type)s in %(area)s%(coast)s") % {
-			'type': self.get_type_display(),
-			'area': self.area,
-			'coast': coast_str
-		}
-
-	def place(self):
-		self.placed = True
-		self.paid = False ## to be unpaid in the next reinforcement phase
-		if signals:
-			signals.unit_placed.send(sender=self)
-		else:
-			self.player.game.log_event(NewUnitEvent, country=self.player.country,
-								type=self.type, area=self.area.board_area)
-		self.save()
-
-	def delete(self):
-		if signals:
-			signals.unit_disbanded.send(sender=self)
-		else:
-			self.player.game.log_event(DisbandEvent, country=self.player.country,
-								type=self.type, area=self.area.board_area)
-		super(Unit, self).delete()
-	
-	def __unicode__(self):
-		coast_str = f"/{self.coast}" if self.coast else ""
-		return _("%(type)s in %(area)s%(coast)s") % {
-		    'type': self.get_type_display(),
-		    'area': self.area,
-		    'coast': coast_str
+    def supportable_order(self):
+        """Returns a description of the unit for the support order dropdown."""
+        coast_str = "/{self.coast}" if self.coast else ""
+        return _("%(type)s in %(area)s%(coast)s") % {
+            'type': self.get_type_display(),
+            'area': self.area,
+            'coast': coast_str
         }
 
-	def describe_with_cost(self):
-		coast_str = f"/{self.coast}" if self.coast else ""
-		return _("%(type)s in %(area)s%(coast)s (%(cost)s ducats)") % {
-		    'type': self.get_type_display(),
-			'area': self.area,
-			'coast': coast_str,
-			'cost': self.cost,
+    def place(self):
+        self.placed = True
+        self.paid = False ## to be unpaid in the next reinforcement phase
+        if signals:
+            signals.unit_placed.send(sender=self)
+        else:
+            self.player.game.log_event(NewUnitEvent, country=self.player.country,
+                                type=self.type, area=self.area.board_area)
+        self.save()
+
+    def delete(self):
+        if signals:
+            signals.unit_disbanded.send(sender=self)
+        else:
+            self.player.game.log_event(DisbandEvent, country=self.player.country,
+                                type=self.type, area=self.area.board_area)
+        super(Unit, self).delete()
+    
+    def __unicode__(self):
+        coast_str = "/{self.coast}" if self.coast else ""
+        return _("%(type)s in %(area)s%(coast)s") % {
+            'type': self.get_type_display(),
+            'area': self.area,
+            'coast': coast_str
+        }
+
+    def describe_with_cost(self):
+        coast_str = "/{self.coast}" if self.coast else ""
+        return _("%(type)s in %(area)s%(coast)s (%(cost)s ducats)") % {
+            'type': self.get_type_display(),
+            'area': self.area,
+            'coast': coast_str,
+            'cost': self.cost,
         }
     
     def get_possible_retreats(self):
@@ -3536,7 +3534,7 @@ class Unit(models.Model):
             self.coast = target_coast # Use the specified target coast from the order
             if not self.coast:
                 # Log error if fleet moves to multi-coast without specifying
-                if logging: logging.error(f"Fleet {self.id} moved to multi-coast {ga.board_area.code} without target_coast!")
+                if logging: logging.error("Fleet {self.id} moved to multi-coast {ga.board_area.code} without target_coast!")
                 # Default to first available coast? Or clear? Clearing is safer.
                 self.coast = None
         else:
@@ -3546,14 +3544,14 @@ class Unit(models.Model):
         self.siege_stage = 0 # Moving resets siege
         # self.besieging = False # Removed field
         self.save()
-        if logging: logging.info(f"Unit {self.id} ({self.type}) moved from {old_area_code} to {ga.board_area.code}{'/' + self.coast if self.coast else ''}")
+        if logging: logging.info("Unit {self.id} ({self.type}) moved from {old_area_code} to {ga.board_area.code}{'/' + self.coast if self.coast else ''}")
         self.check_rebellion() # Check for liberating rebellion
 
     def retreat(self, destination, target_coast=None): # Add target_coast parameter
         """ Moves unit after retreat order, handles conversion option. """
         if self.area == destination: # Retreating into own city/fortress (Conversion - Rule VIII.B.6.d)
             if signals: signals.unit_converted.send(sender=self, before=self.type, after='G', context="retreat")
-            if logging: logging.info(f"Unit {self.id} ({self.type}) retreats by converting to Garrison in {self.area.board_area.code}")
+            if logging: logging.info("Unit {self.id} ({self.type}) retreats by converting to Garrison in {self.area.board_area.code}")
             self.type = 'G'
             self.coast = None # Garrisons don't have coasts
             self.siege_stage = 0
@@ -3569,14 +3567,14 @@ class Unit(models.Model):
             if destination.board_area.has_multiple_coasts() and self.type == 'F':
                 self.coast = target_coast # Use specified coast from RetreatOrder
                 if not self.coast:
-                     if logging: logging.error(f"Fleet {self.id} retreated to multi-coast {destination.board_area.code} without target_coast specified!")
+                     if logging: logging.error("Fleet {self.id} retreated to multi-coast {destination.board_area.code} without target_coast specified!")
                      self.coast = None # Clear coast if invalid
             else:
                 self.coast = None # Clear coast otherwise
 
             self.must_retreat = '' # Successful retreat clears status
             self.save()
-            if logging: logging.info(f"Unit {self.id} ({self.type}) retreated from {old_area_code} to {destination.board_area.code}{'/' + self.coast if self.coast else ''}")
+            if logging: logging.info("Unit {self.id} ({self.type}) retreated from {old_area_code} to {destination.board_area.code}{'/' + self.coast if self.coast else ''}")
             self.check_rebellion() # Check for liberating rebellion
 
 
@@ -3585,7 +3583,7 @@ class Unit(models.Model):
         # Rule VII.B.7.h: Besieged Garrison may not convert.
         # Check if *another* unit is besieging this garrison's area
         if self.type == 'G' and Unit.objects.filter(area=self.area, siege_stage__gt=0).exclude(id=self.id).exists():
-             if logging: logging.info(f"Conversion failed: Garrison {self.id} in {self.area.board_area.code} is besieged.")
+             if logging: logging.info("Conversion failed: Garrison {self.id} in {self.area.board_area.code} is besieged.")
              # Order fails, unit holds implicitly. Delete the order? Adjudication loop might handle this.
              return # Stop the conversion
 
@@ -3604,12 +3602,12 @@ class Unit(models.Model):
             # Direct A<->F disallowed (Rule VII.B.7.d)
 
         if not valid:
-             if logging: logging.warning(f"Invalid conversion attempt: {self.id} ({self.type}) to {new_type} in {board_area.code}.")
+             if logging: logging.warning("Invalid conversion attempt: {self.id} ({self.type}) to {new_type} in {board_area.code}.")
              # Order fails, unit holds implicitly.
              return
 
         if signals: signals.unit_converted.send(sender=self, before=self.type, after=new_type)
-        if logging: logging.info(f"Unit {self.id} converting from {self.type} to {new_type} in {board_area.code}")
+        if logging: logging.info("Unit {self.id} converting from {self.type} to {new_type} in {board_area.code}")
 
         old_type = self.type
         self.type = new_type
@@ -3634,38 +3632,38 @@ class Unit(models.Model):
         if old_type == 'G' and new_type != 'G':
             self.check_rebellion() # Liberate rebellion if present (Rule VI.C.5.c.8)
 
-	def check_rebellion(self):
-		## if there is a rebellion against other player, put it down
-		reb = self.area.has_rebellion(self.player, same=False)
-		if reb:
-			reb.delete()
+    def check_rebellion(self):
+        ## if there is a rebellion against other player, put it down
+        reb = self.area.has_rebellion(self.player, same=False)
+        if reb:
+            reb.delete()
 
-	def delete_order(self):
-		order = self.get_order()
-		if order:
-			order.delete()
-		return True
+    def delete_order(self):
+        order = self.get_order()
+        if order:
+            order.delete()
+        return True
 
-	def change_player(self, player):
-		assert isinstance(player, Player)
-		self.player = player
-		self.save()
-		self.check_rebellion()
-		if signals:
-			signals.unit_changed_country.send(sender=self)
+    def change_player(self, player):
+        assert isinstance(player, Player)
+        self.player = player
+        self.save()
+        self.check_rebellion()
+        if signals:
+            signals.unit_changed_country.send(sender=self)
 
-	def to_autonomous(self):
-		assert self.type == 'G'
-		## find the autonomous player
-		try:
-			aplayer = Player.objects.get(game=self.player.game, user__isnull=True)
-		except ObjectDoesNotExist:
-			return
-		self.player = aplayer
-		self.paid = True
-		self.save()
-		if signals:
-			signals.unit_to_autonomous.send(sender=self)
+    def to_autonomous(self):
+        assert self.type == 'G'
+        ## find the autonomous player
+        try:
+            aplayer = Player.objects.get(game=self.player.game, user__isnull=True)
+        except ObjectDoesNotExist:
+            return
+        self.player = aplayer
+        self.paid = True
+        self.save()
+        if signals:
+            signals.unit_to_autonomous.send(sender=self)
 
 class Order(models.Model):
     """ This class defines an order from a player to a unit. The order will not be
@@ -3700,9 +3698,9 @@ class Order(models.Model):
 
     def explain(self):
         """ Returns a human readable order, including coasts. """
-        unit_str = f"{self.unit}" # Uses Unit.__unicode__ which includes coast
-        dest_coast_str = f"/{self.destination_coast}" if self.destination_coast else ""
-        subdest_coast_str = f"/{self.subdestination_coast}" if self.subdestination_coast else ""
+        unit_str = "{self.unit}" # Uses Unit.__unicode__ which includes coast
+        dest_coast_str = "/{self.destination_coast}" if self.destination_coast else ""
+        subdest_coast_str = "/{self.subdestination_coast}" if self.subdestination_coast else ""
 
         if self.code == 'H': msg = _("%(unit)s holds.") % {'unit': unit_str}
         elif self.code == '0': msg = _("%(unit)s disbands.") % {'unit': unit_str}
@@ -3711,10 +3709,10 @@ class Order(models.Model):
         elif self.code == 'B': msg = _("%(unit)s besieges.") % {'unit': unit_str}
         elif self.code == '=': msg = _("%(unit)s converts to %(type)s.") % {'unit': unit_str, 'type': self.get_type_display()}
         elif self.code == 'C':
-            subunit_str = f"{self.subunit}" # Includes subunit coast
+            subunit_str = "{self.subunit}" # Includes subunit coast
             msg = _("%(unit)s C %(subunit)s -> %(area)s%(coast)s.") % {'unit': unit_str, 'subunit': subunit_str, 'area': self.subdestination, 'coast': subdest_coast_str}
         elif self.code == 'S':
-            subunit_str = f"{self.subunit}" # Includes subunit coast
+            subunit_str = "{self.subunit}" # Includes subunit coast
             if self.subcode == 'H': msg = _("%(unit)s S %(subunit)s H.") % {'unit': unit_str, 'subunit': subunit_str}
             elif self.subcode == '-': msg = _("%(unit)s S %(subunit)s -> %(area)s%(coast)s.") % {'unit': unit_str, 'subunit': subunit_str, 'area': self.subdestination, 'coast': subdest_coast_str}
             # elif self.subcode == '=': msg = _("%(unit)s S %(subunit)s = %(type)s.") % {'unit': unit_str, 'subunit': subunit_str, 'type': self.get_subtype_display()} # Support conversion?
@@ -3728,31 +3726,31 @@ class Order(models.Model):
     def format(self):
         """ Returns abbreviated order string, including coasts. """
         # Get unit representation including coast
-        f = f"{self.unit.type} {self.unit.area.board_area.code}"
-        if self.unit.coast: f += f"/{self.unit.coast}"
+        f = "{self.unit.type} {self.unit.area.board_area.code}"
+        if self.unit.coast: f += "/{self.unit.coast}"
 
-        f += f" {self.code}" # Add the order code
+        f += " {self.code}" # Add the order code
 
         if self.code == '-':
-            f += f" {self.destination.board_area.code}"
-            if self.destination_coast: f += f"/{self.destination_coast}"
+            f += " {self.destination.board_area.code}"
+            if self.destination_coast: f += "/{self.destination_coast}"
         elif self.code == '=':
-            f += f" {self.type}"
+            f += " {self.type}"
         elif self.code in ['S', 'C']:
             # Get subunit representation including coast
-            sub_f = f"{self.subunit.type} {self.subunit.area.board_area.code}"
-            if self.subunit.coast: sub_f += f"/{self.subunit.coast}"
+            sub_f = "{self.subunit.type} {self.subunit.area.board_area.code}"
+            if self.subunit.coast: sub_f += "/{self.subunit.coast}"
 
             if self.code == 'S':
-                sub_f += f" {self.subcode or 'H'}" # Default subcode to H if None
+                sub_f += " {self.subcode or 'H'}" # Default subcode to H if None
                 if self.subcode == '-':
-                    sub_f += f" {self.subdestination.board_area.code}"
-                    if self.subdestination_coast: sub_f += f"/{self.subdestination_coast}"
-                # elif self.subcode == '=': sub_f += f" {self.subtype}" # Support conversion?
+                    sub_f += " {self.subdestination.board_area.code}"
+                    if self.subdestination_coast: sub_f += "/{self.subdestination_coast}"
+                # elif self.subcode == '=': sub_f += " {self.subtype}" # Support conversion?
             elif self.code == 'C':
-                sub_f += f" - {self.subdestination.board_area.code}" # Convoy implies move (-)
-                if self.subdestination_coast: sub_f += f"/{self.subdestination_coast}"
-            f += f" {sub_f}"
+                sub_f += " - {self.subdestination.board_area.code}" # Convoy implies move (-)
+                if self.subdestination_coast: sub_f += "/{self.subdestination_coast}"
+            f += " {sub_f}"
         # Codes H, B, L, 0 require no further parts
         return f
 
@@ -3781,10 +3779,10 @@ class Order(models.Model):
         # Validate target coast if required
         if target_area.board_area.has_multiple_coasts():
             if not target_coast or target_coast not in target_area.board_area.get_coast_list():
-                 if logging: logging.warning(f"Convoy Check Fail: Invalid/missing target coast '{target_coast}' for multi-coast destination {target_area.board_area.code}")
+                 if logging: logging.warning("Convoy Check Fail: Invalid/missing target coast '{target_coast}' for multi-coast destination {target_area.board_area.code}")
                  return False
         elif target_coast:
-             if logging: logging.warning(f"Convoy Check Fail: Target coast '{target_coast}' specified for single-coast destination {target_area.board_area.code}")
+             if logging: logging.warning("Convoy Check Fail: Target coast '{target_coast}' specified for single-coast destination {target_area.board_area.code}")
              return False # Cannot specify coast for single coast dest
 
         # --- 2. Pre-fetch Potential Convoying Fleets ---
@@ -4009,61 +4007,61 @@ class RetreatOrder(models.Model):
     coast = models.CharField(max_length=2, blank=True, null=True, choices=(('nc','NC'),('sc','SC'),('ec','EC')))
 
     def __unicode__(self):
-        coast_str = f"/{self.coast}" if self.coast else ""
+        coast_str = "/{self.coast}" if self.coast else ""
         # Use unit's __unicode__ which includes its current location/coast
-        unit_str = f"{self.unit}"
-        dest_str = f"{self.area}{coast_str}" if self.area else "Disband"
-        return f"{unit_str} Retreat -> {dest_str}"
-	
+        unit_str = "{self.unit}"
+        dest_str = "{self.area}{coast_str}" if self.area else "Disband"
+        return "{unit_str} Retreat -> {dest_str}"
+    
 class ControlToken(models.Model):
-	""" Defines the coordinates of the control token for a board area. """
+    """ Defines the coordinates of the control token for a board area. """
 
-	area = models.OneToOneField(Area)
-	x = models.PositiveIntegerField()
-	y = models.PositiveIntegerField()
+    area = models.OneToOneField(Area)
+    x = models.PositiveIntegerField()
+    y = models.PositiveIntegerField()
 
-	def __unicode__(self):
-		return "%s, %s" % (self.x, self.y)
+    def __unicode__(self):
+        return "%s, %s" % (self.x, self.y)
 
 
 class GToken(models.Model):
-	""" Defines the coordinates of the Garrison token in a board area. """
+    """ Defines the coordinates of the Garrison token in a board area. """
 
-	area = models.OneToOneField(Area)
-	x = models.PositiveIntegerField()
-	y = models.PositiveIntegerField()
+    area = models.OneToOneField(Area)
+    x = models.PositiveIntegerField()
+    y = models.PositiveIntegerField()
 
-	def __unicode__(self):
-		return "%s, %s" % (self.x, self.y)
+    def __unicode__(self):
+        return "%s, %s" % (self.x, self.y)
 
 
 class AFToken(models.Model):
-	""" Defines the coordinates of the Army and Fleet tokens in a board area."""
+    """ Defines the coordinates of the Army and Fleet tokens in a board area."""
 
-	area = models.OneToOneField(Area)
-	x = models.PositiveIntegerField()
-	y = models.PositiveIntegerField()
+    area = models.OneToOneField(Area)
+    x = models.PositiveIntegerField()
+    y = models.PositiveIntegerField()
 
-	def __unicode__(self):
-		return "%s, %s" % (self.x, self.y)
+    def __unicode__(self):
+        return "%s, %s" % (self.x, self.y)
 
 class TurnLog(models.Model):
-	""" A TurnLog is text describing the processing of the method
-	``Game.process_orders()``.
-	"""
+    """ A TurnLog is text describing the processing of the method
+    ``Game.process_orders()``.
+    """
 
-	game = models.ForeignKey(Game)
-	year = models.PositiveIntegerField()
-	season = models.PositiveIntegerField(choices=SEASONS)
-	phase = models.PositiveIntegerField(choices=GAME_PHASES)
-	timestamp = models.DateTimeField(auto_now_add=True)
-	log = models.TextField()
+    game = models.ForeignKey(Game)
+    year = models.PositiveIntegerField()
+    season = models.PositiveIntegerField(choices=SEASONS)
+    phase = models.PositiveIntegerField(choices=GAME_PHASES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    log = models.TextField()
 
-	class Meta:
-		ordering = ['-timestamp',]
+    class Meta:
+        ordering = ['-timestamp',]
 
-	def __unicode__(self):
-		return self.log
+    def __unicode__(self):
+        return self.log
 
 class Configuration(models.Model):
     """ Defines the configuration options for each game. """
@@ -4115,8 +4113,8 @@ class Configuration(models.Model):
 
 def create_configuration(sender, instance, created, **kwargs):
     if isinstance(instance, Game) and created:
-		config = Configuration(game=instance)
-		config.save()
+        config = Configuration(game=instance)
+        config.save()
 
 models.signals.post_save.connect(create_configuration, sender=Game)
 
@@ -4214,7 +4212,7 @@ class Expense(models.Model):
             if not self.unit: raise ValidationError("Expense type requires a unit.")
             self.area = None # Ensure area is None
         else:
-            raise ValidationError(f"Unknown expense type {self.type}")
+            raise ValidationError("Unknown expense type {self.type}")
 
         # Ensure ducats meet minimum cost (can be overridden by form validation)
         try:
@@ -4222,8 +4220,8 @@ class Expense(models.Model):
             if self.ducats < min_cost:
                  # Allow saving if unconfirmed (form handles validation), but log warning
                  if self.confirmed:
-                      raise ValidationError(f"Ducats ({self.ducats}) is less than minimum cost ({min_cost}) for confirmed expense.")
-                 # else: print(f"Warning: Unconfirmed expense ducats {self.ducats} < min {min_cost}")
+                      raise ValidationError("Ducats ({self.ducats}) is less than minimum cost ({min_cost}) for confirmed expense.")
+                 # else: print("Warning: Unconfirmed expense ducats {self.ducats} < min {min_cost}")
         except ValueError as e:
              raise ValidationError(str(e))
 
@@ -4258,7 +4256,7 @@ class Expense(models.Model):
         try:
             return messages[self.type] % data
         except KeyError:
-            return f"Unknown expense type {self.type}"
+            return "Unknown expense type {self.type}"
 
     def is_bribe(self):
         """ Checks if the expense type is a bribe (Rule VI.C.4). """
@@ -4273,16 +4271,16 @@ class Expense(models.Model):
     def undo(self):
         """ Deletes the expense and returns the money to the player (if unconfirmed). """
         if self.confirmed:
-             if logging: logging.warning(f"Attempted to undo confirmed expense {self.id}")
+             if logging: logging.warning("Attempted to undo confirmed expense {self.id}")
              return False # Cannot undo confirmed expense
 
         # Refund ducats using F expression
         Player.objects.filter(id=self.player.id).update(ducats=F('ducats') + self.ducats)
 
-        if logging: logging.info(f"Undoing expense {self.id} ({self.explain()}). Refunding {self.ducats}d to {self.player}.")
+        if logging: logging.info("Undoing expense {self.id} ({self.explain()}). Refunding {self.ducats}d to {self.player}.")
         self.delete()
         return True
-	
+    
 
 class Rebellion(models.Model):
     """
@@ -4333,7 +4331,7 @@ class Rebellion(models.Model):
         if signals:
             # Pass the player who *caused* the rebellion if known? Signal doesn't support it yet.
             signals.rebellion_started.send(sender=self.area)
-        if logging: logging.info(f"Rebellion started: {self}")
+        if logging: logging.info("Rebellion started: {self}")
 
     def get_strength(self):
         """ Returns strength for supporting attacks (Rule VI.C.5.c.9). """
@@ -4409,66 +4407,66 @@ class Assassination(models.Model):
         return self.ducats // 12
 
 class Whisper(models.Model):
-	""" A whisper is an _anonymous_ message that is shown in the game screen. """
-	created_at = models.DateTimeField(auto_now_add=True)
-	user = models.ForeignKey(User)
-	as_admin = models.BooleanField(default=False)
-	game = models.ForeignKey(Game)
-	text = models.CharField(max_length=140,
-		help_text=_("limit of 140 characters"))
-	order = models.PositiveIntegerField(editable=False, default=0)
+    """ A whisper is an _anonymous_ message that is shown in the game screen. """
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User)
+    as_admin = models.BooleanField(default=False)
+    game = models.ForeignKey(Game)
+    text = models.CharField(max_length=140,
+        help_text=_("limit of 140 characters"))
+    order = models.PositiveIntegerField(editable=False, default=0)
 
-	class Meta:
-		ordering = ["-created_at" ,]
-		unique_together = (("game", "order"),)
+    class Meta:
+        ordering = ["-created_at" ,]
+        unique_together = (("game", "order"),)
 
-	def __unicode__(self):
-		return self.text
+    def __unicode__(self):
+        return self.text
 
-	def as_li(self):
-		if self.as_admin:
-			li = u"<li class=\"admin\">"
-		else:
-			li = u"<li>"
-		html = u"%(li)s<strong>#%(order)s</strong>&nbsp;&nbsp;%(text)s<span class=\"date\">%(date)s</span> </li>" % {
-								'order': self.order,
-								'li': li,
-								'date': timesince(self.created_at),
-								'text': force_escape(self.text), }
-		return html
+    def as_li(self):
+        if self.as_admin:
+            li = u"<li class=\"admin\">"
+        else:
+            li = u"<li>"
+        html = u"%(li)s<strong>#%(order)s</strong>&nbsp;&nbsp;%(text)s<span class=\"date\">%(date)s</span> </li>" % {
+                                'order': self.order,
+                                'li': li,
+                                'date': timesince(self.created_at),
+                                'text': force_escape(self.text), }
+        return html
 
 def whisper_order(sender, instance, **kw):
-	""" Checks if a whisper has already an 'order' value and, if not, calculate
-	and assign one """
-	if instance.order is None or instance.order == 0:
-		whispers = Whisper.objects.filter(game=instance.game).order_by("-order")
-		try:
-			last = whispers[0].order
-			instance.order = last + 1
-		except IndexError:
-			instance.order = 1
+    """ Checks if a whisper has already an 'order' value and, if not, calculate
+    and assign one """
+    if instance.order is None or instance.order == 0:
+        whispers = Whisper.objects.filter(game=instance.game).order_by("-order")
+        try:
+            last = whispers[0].order
+            instance.order = last + 1
+        except IndexError:
+            instance.order = 1
 
 models.signals.pre_save.connect(whisper_order, sender=Whisper)
 
 class Invitation(models.Model):
-	""" A private game accepts only users that have been invited by the creator
-	of the game. """
-	game = models.ForeignKey(Game)
-	user = models.ForeignKey(User)
-	message = models.TextField(default="", blank=True)
+    """ A private game accepts only users that have been invited by the creator
+    of the game. """
+    game = models.ForeignKey(Game)
+    user = models.ForeignKey(User)
+    message = models.TextField(default="", blank=True)
 
-	class Meta:
-		unique_together = (('game', 'user'),)
+    class Meta:
+        unique_together = (('game', 'user'),)
 
-	def __unicode__(self):
-		return "%s" % self.user
+    def __unicode__(self):
+        return "%s" % self.user
 
 def notify_new_invitation(sender, instance, created, **kw):
-	if notification and isinstance(instance, Invitation) and created:
-		user = [instance.user,]
-		extra_context = {'game': instance.game,
-						'invitation': instance,}
-		notification.send(user, "new_invitation", extra_context , on_site=True)
+    if notification and isinstance(instance, Invitation) and created:
+        user = [instance.user,]
+        extra_context = {'game': instance.game,
+                        'invitation': instance,}
+        notification.send(user, "new_invitation", extra_context , on_site=True)
 
 models.signals.post_save.connect(notify_new_invitation, sender=Invitation)
 
