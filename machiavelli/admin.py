@@ -94,7 +94,7 @@ class AFTokenInline(admin.TabularInline):
 	extra = 1
 
 class AreaAdmin(admin.ModelAdmin):
-	list_display = ('name', 'code', 'is_sea', 'is_coast', 'has_city', 'is_fortified', 'has_port', 'control_income', 'garrison_income')
+	list_display = ('name', 'code', 'is_sea', 'is_coast', 'has_city', 'is_fortified', 'has_port')
 	inlines = [ ControlTokenInline,
 		GTokenInline,
 		AFTokenInline ]
@@ -144,7 +144,7 @@ class RebellionAdmin(admin.ModelAdmin):
 	list_filter = ('player',)
 
 class LoanAdmin(admin.ModelAdmin):
-	list_display = ('player', 'debt', 'year', 'season', )
+	list_display = ('player', 'debt', 'due_year', 'due_season')
 
 class AssassinAdmin(admin.ModelAdmin):
 	pass

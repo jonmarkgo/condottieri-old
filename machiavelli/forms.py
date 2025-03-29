@@ -7,8 +7,9 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
-from .models import VICTORY_TYPES # Import from models
-from .models import Unit, SpecialUnit # Import necessary models
+from django.contrib.auth.decorators import login_required
+from .models import VICTORY_TYPES, TIME_LIMITS, UNIT_TYPES # Import from models
+from .models import Unit, SpecialUnit, Scenario, Game, Configuration, Whisper, Order # Import necessary models
 class GameForm(forms.ModelForm):
     scenario = forms.ModelChoiceField(queryset=Scenario.objects.filter(enabled=True),
                                     empty_label=None,
@@ -125,31 +126,31 @@ class ConfigurationForm(forms.ModelForm):
         # Using exclude = ('game',) should include all other fields automatically.
 
 class InvitationForm(forms.Form):
-	user_list = forms.CharField(required=True,
-								label=_("User list, comma separated"))
-	message = forms.CharField(label=_("Optional message"),
-								required=False,
-								widget=forms.Textarea)
+    user_list = forms.CharField(required=True,
+                                label=_("User list, comma separated"))
+    message = forms.CharField(label=_("Optional message"),
+                                required=False,
+                                widget=forms.Textarea)
 
 class WhisperForm(forms.ModelForm):
-	class Meta:
-		model = Whisper
-		fields = ('text',)
-		widgets = {
-			'text': forms.Textarea(attrs={'rows': 3, 'cols': 20})
-		}
+    class Meta:
+        model = Whisper
+        fields = ('text',)
+        widgets = {
+            'text': forms.Textarea(attrs={'rows': 3, 'cols': 20})
+        }
 
-	def __init__(self, user, game, **kwargs):
-		super(WhisperForm, self).__init__(**kwargs)
-		self.instance.user = user
-		self.instance.game = game
+    def __init__(self, user, game, **kwargs):
+        super(WhisperForm, self).__init__(**kwargs)
+        self.instance.user = user
+        self.instance.game = game
 
 class UnitForm(forms.ModelForm):
-	type = forms.ChoiceField(required=True, choices=UNIT_TYPES)
+    type = forms.ChoiceField(required=True, choices=UNIT_TYPES)
 
-	class Meta:
-		model = Unit
-		fields = ('type', 'area')
+    class Meta:
+        model = Unit
+        fields = ('type', 'area')
 from collections import defaultdict # Add defaultdict
 # Get order codes from the model definition
 ORDER_CODES_FROM_MODEL = Order._meta.get_field('code').choices
@@ -492,187 +493,41 @@ def get_valid_destinations(request, slug):
         pass # Return default empty list on error
 
     return JsonResponse(response_data)
-	
-		def get_valid_support_destinations(self, unit, supported_unit):
-			"""Returns valid destinations for support orders"""
-			if not unit or not supported_unit:
-				return GameArea.objects.none()
 
-			# For garrisons, only allow supporting into their own province
-			if unit.type == 'G':
-				return GameArea.objects.filter(id=unit.area.id)
-			
-			# For non-garrison units, use normal support rules
-			is_fleet = (unit.type == 'F')
-			supported_area = supported_unit.area
-			
-			# Get areas adjacent to the supporting unit
-			adjacent = GameArea.objects.filter(
-				game=unit.player.game,
-				board_area__borders=unit.area.board_area
-			)
+def get_valid_support_destinations(self, unit, supported_unit):
+    """Returns valid destinations for support orders"""
+    if not unit or not supported_unit:
+        return GameArea.objects.none()
 
-			# Filter based on supporting unit type
-			if is_fleet:
-				adjacent = adjacent.filter(
-					Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
-				)
-				adjacent = [a for a in adjacent if unit.area.board_area.is_adjacent(a.board_area, fleet=True)]
-			else:
-				adjacent = adjacent.exclude(board_area__is_sea=True)
+    # For garrisons, only allow supporting into their own province
+    if unit.type == 'G':
+        return GameArea.objects.filter(id=unit.area.id)
+    
+    # For non-garrison units, use normal support rules
+    is_fleet = (unit.type == 'F')
+    supported_area = supported_unit.area
+    
+    # Get areas adjacent to the supporting unit
+    adjacent = GameArea.objects.filter(
+        game=unit.player.game,
+        board_area__borders=unit.area.board_area
+    )
 
-			# Must include the supported unit's area and its valid destinations
-			supported_destinations = self.get_valid_destinations(supported_unit)
-			return adjacent.filter(
-				Q(id__in=[a.id for a in supported_destinations]) |
-				Q(id=supported_area.id)
-			)
-		# Minor adjustments might be needed in AJAX views calling these if rules changed significantly
+    # Filter based on supporting unit type
+    if is_fleet:
+        adjacent = adjacent.filter(
+            Q(board_area__is_sea=True) | Q(board_area__is_coast=True)
+        )
+        adjacent = [a for a in adjacent if unit.area.board_area.is_adjacent(a.board_area, fleet=True)]
+    else:
+        adjacent = adjacent.exclude(board_area__is_sea=True)
 
-        class Meta:
-            model = Order
-            # Add new coast fields
-            fields = ('unit', 'code', 'destination', 'destination_coast', 'type',
-                      'subunit', 'subcode', 'subdestination', 'subdestination_coast', 'subtype')
-
-        class Media:
-            # JS file needs updates to handle showing/hiding/populating coast fields
-            js = ("/site_media/static/machiavelli/js/order_form.js", # Needs update!
-                  "/site_media/static/machiavelli/js/jquery.form.js")
-
-        def clean(self):
-            cleaned_data = super(OrderForm, self).clean()
-            unit = cleaned_data.get('unit')
-            code = cleaned_data.get('code')
-            destination = cleaned_data.get('destination')
-            destination_coast = cleaned_data.get('destination_coast')
-            type_ = cleaned_data.get('type')
-            subunit = cleaned_data.get('subunit')
-            subcode = cleaned_data.get('subcode')
-            subdestination = cleaned_data.get('subdestination')
-            subdestination_coast = cleaned_data.get('subdestination_coast')
-            subtype = cleaned_data.get('subtype')
-
-            if not unit: return cleaned_data
-
-            # --- Coast Validation ---
-            dest_requires_coast = False
-            subdest_requires_coast = False
-
-            if code == '-' and destination and unit.type == 'F' and destination.board_area.has_multiple_coasts():
-                dest_requires_coast = True
-            elif code == 'C' and subdestination and subdestination.board_area.has_multiple_coasts():
-                 # Convoy destination always needs coast if multi-coast
-                 subdest_requires_coast = True
-            elif code == 'S' and subcode == '-' and subdestination and subdestination.board_area.has_multiple_coasts():
-                 # Support move needs coast if target area is multi-coast
-                 # (Technically depends on supported unit type, but require for simplicity, JS can refine)
-                 subdest_requires_coast = True
-
-            if dest_requires_coast and not destination_coast:
-                self.add_error('destination_coast', _("Must specify coast for this destination."))
-            elif not dest_requires_coast:
-                 cleaned_data['destination_coast'] = None # Clear if not needed
-
-            if subdest_requires_coast and not subdestination_coast:
-                 self.add_error('subdestination_coast', _("Must specify coast for this support/convoy destination."))
-            elif not subdest_requires_coast:
-                 cleaned_data['subdestination_coast'] = None # Clear if not needed
-
-			## check if unit has already an order from the same player
-			# Use self.instance.pk to exclude current order if editing
-			existing_order_query = Order.objects.filter(unit=unit, player=player)
-			if self.instance.pk:
-			    existing_order_query = existing_order_query.exclude(pk=self.instance.pk)
-			if existing_order_query.exists():
-				raise forms.ValidationError(_("This unit already has an order from you."))
-
-			## check for errors based on order code and rules
-			error_msg = None
-			if code == '-': # Advance
-				if not destination: error_msg = _("You must select an area to advance into.")
-				elif unit.siege_stage > 0: error_msg = _("Cannot advance while besieging. Lift siege first.")
-				# Further validation in Order.is_possible()
-			elif code == '=': # Conversion
-				if not type_: error_msg = _("You must select a unit type to convert into.")
-				elif unit.type == type_: error_msg = _("A unit must convert into a different type.")
-				elif unit.type == 'G' and unit.siege_stage > 0: error_msg = _("Cannot convert while garrison is besieged.")
-				# Further validation in Order.is_possible()
-			elif code == 'C': # Convoy
-				if not subunit: error_msg = _("You must select a unit to convoy.")
-				elif not subdestination: error_msg = _("You must select a destination area for the convoy.")
-				elif subunit.type != 'A': error_msg = _("Only armies can be convoyed.")
-				elif unit.area.storm: error_msg = _("A fleet cannot convoy while affected by a storm.")
-				elif not unit.area.board_area.is_sea and unit.area.board_area.code != 'VEN': error_msg = _("Only fleets in sea areas or Venice Lagoon can convoy.")
-				elif not subunit.area.board_area.is_coast: error_msg = _("Units can only be convoyed from coastal territories.")
-				else: cleaned_data['subcode'] = '-' # Force subcode for convoy
-			elif code == 'S': # Support
-				if not subunit: error_msg = _("You must select a unit to support.")
-				elif subcode == '-' and not subdestination: error_msg = _("You must select a destination area for the supported unit.")
-				elif subcode == '=': error_msg = _("Units cannot support conversions.") # Rule VII.B.5 implies support for hold/advance only? Let's keep this restriction.
-				# Further validation in Order.is_possible()
-			elif code == 'B': # Besiege
-			    if unit.siege_stage == 2: error_msg = _("Siege already at maximum stage.")
-			    # Further validation in Order.is_possible()
-			elif code == 'L': # Lift Siege
-			    if unit.siege_stage == 0: error_msg = _("Unit is not currently besieging.")
-			elif code == '0': # Disband
-			    pass # Always valid
-			elif code == 'H': # Hold
-			    pass # Always valid
-			else:
-			    error_msg = _("Invalid order code selected.")
-
-			if error_msg:
-			    raise forms.ValidationError(error_msg)
-
-            # Use Order.is_possible for final rule check (now includes coast checks)
-            temp_order_data = cleaned_data.copy()
-            temp_order_data['player'] = player
-            # Ensure only valid fields are passed to Order constructor
-            valid_order_fields = {f.name for f in Order._meta.get_fields()}
-            temp_order = Order(**{k: v for k, v in temp_order_data.items() if k in valid_order_fields})
-            if not temp_order.is_possible():
-                 # Provide a more generic error, as specific reason is hard to pinpoint here
-                 raise forms.ValidationError(_("This order (including coast selection) is not possible according to the rules."))
-
-
-            # Clear fields based on primary code
-            if code in ['H', 'B', 'L', '0']:
-                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None, 'subunit': None,
-                                     'subcode': None, 'subdestination': None, 'subdestination_coast': None, 'subtype': None})
-            elif code == '-':
-                cleaned_data.update({'type': None, 'subunit': None, 'subcode': None,
-                                     'subdestination': None, 'subdestination_coast': None, 'subtype': None})
-                # Keep destination, destination_coast
-            elif code == '=':
-                cleaned_data.update({'destination': None, 'destination_coast': None, 'subunit': None, 'subcode': None,
-                                     'subdestination': None, 'subdestination_coast': None, 'subtype': None})
-                # Keep type
-            elif code == 'C':
-                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None, 'subcode': '-', 'subtype': None})
-                # Keep subunit, subdestination, subdestination_coast (force subcode='-')
-            elif code == 'S':
-                cleaned_data.update({'destination': None, 'destination_coast': None, 'type': None})
-                # Keep subunit, subcode
-                if subcode in ['H', 'B']:
-                    cleaned_data.update({'subdestination': None, 'subdestination_coast': None, 'subtype': None})
-                elif subcode == '-':
-                    cleaned_data.update({'subtype': None})
-                    # Keep subdestination, subdestination_coast
-                # elif subcode == '=': # Support Conversion (Currently disallowed)
-                #     cleaned_data.update({'subdestination': None, 'subdestination_coast': None})
-                #     # Keep subtype
-
-            return cleaned_data
-
-		def as_td(self):
-			"Returns this form rendered as HTML <td>s -- excluding the <tr></tr>."
-			# Use standard form rendering methods if possible, or keep custom one
-			# return self._html_output(u'<td>%(errors)s %(field)s%(help_text)s</td>', u'<td style="width:10%%">%s</td>', u'</td>', u' %s', False)
-			return super(OrderForm, self).as_table() # Or as_p, as_ul
-
-	return OrderForm
+    # Must include the supported unit's area and its valid destinations
+    supported_destinations = self.get_valid_destinations(supported_unit)
+    return adjacent.filter(
+        Q(id__in=[a.id for a in supported_destinations]) |
+        Q(id=supported_area.id)
+    )
 
 def make_retreat_form(u):
     # Get possible retreat areas using updated model method (includes current area for conversion)
@@ -813,78 +668,78 @@ def make_reinforce_form(player, finances=False, special_units=False):
     return ReinforceForm
 
 class BaseReinforceFormSet(BaseFormSet):
-	def clean(self):
-		if any(self.errors):
-			return
-		areas = []
-		special_count = 0
-		for i in range(0, self.total_form_count()):
-			form = self.forms[i]
-			# Check if form has data and is valid before accessing cleaned_data
-			if form.has_changed() and form.is_valid():
-			    area = form.cleaned_data.get('area')
-			    if area:
-			        if area in areas:
-			            raise forms.ValidationError(_('You cannot place two units in the same area in one turn'))
-			        areas.append(area)
+    def clean(self):
+        if any(self.errors):
+            return
+        areas = []
+        special_count = 0
+        for i in range(0, self.total_form_count()):
+            form = self.forms[i]
+            # Check if form has data and is valid before accessing cleaned_data
+            if form.has_changed() and form.is_valid():
+                area = form.cleaned_data.get('area')
+                if area:
+                    if area in areas:
+                        raise forms.ValidationError(_('You cannot place two units in the same area in one turn'))
+                    areas.append(area)
 
-			    unit_class = form.cleaned_data.get('unit_class')
-			    if unit_class is not None: # Check if a special unit was selected
-			        special_count += 1
+                unit_class = form.cleaned_data.get('unit_class')
+                if unit_class is not None: # Check if a special unit was selected
+                    special_count += 1
 
-		if special_count > 1:
-			raise forms.ValidationError(_("You cannot buy more than one special unit per turn"))
+        if special_count > 1:
+            raise forms.ValidationError(_("You cannot buy more than one special unit per turn"))
 
 
 def make_disband_form(player):
-	class DisbandForm(forms.Form):
-		units = forms.ModelMultipleChoiceField(required=True,
-					      queryset=player.unit_set.all(),
-					      label="Units to disband")
-	return DisbandForm
+    class DisbandForm(forms.Form):
+        units = forms.ModelMultipleChoiceField(required=True,
+                          queryset=player.unit_set.all(),
+                          label="Units to disband")
+    return DisbandForm
 
 class UnitPaymentCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
-	def build_attrs(self, attrs=None, **kwargs):
-		attrs = super(UnitPaymentCheckboxSelectMultiple, self).build_attrs(attrs, **kwargs)
-		if 'name' in attrs:
-			attrs['name'] = attrs['name'] + '[]'
-		return attrs
+    def build_attrs(self, attrs=None, **kwargs):
+        attrs = super(UnitPaymentCheckboxSelectMultiple, self).build_attrs(attrs, **kwargs)
+        if 'name' in attrs:
+            attrs['name'] = attrs['name'] + '[]'
+        return attrs
 
 class UnitPaymentMultipleChoiceField(forms.ModelMultipleChoiceField):
-	def label_from_instance(self, obj):
-		return obj.describe_with_cost()
+    def label_from_instance(self, obj):
+        return obj.describe_with_cost()
 
 def make_unit_payment_form(player):
-	class UnitPaymentForm(forms.Form):
-		units = UnitPaymentMultipleChoiceField(required=False,
-					      queryset=player.unit_set.filter(placed=True), # Only pay for placed units
-						  widget=UnitPaymentCheckboxSelectMultiple,
-					      label="")
+    class UnitPaymentForm(forms.Form):
+        units = UnitPaymentMultipleChoiceField(required=False,
+                          queryset=player.unit_set.filter(placed=True), # Only pay for placed units
+                          widget=UnitPaymentCheckboxSelectMultiple,
+                          label="")
 
-		def clean(self):
-			cleaned_data = super(UnitPaymentForm, self).clean()
-			units = cleaned_data.get('units', [])
-			cost = sum(u.cost for u in units)
-			if cost > player.ducats:
-				raise forms.ValidationError(_("You don't have enough ducats. Need %(cost)s but only have %(has)s.") % {
-					'cost': cost,
-					'has': player.ducats
-				})
-			return cleaned_data
+        def clean(self):
+            cleaned_data = super(UnitPaymentForm, self).clean()
+            units = cleaned_data.get('units', [])
+            cost = sum(u.cost for u in units)
+            if cost > player.ducats:
+                raise forms.ValidationError(_("You don't have enough ducats. Need %(cost)s but only have %(has)s.") % {
+                    'cost': cost,
+                    'has': player.ducats
+                })
+            return cleaned_data
 
-	return UnitPaymentForm
+    return UnitPaymentForm
 
 def make_ducats_list(ducats, f=3):
-	""" Creates a list of possible ducat amounts in multiples of f. """
-	choices = []
-	if ducats >= f:
-		max_multiple = int(ducats / f)
-		for i in range(1, max_multiple + 1):
-			val = i * f
-			choices.append((val, val))
-	if not choices: # Ensure there's at least one option if ducats < f
-	    choices.append((0, 0)) # Or handle this case differently if 0 is not allowed
-	return tuple(choices)
+    """ Creates a list of possible ducat amounts in multiples of f. """
+    choices = []
+    if ducats >= f:
+        max_multiple = int(ducats / f)
+        for i in range(1, max_multiple + 1):
+            val = i * f
+            choices.append((val, val))
+    if not choices: # Ensure there's at least one option if ducats < f
+        choices.append((0, 0)) # Or handle this case differently if 0 is not allowed
+    return tuple(choices)
 
 
 def make_expense_form(player):
@@ -1033,7 +888,7 @@ def make_expense_form(player):
     return ExpenseForm
 
 class LendForm(forms.Form):
-	ducats = forms.IntegerField(required=True, min_value=1) # Cannot lend 0
+    ducats = forms.IntegerField(required=True, min_value=1) # Cannot lend 0
 
 TERMS = (
     (1, _("1 year, 20% interest")), # Rule X.A.3
@@ -1098,8 +953,8 @@ class BorrowForm(forms.Form):
 
 
 class RepayForm(forms.Form):
-	# No fields needed, just a confirmation button
-	pass
+    # No fields needed, just a confirmation button
+    pass
 
 def make_assassination_form(player):
     # Cost is minimum 12, max 36 (multiples of 12) - Rule VI.C.6.a

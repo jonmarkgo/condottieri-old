@@ -23,7 +23,7 @@ from datetime import datetime
 from math import ceil
 
 ## django
-from django.http import HttpResponseRedirect, Http404, HttpResponse, JsonResponse # Added JsonResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponse # Remove JsonResponse
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
@@ -37,7 +37,6 @@ from django.views.decorators.cache import never_cache, cache_page
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-# from django.utils import simplejson # Deprecated in Django 1.7+, use json
 import json # Use standard json library
 from django.contrib import messages
 
@@ -56,19 +55,19 @@ import condottieri_events.paginator as events_paginator
 
 ## clones detection
 if 'clones' in settings.INSTALLED_APPS:
-	from clones import models as clones
+    from clones import models as clones
 else:
-	clones = None
+    clones = None
 
 if "jogging" in settings.INSTALLED_APPS:
-	from jogging import logging
+    from jogging import logging
 else:
-	logging = None
+    logging = None
 
 if "notification" in settings.INSTALLED_APPS:
-	from notification import models as notification
+    from notification import models as notification
 else:
-	notification = None
+    notification = None
 
 
 # from machiavelli.models import Unit # Already imported via *
@@ -76,245 +75,249 @@ else:
 # --- Helper Functions ---
 
 def sidebar_context(request):
-	# ... (sidebar_context function remains largely the same) ...
-	context = {}
-	activity = cache.get('sidebar_activity')
-	if not activity:
-		activity = Player.objects.values("user").distinct().count()
-		cache.set('sidebar_activity', activity)
-	top_users = cache.get('sidebar_top_users')
-	if not top_users:
-		top_users = CondottieriProfile.objects.all().order_by('-weighted_score').select_related('user')[:5]
-		cache.set('sidebar_top_users', top_users)
-	if request.user.is_authenticated():
-		user_profile = request.user.get_profile()
-		if user_profile and not user_profile in top_users:
-			my_score = user_profile.weighted_score
-			my_position = CondottieriProfile.objects.filter(weighted_score__gt=my_score).count() + 1
-			context.update({'my_position': my_position,})
-	latest_gossip = cache.get('latest_gossip')
-	if not latest_gossip:
-		latest_gossip = Whisper.objects.all()[:5]
-		cache.set('latest_gossip', latest_gossip)
+    # ... (sidebar_context function remains largely the same) ...
+    context = {}
+    activity = cache.get('sidebar_activity')
+    if not activity:
+        activity = Player.objects.values("user").distinct().count()
+        cache.set('sidebar_activity', activity)
+    top_users = cache.get('sidebar_top_users')
+    if not top_users:
+        top_users = CondottieriProfile.objects.all().order_by('-weighted_score').select_related('user')[:5]
+        cache.set('sidebar_top_users', top_users)
+    if request.user.is_authenticated():
+        user_profile = request.user.get_profile()
+        if user_profile and not user_profile in top_users:
+            my_score = user_profile.weighted_score
+            my_position = CondottieriProfile.objects.filter(weighted_score__gt=my_score).count() + 1
+            context.update({'my_position': my_position,})
+    latest_gossip = cache.get('latest_gossip')
+    if not latest_gossip:
+        latest_gossip = Whisper.objects.all()[:5]
+        cache.set('latest_gossip', latest_gossip)
 
-	try:
-		server = Server.objects.get()
-		ranking_last_update = server.ranking_last_update
-	except Server.DoesNotExist:
-		ranking_last_update = None # Handle case where Server object doesn't exist
+    try:
+        server = Server.objects.get()
+        ranking_last_update = server.ranking_last_update
+    except Server.DoesNotExist:
+        ranking_last_update = None # Handle case where Server object doesn't exist
 
-	context.update({ 'activity': activity,
-				'top_users': top_users,
-				'whispers': latest_gossip,
-				'ranking_last_update': ranking_last_update,})
-	return context
+    context.update({ 'activity': activity,
+                'top_users': top_users,
+                'whispers': latest_gossip,
+                'ranking_last_update': ranking_last_update,})
+    return context
 
+def json_response(data):
+    """Helper function to return JSON responses in Django 1.2.7"""
+    return HttpResponse(json.dumps(data, ensure_ascii=False), 
+                       content_type='application/json')
 
 # --- View Functions ---
 
 def summary(request):
-	# ... (summary view remains largely the same) ...
-	context = sidebar_context(request)
-	context.update( {'forum': 'forum' in settings.INSTALLED_APPS} )
-	if request.user.is_authenticated():
-		joinable = Game.objects.exclude(player__user=request.user).filter(slots__gt=0, private=False).order_by('slots').select_related('scenario', 'configuration', 'player__user')
-		my_games_ids = Game.objects.filter(player__user=request.user).values_list('id', flat=True) # Use values_list
-		context.update( {'revolutions': Revolution.objects.filter(opposition__isnull=True).exclude(government__game__id__in=my_games_ids).select_related('government__game', 'government__country')} ) # Correct related name
-		context.update( {'actions': Player.objects.filter(user=request.user, game__slots=0, done=False).select_related('game')} )
-		## show unseen notices
-		if notification:
-			new_notices = notification.Notice.objects.notices_for(request.user, unseen=True, on_site=True)
-			context.update({'new_notices': new_notices,})
-	else:
-		joinable = Game.objects.filter(slots__gt=0, private=False).order_by('slots').select_related('scenario', 'configuration', 'player__user')
-		context.update( {'revolutions': Revolution.objects.filter(opposition__isnull=True).select_related('government__game', 'government__country')} ) # Correct related name
-	if joinable:
-		context.update( {'joinable_game': joinable.first()} ) # Use first() instead of index
+    # ... (summary view remains largely the same) ...
+    context = sidebar_context(request)
+    context.update( {'forum': 'forum' in settings.INSTALLED_APPS} )
+    if request.user.is_authenticated():
+        joinable = Game.objects.exclude(player__user=request.user).filter(slots__gt=0, private=False).order_by('slots').select_related('scenario', 'configuration', 'player__user')
+        my_games_ids = Game.objects.filter(player__user=request.user).values_list('id', flat=True) # Use values_list
+        context.update( {'revolutions': Revolution.objects.filter(opposition__isnull=True).exclude(government__game__id__in=my_games_ids).select_related('government__game', 'government__country')} ) # Correct related name
+        context.update( {'actions': Player.objects.filter(user=request.user, game__slots=0, done=False).select_related('game')} )
+        ## show unseen notices
+        if notification:
+            new_notices = notification.Notice.objects.notices_for(request.user, unseen=True, on_site=True)
+            context.update({'new_notices': new_notices,})
+    else:
+        joinable = Game.objects.filter(slots__gt=0, private=False).order_by('slots').select_related('scenario', 'configuration', 'player__user')
+        context.update( {'revolutions': Revolution.objects.filter(opposition__isnull=True).select_related('government__game', 'government__country')} ) # Correct related name
+    if joinable:
+        context.update( {'joinable_game': joinable.first()} ) # Use first() instead of index
 
-	return render_to_response('machiavelli/summary.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/summary.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 # --- Game List Views (largely unchanged, ensure templates use updated context if needed) ---
 @never_cache
 def my_active_games(request):
-	# ... (remains same) ...
-	context = sidebar_context(request)
-	if request.user.is_authenticated():
-		my_players = Player.objects.filter(user=request.user, game__slots=0).select_related("country", "game__scenario", "game__configuration")
-	else:
-		my_players = Player.objects.none()
-	paginator = Paginator(my_players, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		player_list = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		player_list = paginator.page(paginator.num_pages)
-	context.update( {
-		'player_list': player_list,
-		})
+    # ... (remains same) ...
+    context = sidebar_context(request)
+    if request.user.is_authenticated():
+        my_players = Player.objects.filter(user=request.user, game__slots=0).select_related("country", "game__scenario", "game__configuration")
+    else:
+        my_players = Player.objects.none()
+    paginator = Paginator(my_players, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        player_list = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        player_list = paginator.page(paginator.num_pages)
+    context.update( {
+        'player_list': player_list,
+        })
 
-	return render_to_response('machiavelli/game_list_my_active.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/game_list_my_active.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @never_cache
 def other_active_games(request):
-	# ... (remains same) ...
-	context = sidebar_context(request)
-	if request.user.is_authenticated():
-		games = Game.objects.exclude(phase=PHINACTIVE).exclude(player__user=request.user)
-	else:
-		games = Game.objects.exclude(phase=PHINACTIVE)
-	paginator = Paginator(games, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		game_list = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		game_list = paginator.page(paginator.num_pages)
-	context.update( {
-		'game_list': game_list,
-		})
+    # ... (remains same) ...
+    context = sidebar_context(request)
+    if request.user.is_authenticated():
+        games = Game.objects.exclude(phase=PHINACTIVE).exclude(player__user=request.user)
+    else:
+        games = Game.objects.exclude(phase=PHINACTIVE)
+    paginator = Paginator(games, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        game_list = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        game_list = paginator.page(paginator.num_pages)
+    context.update( {
+        'game_list': game_list,
+        })
 
-	return render_to_response('machiavelli/game_list_active.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/game_list_active.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @never_cache
 def finished_games(request, only_user=False):
-	# ... (remains same) ...
-	context = sidebar_context(request)
-	games = Game.objects.filter(slots=0, phase=PHINACTIVE).order_by("-finished")
-	if only_user and request.user.is_authenticated(): # Check authentication for user filter
-		games = games.filter(score__user=request.user)
-	paginator = Paginator(games, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		game_list = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		game_list = paginator.page(paginator.num_pages)
-	context.update( {
-		'game_list': game_list,
-		'only_user': only_user,
-		})
+    # ... (remains same) ...
+    context = sidebar_context(request)
+    games = Game.objects.filter(slots=0, phase=PHINACTIVE).order_by("-finished")
+    if only_user and request.user.is_authenticated(): # Check authentication for user filter
+        games = games.filter(score__user=request.user)
+    paginator = Paginator(games, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        game_list = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        game_list = paginator.page(paginator.num_pages)
+    context.update( {
+        'game_list': game_list,
+        'only_user': only_user,
+        })
 
-	return render_to_response('machiavelli/game_list_finished.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/game_list_finished.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @never_cache
 def joinable_games(request):
-	# ... (remains same) ...
-	context = sidebar_context(request)
-	if request.user.is_authenticated():
-		games = Game.objects.filter(slots__gt=0).exclude(player__user=request.user)
-	else:
-		games = Game.objects.filter(slots__gt=0)
-	paginator = Paginator(games, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		game_list = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		game_list = paginator.page(paginator.num_pages)
-	context.update( {
-		'game_list': game_list,
-		'joinable': True,
-		})
+    # ... (remains same) ...
+    context = sidebar_context(request)
+    if request.user.is_authenticated():
+        games = Game.objects.filter(slots__gt=0).exclude(player__user=request.user)
+    else:
+        games = Game.objects.filter(slots__gt=0)
+    paginator = Paginator(games, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        game_list = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        game_list = paginator.page(paginator.num_pages)
+    context.update( {
+        'game_list': game_list,
+        'joinable': True,
+        })
 
-	return render_to_response('machiavelli/game_list_pending.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/game_list_pending.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @never_cache
 @login_required
 def pending_games(request):
-	# ... (remains same) ...
-	context = sidebar_context(request)
-	games = Game.objects.filter(slots__gt=0, player__user=request.user)
-	paginator = Paginator(games, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		game_list = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		game_list = paginator.page(paginator.num_pages)
-	context.update( {
-		'game_list': game_list,
-		'joinable': False,
-		})
+    # ... (remains same) ...
+    context = sidebar_context(request)
+    games = Game.objects.filter(slots__gt=0, player__user=request.user)
+    paginator = Paginator(games, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        game_list = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        game_list = paginator.page(paginator.num_pages)
+    context.update( {
+        'game_list': game_list,
+        'joinable': False,
+        })
 
-	return render_to_response('machiavelli/game_list_pending.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/game_list_pending.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 def base_context(request, game, player):
-	# ... (base_context function remains largely the same) ...
-	# Ensure player object is valid before accessing attributes
-	context = {
-		'user': request.user,
-		'game': game,
-		'map' : game.get_map_url(),
-		'player': player if player and player.pk else None, # Pass None if player is invalid/None
-		'player_list': game.player_list_ordered_by_cities(),
-		'show_users': game.visible,
-		}
-	if game.slots > 0:
-		context['player_list'] = game.player_set.filter(user__isnull=False)
+    # ... (base_context function remains largely the same) ...
+    # Ensure player object is valid before accessing attributes
+    context = {
+        'user': request.user,
+        'game': game,
+        'map' : game.get_map_url(),
+        'player': player if player and player.pk else None, # Pass None if player is invalid/None
+        'player_list': game.player_list_ordered_by_cities(),
+        'show_users': game.visible,
+        }
+    if game.slots > 0:
+        context['player_list'] = game.player_set.filter(user__isnull=False)
 
-	# Safely access player attributes
-	if player and player.pk:
-		context['done'] = player.done
-		if game.configuration.finances:
-			context['ducats'] = player.ducats
-		context['can_excommunicate'] = player.can_excommunicate()
-		context['can_forgive'] = player.can_forgive()
-		if game.slots == 0:
-			context['time_exceeded'] = player.time_exceeded()
-		if game.phase == PHORDERS:
-			# Check if undo is allowed (done, but not in last seconds)
-			if player.done and not player.in_last_seconds():
-				context.update({'undoable': True,})
+    # Safely access player attributes
+    if player and player.pk:
+        context['done'] = player.done
+        if game.configuration.finances:
+            context['ducats'] = player.ducats
+        context['can_excommunicate'] = player.can_excommunicate()
+        context['can_forgive'] = player.can_forgive()
+        if game.slots == 0:
+            context['time_exceeded'] = player.time_exceeded()
+        if game.phase == PHORDERS:
+            # Check if undo is allowed (done, but not in last seconds)
+            if player.done and not player.in_last_seconds():
+                context.update({'undoable': True,})
 
-	# Log fetching logic seems okay, but ensure BaseEvent model exists if used
-	# log = game.baseevent_set.all()
-	# if player:
-	# 	log = log.exclude(season__exact=game.season,
-	# 							phase__exact=game.phase)
-	# if len(log) > 0:
-	# 	last_year = log[0].year
-	# 	last_season = log[0].season
-	# 	last_phase = log[0].phase
-	# 	context['log'] = log.filter(year__exact=last_year,
-	# 							season__exact=last_season,
-	# 							phase__exact=last_phase)
-	# else:
-	# 	context['log'] = log # this will always be an empty queryset
+    # Log fetching logic seems okay, but ensure BaseEvent model exists if used
+    # log = game.baseevent_set.all()
+    # if player:
+    # 	log = log.exclude(season__exact=game.season,
+    # 							phase__exact=game.phase)
+    # if len(log) > 0:
+    # 	last_year = log[0].year
+    # 	last_season = log[0].season
+    # 	last_phase = log[0].phase
+    # 	context['log'] = log.filter(year__exact=last_year,
+    # 							season__exact=last_season,
+    # 							phase__exact=last_phase)
+    # else:
+    # 	context['log'] = log # this will always be an empty queryset
 
-	rules = game.configuration.get_enabled_rules()
-	if len(rules) > 0:
-		context['rules'] = rules
+    rules = game.configuration.get_enabled_rules()
+    if len(rules) > 0:
+        context['rules'] = rules
 
-	if game.configuration.gossip:
-		whispers = game.whisper_set.all()[:10]
-		context.update({'whispers': whispers, })
-		if player and player.pk:
-			context.update({'whisper_form': forms.WhisperForm(request.user, game),})
+    if game.configuration.gossip:
+        whispers = game.whisper_set.all()[:10]
+        context.update({'whispers': whispers, })
+        if player and player.pk:
+            context.update({'whisper_form': forms.WhisperForm(request.user, game),})
 
-	return context
+    return context
 
 #@never_cache
 #def js_play_game(request, slug=''):
@@ -340,65 +343,65 @@ def base_context(request, game, player):
 # --- Utility Views (unchanged) ---
 @login_required
 def undo_actions(request, slug=''):
-	# ... (remains same) ...
-	game = get_object_or_404(Game, slug=slug)
-	player = get_object_or_404(Player, game=game, user=request.user)
-	profile = request.user.get_profile()
-	if request.method == 'POST':
-		# Allow undo only during specific phases and if player is done but time allows
-		allowed_phases = [PHORDERS] # Example: Only allow undoing orders
-		if game.phase in allowed_phases and player.done and not player.in_last_seconds():
-			player.done = False
-			# Unconfirm orders, expenses, assassinations
-			player.order_set.update(confirmed=False)
-			player.expense_set.update(confirmed=False)
-			# Assassinations don't have confirmed flag, maybe delete them? Or require re-entry?
-			# Let's assume they need re-entry if actions are undone.
-			# Player needs to re-spend ducats and re-use token.
-			pending_assassinations = player.assassination_attempts.all()
-			for attempt in pending_assassinations:
-			    # Refund ducats
-			    Player.objects.filter(id=player.id).update(ducats=F('ducats') + attempt.ducats)
-			    # Restore assassin token
-			    Assassin.objects.get_or_create(owner=player, target=attempt.target.country) # Assumes target player still exists
-			    attempt.delete()
+    # ... (remains same) ...
+    game = get_object_or_404(Game, slug=slug)
+    player = get_object_or_404(Player, game=game, user=request.user)
+    profile = request.user.get_profile()
+    if request.method == 'POST':
+        # Allow undo only during specific phases and if player is done but time allows
+        allowed_phases = [PHORDERS] # Example: Only allow undoing orders
+        if game.phase in allowed_phases and player.done and not player.in_last_seconds():
+            player.done = False
+            # Unconfirm orders, expenses, assassinations
+            player.order_set.update(confirmed=False)
+            player.expense_set.update(confirmed=False)
+            # Assassinations don't have confirmed flag, maybe delete them? Or require re-entry?
+            # Let's assume they need re-entry if actions are undone.
+            # Player needs to re-spend ducats and re-use token.
+            pending_assassinations = player.assassination_attempts.all()
+            for attempt in pending_assassinations:
+                # Refund ducats
+                Player.objects.filter(id=player.id).update(ducats=F('ducats') + attempt.ducats)
+                # Restore assassin token
+                Assassin.objects.get_or_create(owner=player, target=attempt.target.country) # Assumes target player still exists
+                attempt.delete()
 
 
-			if game.check_bonus_time(): # Check if bonus was applied
-				if profile: profile.adjust_karma( -1 ) # Remove karma bonus
-			player.save(update_fields=['done'])
-			messages.success(request, _("Your actions are now unconfirmed. You'll have to confirm them again."))
-		else:
-		    messages.error(request, _("Cannot undo actions at this time."))
+            if game.check_bonus_time(): # Check if bonus was applied
+                if profile: profile.adjust_karma( -1 ) # Remove karma bonus
+            player.save(update_fields=['done'])
+            messages.success(request, _("Your actions are now unconfirmed. You'll have to confirm them again."))
+        else:
+            messages.error(request, _("Cannot undo actions at this time."))
 
-	return redirect('show-game', slug=slug)
+    return redirect('show-game', slug=slug)
 @never_cache
 @login_required # Added decorator, playing requires login
 def play_game(request, slug='', **kwargs):
-	game = get_object_or_404(Game, slug=slug)
-	if game.slots == 0 and game.phase == PHINACTIVE:
-		return redirect('game-results', slug=game.slug)
-	try:
-		# Ensure player is not eliminated if game has started
-		player = Player.objects.get(game=game, user=request.user)
-		if game.slots == 0 and player.eliminated:
-		    player = None # Treat eliminated player as spectator
-	except Player.DoesNotExist:
-		player = None # User is not in this game
+    game = get_object_or_404(Game, slug=slug)
+    if game.slots == 0 and game.phase == PHINACTIVE:
+        return redirect('game-results', slug=game.slug)
+    try:
+        # Ensure player is not eliminated if game has started
+        player = Player.objects.get(game=game, user=request.user)
+        if game.slots == 0 and player.eliminated:
+            player = None # Treat eliminated player as spectator
+    except Player.DoesNotExist:
+        player = None # User is not in this game
 
-	if player:
-		# --- IP Tracking ---
-		if clones and request.method == 'POST' and not request.is_ajax():
-			try:
-				# Ensure IP_HEADER is correctly configured in settings
-				ip_address = request.META.get(settings.IP_HEADER, request.META.get('REMOTE_ADDR'))
-				if ip_address:
-					fp = clones.Fingerprint(user=request.user, game=game, ip=ip_address)
-					fp.save()
-			except Exception as e: # Catch potential errors during fingerprinting
-				if logging: logging.error("Fingerprint save error for game {game.id}, user {request.user.id}: {e}")
-				pass
-		# --- End IP Tracking ---
+    if player:
+        # --- IP Tracking ---
+        if clones and request.method == 'POST' and not request.is_ajax():
+            try:
+                # Ensure IP_HEADER is correctly configured in settings
+                ip_address = request.META.get(settings.IP_HEADER, request.META.get('REMOTE_ADDR'))
+                if ip_address:
+                    fp = clones.Fingerprint(user=request.user, game=game, ip=ip_address)
+                    fp.save()
+            except Exception as e: # Catch potential errors during fingerprinting
+                if logging: logging.error("Fingerprint save error for game {game.id}, user {request.user.id}: {e}")
+                pass
+        # --- End IP Tracking ---
 
         # Phase Dispatching
         phase_handlers = {
@@ -416,14 +419,14 @@ def play_game(request, slug='', **kwargs):
             PHSTORMS: lambda: play_orders(request, game, player),
         }
 
-		handler = phase_handlers.get(game.phase)
-		if handler:
-		    return handler()
-		else:
-		    # Fallback or error for unhandled phases
-		    if logging: logging.warning("Unhandled phase {game.phase} in game {game.id}")
-		    # Default to showing orders or inactive screen
-		    return play_orders(request, game, player)
+        handler = phase_handlers.get(game.phase)
+        if handler:
+            return handler()
+        else:
+            # Fallback or error for unhandled phases
+            if logging: logging.warning("Unhandled phase {game.phase} in game {game.id}")
+            # Default to showing orders or inactive screen
+            return play_orders(request, game, player)
 
     else: # Spectator or eliminated
         context = base_context(request, game, None)
@@ -513,89 +516,256 @@ def play_reinforcements(request, game, player):
     return render_to_response('machiavelli/reinforcements_actions.html',
                             context,
                             context_instance=RequestContext(request))
+# machiavelli/views.py
 
+# Make sure these imports are present at the top of your views.py
+from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.template import RequestContext
+from django.contrib.auth.decorators import login_required
+from django.forms.formsets import formset_factory
+from django.db.models import F
+from django.contrib import messages
+from django.utils.translation import ugettext_lazy as _
+from .models import Game, Player, Unit, Loan, Order, Expense, Assassin, RetreatOrder, Rebellion, Configuration, PHINACTIVE, PHREINFORCE, PHORDERS, PHRETREATS # Add other models if needed
+from . import forms # Import your forms module
+
+# Import logging if not already done
+try:
+    from jogging import logging
+except ImportError:
+    import logging # Fallback to standard logging
+
+# machiavelli/views.py
+
+# Make sure these imports are present at the top of your views.py
+from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.template import RequestContext
+from django.contrib.auth.decorators import login_required
+from django.forms.formsets import formset_factory
+from django.db.models import F
+from django.contrib import messages
+from django.utils.translation import ugettext_lazy as _
+from .models import Game, Player, Unit, Loan, Order, Expense, Assassin, RetreatOrder, Rebellion, Configuration, PHINACTIVE, PHREINFORCE, PHORDERS, PHRETREATS # Add other models if needed
+from . import forms # Import your forms module
+
+# Import logging if not already done
+try:
+    from jogging import logging
+except ImportError:
+    import logging # Fallback to standard logging
+
+# --- other view functions like base_context, play_reinforcements, etc. ---
+
+@login_required # Ensure login is required
 def play_finance_reinforcements(request, game, player):
-    # ... (context setup, step 0 logic - unchanged) ...
+    """
+    Handles the Spring Reinforcement phase when Finance rules are active.
+    Includes payment step, potential initial disband step, and placement step.
+    """
+    context = base_context(request, game, player)
+    any_not_done = game.player_set.filter(done=False).exclude(id=player.id).exists()
 
-    # --- Step 1: Placement Step ---
-    elif step == 1:
-        # ... (calculate max_units_possible, check if placement possible - unchanged) ...
-        can_buy = int(player.ducats / 3)
-        can_place = player.get_areas_for_new_units(finances=True).count()
-        max_units_possible = min(can_buy, can_place)
-        can_afford_any = player.ducats >= 3
-        can_place_any = can_place > 0
-        has_special_option = game.configuration.special_units and not player.has_special_unit()
+    # --- Display summary if player is done but others aren't ---
+    if player.done and any_not_done:
+        context['to_place'] = player.unit_set.filter(placed=False)
+        context['to_disband'] = player.unit_set.filter(placed=True, paid=False)
+        context['to_keep'] = player.unit_set.filter(placed=True, paid=True)
+        template_name = 'machiavelli/reinforcements_actions.html' # Show summary template
+        return render_to_response(template_name, context, context_instance=RequestContext(request))
+    # --- Display wait message if player is done and all others are too ---
+    elif player.done and not any_not_done:
+         messages.info(request, _("Waiting for game phase to advance."))
+         template_name = 'machiavelli/reinforcements_actions.html' # Show summary/wait template
+         return render_to_response(template_name, context, context_instance=RequestContext(request))
 
-        if not can_afford_any and not can_place_any and not has_special_option:
-            player.end_phase()
-            messages.info(request, _("No new units can be placed this turn (insufficient funds or space)."))
-            return HttpResponseRedirect(request.path)
+    # --- Player is NOT done, process steps ---
+    else:
+        step = player.step
+        # Add optional rule context
+        if game.configuration.lenders:
+            try: loan = player.loan
+            except Loan.DoesNotExist: loan = None
+            context.update({'loan': loan})
+        if game.configuration.special_units:
+            context.update({'special_units': True})
 
-        ReinforceForm = forms.make_reinforce_form(player, finances=True,
-                                            special_units=game.configuration.special_units)
-        extra_forms = max(1, max_units_possible if max_units_possible > 0 else (1 if has_special_option else 0))
-        max_forms = can_place if can_place > 0 else (1 if has_special_option else 0)
+        # Check for First Spring Turn (Rule V.A.3)
+        is_first_spring = (game.year == game.scenario.start_year and game.season == 1)
+        initial_units = player.unit_set.filter(placed=True) # Units placed by scenario setup
+        initial_cost = sum(u.cost for u in initial_units)
 
-        ReinforceFormSet = formset_factory(ReinforceForm,
-                            formset=forms.BaseReinforceFormSet,
-                            extra=extra_forms,
-                            max_num=max_forms) # Use max_forms here
+        # --- Step 0: Payment OR Initial Disband ---
+        if step == 0:
+            # --- Special First Turn Disband Step (Rule V.A.3) ---
+            if is_first_spring and initial_cost > player.ducats:
+                units_to_remove_count = 0
+                temp_cost = initial_cost
+                # Calculate how many units *must* be removed (simplistic cost 3 assumption)
+                # TODO: Improve calculation if special units have variable cost > 3
+                while temp_cost > player.ducats:
+                     temp_cost -= 3
+                     units_to_remove_count += 1
+                     if units_to_remove_count > initial_units.count(): # Safety break
+                          units_to_remove_count = initial_units.count()
+                          break
 
-        if request.method == 'POST':
-            # *** ADD form_kwargs HERE ***
-            formset = ReinforceFormSet(request.POST, prefix='reinforce', form_kwargs={'player': player})
-            if formset.is_valid():
-                # ... (form processing logic - unchanged) ...
-                total_cost = 0
-                units_to_create = []
-                cost_from_forms = 0
-                for form in formset:
-                     if form.has_changed() and form.is_valid() and form.cleaned_data.get('area') and form.cleaned_data.get('type'):
-                          cost_from_forms += form.cleaned_data.get('cost', 3)
+                context['initial_cost'] = initial_cost
+                context['units_to_remove_count'] = units_to_remove_count
+                context['initial_units'] = initial_units # Pass units for display/selection
 
-                if cost_from_forms > player.ducats:
-                     messages.error(request, _("Cannot build all selected units: Insufficient ducats."))
-                     context['formset'] = formset
-                     context['max_units_possible'] = max_units_possible
-                     template_name = 'machiavelli/finance_reinforcements_1.html'
-                     return render_to_response(template_name, context, context_instance=RequestContext(request))
+                DisbandForm = forms.make_disband_form(player) # Use the existing disband form
+
+                if request.method == 'POST':
+                    # Check if POST is for this specific step
+                    if request.POST.get('initial_disband_step') == '1':
+                        disband_form = DisbandForm(request.POST)
+                        if disband_form.is_valid():
+                            selected_units = disband_form.cleaned_data['units']
+                            if len(selected_units) == units_to_remove_count:
+                                # Disband selected units
+                                selected_units_ids = selected_units.values_list('id', flat=True)
+                                Unit.objects.filter(id__in=selected_units_ids).delete()
+                                # Mark remaining initial units as paid (implicitly, cost is now affordable)
+                                remaining_units = player.unit_set.filter(placed=True) # Re-query remaining
+                                remaining_cost = sum(u.cost for u in remaining_units)
+                                remaining_units.update(paid=True)
+                                # Deduct cost
+                                Player.objects.filter(id=player.id).update(ducats=F('ducats') - remaining_cost)
+                                player.refresh_from_db()
+                                # Advance to placement step
+                                player.step = 1
+                                player.save(update_fields=['step'])
+                                messages.success(request, _("Initial excess units disbanded. Proceed to placement."))
+                                return HttpResponseRedirect(request.path) # Redirect to reload view at step 1
+                            else:
+                                messages.error(request, _("Please select exactly %(num)s units to disband.") % {'num': units_to_remove_count})
+                        else:
+                            messages.error(request, _("Invalid selection for disbanding."))
+                        # Re-render the form with error if validation failed
+                        context['disband_form'] = disband_form
+                        return render_to_response('machiavelli/finance_reinforcements_initial_disband.html', context, context_instance=RequestContext(request))
+                    else:
+                        # POST not for this step, ignore or handle if needed
+                        pass
+                else: # GET request
+                    disband_form = DisbandForm()
+                    context['disband_form'] = disband_form
+                    return render_to_response('machiavelli/finance_reinforcements_initial_disband.html', context, context_instance=RequestContext(request))
+            # --- End Special First Turn Disband Step ---
+
+            # --- Normal Payment Step ---
+            else: # (Not first turn OR first turn but affordable)
+                UnitPaymentForm = forms.make_unit_payment_form(player)
+                if request.method == 'POST':
+                    # Ensure POST is not for the initial disband step
+                    if not (is_first_spring and initial_cost > player.ducats):
+                        form = UnitPaymentForm(request.POST)
+                        if form.is_valid():
+                            paid_units = form.cleaned_data.get('units', Unit.objects.none())
+                            cost = sum(u.cost for u in paid_units)
+                            # Check affordability again
+                            if cost > player.ducats:
+                                 messages.error(request, _("Insufficient ducats to pay for selected units."))
+                                 form.add_error(None, _("Insufficient ducats."))
+                            else:
+                                paid_units_ids = paid_units.values_list('id', flat=True)
+                                # Mark selected as paid, others as unpaid
+                                player.unit_set.filter(placed=True, id__in=paid_units_ids).update(paid=True)
+                                player.unit_set.filter(placed=True).exclude(id__in=paid_units_ids).update(paid=False)
+                                # Deduct cost
+                                Player.objects.filter(id=player.id).update(ducats=F('ducats') - cost)
+                                player.refresh_from_db()
+                                # Advance step
+                                player.step = 1
+                                player.save(update_fields=['step'])
+                                messages.success(request, _("You have successfully paid your units."))
+                                return HttpResponseRedirect(request.path) # Redirect to reload view at step 1
+                        else:
+                            messages.error(request, _("There was an error with your unit payment. Please correct the errors below."))
+                    # else: POST was for initial disband, handled above or ignored here
+                else: # GET request
+                    form = UnitPaymentForm(initial={'units': player.unit_set.filter(placed=True)}) # Pre-select all
+                context['form'] = form
+                template_name = 'machiavelli/finance_reinforcements_0.html'
+        # --- End Step 0 ---
+
+        # --- Step 1: Placement Step ---
+        elif step == 1:
+            can_buy = int(player.ducats / 3) # Simplistic base cost check
+            can_place = player.get_areas_for_new_units(finances=True).count()
+            max_units_possible = min(can_buy, can_place) # Basic estimate
+            can_afford_any = player.ducats >= 3
+            can_place_any = can_place > 0
+            has_special_option = game.configuration.special_units and not player.has_special_unit()
+
+            # If no placement possible, end phase
+            if not can_afford_any and not can_place_any and not has_special_option:
+                player.end_phase()
+                messages.info(request, _("No new units can be placed this turn (insufficient funds or space)."))
+                return HttpResponseRedirect(request.path)
+
+            ReinforceForm = forms.make_reinforce_form(player, finances=True,
+                                                special_units=game.configuration.special_units)
+            # Determine 'extra' based on what's possible, ensure at least 1 form shows if options exist
+            extra_forms = max(1, max_units_possible if max_units_possible > 0 else (1 if has_special_option else 0))
+            max_forms = can_place if can_place > 0 else (1 if has_special_option else 0) # Limit by placeable areas
+
+            ReinforceFormSet = formset_factory(ReinforceForm,
+                                formset=forms.BaseReinforceFormSet,
+                                extra=extra_forms,
+                                max_num=max_forms)
+
+            if request.method == 'POST':
+                # *** Pass player to formset using form_kwargs ***
+                formset = ReinforceFormSet(request.POST, prefix='reinforce', form_kwargs={'player': player})
+                if formset.is_valid():
+                    # Formset clean method now validates total cost and unit limits
+                    units_to_create = []
+                    total_cost = 0
+                    for form in formset:
+                         if form.has_changed() and form.is_valid():
+                              area = form.cleaned_data.get('area')
+                              type_ = form.cleaned_data.get('type')
+                              if area and type_: # Ensure core fields are present
+                                   coast = form.cleaned_data.get('coast')
+                                   unit_class = form.cleaned_data.get('unit_class')
+                                   cost = form.cleaned_data.get('cost', 3) # Get cost from form
+                                   power = 1; loyalty = 1
+                                   if unit_class:
+                                        power = unit_class.power
+                                        loyalty = unit_class.loyalty
+
+                                   total_cost += cost
+                                   units_to_create.append(
+                                        Unit(type=type_, area=area, player=player,
+                                             coast=coast, placed=False, cost=cost, power=power, loyalty=loyalty)
+                                   )
+
+                    # Create units and deduct cost if valid
+                    if units_to_create:
+                         Unit.objects.bulk_create(units_to_create)
+                         Player.objects.filter(id=player.id).update(ducats=F('ducats') - total_cost)
+                         player.refresh_from_db()
+
+                    player.end_phase() # End phase regardless of whether units were built
+                    messages.success(request, _("You have successfully completed your reinforcements."))
+                    return HttpResponseRedirect(request.path) # Redirect to game view
                 else:
-                     total_cost = cost_from_forms
-                     for form in formset:
-                          if form.has_changed() and form.is_valid():
-                               area = form.cleaned_data.get('area')
-                               type_ = form.cleaned_data.get('type')
-                               coast = form.cleaned_data.get('coast')
-                               unit_class = form.cleaned_data.get('unit_class')
-                               cost = form.cleaned_data.get('cost', 3)
-                               power = 1; loyalty = 1
-                               if unit_class:
-                                    power = unit_class.power
-                                    loyalty = unit_class.loyalty
-                               if area and type_:
-                                    units_to_create.append(
-                                         Unit(type=type_, area=area, player=player,
-                                              coast=coast, placed=False, cost=cost, power=power, loyalty=loyalty)
-                                    )
-                     if units_to_create:
-                          Unit.objects.bulk_create(units_to_create)
-                          Player.objects.filter(id=player.id).update(ducats=F('ducats') - total_cost)
-                          player.refresh_from_db()
-                     player.end_phase()
-                     messages.success(request, _("You have successfully made your reinforcements."))
-                     return HttpResponseRedirect(request.path)
-            else:
-                messages.error(request, _("Please correct the errors in the reinforcement formset."))
-        else: # GET request
-            # *** ADD form_kwargs HERE ***
-            formset = ReinforceFormSet(prefix='reinforce', form_kwargs={'player': player})
+                    messages.error(request, _("Please correct the errors in the reinforcement formset."))
+            else: # GET request
+                # *** Pass player to formset using form_kwargs ***
+                formset = ReinforceFormSet(prefix='reinforce', form_kwargs={'player': player})
 
-        context['formset'] = formset
-        context['max_units_possible'] = max_units_possible
-        template_name = 'machiavelli/finance_reinforcements_1.html'
+            context['formset'] = formset
+            context['max_units_possible'] = max_units_possible # Pass estimate to template
+            template_name = 'machiavelli/finance_reinforcements_1.html'
+        # --- End Step 1 ---
 
-    # ... (rest of view) ...
+        else: # Invalid step
+            if logging: logging.error("Invalid step {step} for player {player.id} in game {game.id}")
+            raise Http404
+
+    # Render the appropriate template based on the step processed
     return render_to_response(template_name, context,
                             context_instance=RequestContext(request))
 
@@ -622,7 +792,7 @@ def play_orders(request, game, player):
                     response_dict = {'bad': 'false', 'pk': new_order.pk, 'new_order': new_order.explain()}
                 else:
                     response_dict = {'bad': 'true', 'errs': order_form.errors}
-                return JsonResponse(response_dict)
+                return json_response(response_dict)
             else: # Not AJAX
                 if order_form.is_valid():
                     # Save includes coast fields now
@@ -748,79 +918,77 @@ def handle_player_quit(request, slug, player_id):
 
 @login_required
 def delete_order(request, slug='', order_id=''):
-	# ... (remains same, but use JsonResponse) ...
-	game = get_object_or_404(Game, slug=slug)
-	player = get_object_or_404(Player, game=game, user=request.user)
-	order = get_object_or_404(Order, id=order_id, player=player, confirmed=False) # Check player owns order
-	response_dict = {'bad': 'false', 'order_id': order.id}
-	try:
-		order.delete()
-		messages.success(request, _("Order deleted.")) # Add user feedback
-	except Exception as e: # Catch specific exceptions if possible
-		response_dict.update({'bad': 'true', 'error': str(e)})
-		messages.error(request, _("Failed to delete order."))
-		if logging: logging.error("Error deleting order {order_id} for player {player.id}: {e}")
+    # ... (remains same, but use JsonResponse) ...
+    game = get_object_or_404(Game, slug=slug)
+    player = get_object_or_404(Player, game=game, user=request.user)
+    order = get_object_or_404(Order, id=order_id, player=player, confirmed=False) # Check player owns order
+    response_dict = {'bad': 'false', 'order_id': order.id}
+    try:
+        order.delete()
+        messages.success(request, _("Order deleted.")) # Add user feedback
+    except Exception as e: # Catch specific exceptions if possible
+        response_dict.update({'bad': 'true', 'error': str(e)})
+        messages.error(request, _("Failed to delete order."))
+        if logging: logging.error("Error deleting order {order_id} for player {player.id}: {e}")
 
-	if request.is_ajax():
-		return JsonResponse(response_dict)
-		# return HttpResponse(json.dumps(response_dict, ensure_ascii=False), content_type='application/json')
+    if request.is_ajax():
+        return json_response(response_dict)
 
-	return redirect(game) # Redirect back to game view
+    return redirect(game) # Redirect back to game view
 
 @login_required
 def confirm_orders(request, slug=''):
-	# ... (Logic largely okay, relies on updated order.is_possible) ...
-	game = get_object_or_404(Game, slug=slug)
-	player = get_object_or_404(Player, game=game, user=request.user, done=False)
-	if request.method == 'POST':
-		msg = u"Confirming orders for player %s (%s, %s) in game %s (%s):\n" % (player.id,
-			player.static_name, player.user.username, game.id, game.slug)
-		possible_orders = 0
-		impossible_orders = 0
-		sent_orders = player.order_set.all() # Get orders issued by this player
+    # ... (Logic largely okay, relies on updated order.is_possible) ...
+    game = get_object_or_404(Game, slug=slug)
+    player = get_object_or_404(Player, game=game, user=request.user, done=False)
+    if request.method == 'POST':
+        msg = u"Confirming orders for player %s (%s, %s) in game %s (%s):\n" % (player.id,
+            player.static_name, player.user.username, game.id, game.slug)
+        possible_orders = 0
+        impossible_orders = 0
+        sent_orders = player.order_set.all() # Get orders issued by this player
 
-		for order in sent_orders:
-			msg += u"%s => " % order.format()
-			# Re-validate possibility at confirmation time
-			if order.is_possible():
-				order.confirm() # Mark as confirmed
-				possible_orders += 1
-				msg += u"OK\n"
-			else:
-				# Delete impossible orders instead of confirming them? Or let game logic handle?
-				# Current logic seems to keep them, game logic might ignore them.
-				# Let's delete them here for clarity.
-				msg += u"Invalid - DELETED\n"
-				order.delete()
-				impossible_orders += 1
+        for order in sent_orders:
+            msg += u"%s => " % order.format()
+            # Re-validate possibility at confirmation time
+            if order.is_possible():
+                order.confirm() # Mark as confirmed
+                possible_orders += 1
+                msg += u"OK\n"
+            else:
+                # Delete impossible orders instead of confirming them? Or let game logic handle?
+                # Current logic seems to keep them, game logic might ignore them.
+                # Let's delete them here for clarity.
+                msg += u"Invalid - DELETED\n"
+                order.delete()
+                impossible_orders += 1
 
-		# Confirm expenses
-		player.expense_set.all().update(confirmed=True)
-		# Confirm assassinations (already saved, just log?)
-		# player.assassination_attempts.all().update(confirmed=True) # No confirmed flag
+        # Confirm expenses
+        player.expense_set.all().update(confirmed=True)
+        # Confirm assassinations (already saved, just log?)
+        # player.assassination_attempts.all().update(confirmed=True) # No confirmed flag
 
-		if logging: logging.info(msg)
-		player.end_phase()
-		if impossible_orders > 0:
-		     messages.warning(request, _("%(num)s invalid orders were deleted.") % {'num': impossible_orders})
-		messages.success(request, _("You have successfully confirmed your actions (%(num)s orders).") % {'num': possible_orders})
+        if logging: logging.info(msg)
+        player.end_phase()
+        if impossible_orders > 0:
+             messages.warning(request, _("%(num)s invalid orders were deleted.") % {'num': impossible_orders})
+        messages.success(request, _("You have successfully confirmed your actions (%(num)s orders).") % {'num': possible_orders})
 
-		# Check if this is the final player to confirm orders
-		remaining_players = game.player_set.filter(done=False).count()
-		if remaining_players == 0:
-			try:
-				from django.core.management import call_command
-				# Consider running this asynchronously (e.g., with Celery)
-				# to avoid blocking the user request.
-				call_command('check_turns', game_id=game.id) # Pass game_id if command supports it
-			except Exception as e:
-			    if logging: logging.error("Error calling check_turns after confirm_orders for game {game.id}: {e}")
-			    messages.error(request, _("Error triggering game phase advance."))
+        # Check if this is the final player to confirm orders
+        remaining_players = game.player_set.filter(done=False).count()
+        if remaining_players == 0:
+            try:
+                from django.core.management import call_command
+                # Consider running this asynchronously (e.g., with Celery)
+                # to avoid blocking the user request.
+                call_command('check_turns', game_id=game.id) # Pass game_id if command supports it
+            except Exception as e:
+                if logging: logging.error("Error calling check_turns after confirm_orders for game {game.id}: {e}")
+                messages.error(request, _("Error triggering game phase advance."))
 
 
-	return redirect(game)
+    return redirect(game)
 
-def 
 def play_retreats(request, game, player):
     context = base_context(request, game, player)
     if not player.done:
@@ -861,100 +1029,100 @@ def play_retreats(request, game, player):
                     RetreatForm = forms.make_retreat_form(u)
                     retreat_forms.append(RetreatForm(prefix=str(u.id))) # Use prefix
                 context['retreat_forms'] = retreat_forms
-	else: # Player is done
-	    # Optionally show summary of retreats made, or just wait message
-	    pass
+    else: # Player is done
+        # Optionally show summary of retreats made, or just wait message
+        pass
 
-	return render_to_response('machiavelli/retreats_actions.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/retreats_actions.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 
 def play_expenses(request, game, player):
-	# ... (Logic okay, uses updated ExpenseForm) ...
-	context = base_context(request, game, player)
-	context['current_expenses'] = player.expense_set.all()
-	ExpenseForm = forms.make_expense_form(player) # Uses updated form maker
+    # ... (Logic okay, uses updated ExpenseForm) ...
+    context = base_context(request, game, player)
+    context['current_expenses'] = player.expense_set.all()
+    ExpenseForm = forms.make_expense_form(player) # Uses updated form maker
 
-	if not player.done: # Allow adding expenses only if not done
-		if request.method == 'POST':
-			form = ExpenseForm(player, data=request.POST)
-			if form.is_valid():
-				expense = form.save(commit=False)
-				# Deduct ducats immediately upon saving the expense form
-				try:
-				    ducats_to_spend = int(form.cleaned_data['ducats'])
-				    if player.ducats >= ducats_to_spend:
-				        expense.save() # Save the expense object
-				        # Use F expression to prevent race conditions
-				        Player.objects.filter(id=player.id).update(ducats=F('ducats') - ducats_to_spend)
-				        player.refresh_from_db() # Update player object in view context
-				        messages.success(request, _("Expense successfully saved."))
-				        # Redirect to same page to show updated list and clear form
-				        return HttpResponseRedirect(request.path)
-				    else:
-				        messages.error(request, _("Insufficient ducats for this expense."))
-				        # Re-render form with error (or add non-field error)
-				        form.add_error(None, _("Insufficient ducats."))
-				except (ValueError, TypeError):
-				     messages.error(request, _("Invalid ducat amount selected."))
-				     form.add_error('ducats', _("Invalid amount."))
+    if not player.done: # Allow adding expenses only if not done
+        if request.method == 'POST':
+            form = ExpenseForm(player, data=request.POST)
+            if form.is_valid():
+                expense = form.save(commit=False)
+                # Deduct ducats immediately upon saving the expense form
+                try:
+                    ducats_to_spend = int(form.cleaned_data['ducats'])
+                    if player.ducats >= ducats_to_spend:
+                        expense.save() # Save the expense object
+                        # Use F expression to prevent race conditions
+                        Player.objects.filter(id=player.id).update(ducats=F('ducats') - ducats_to_spend)
+                        player.refresh_from_db() # Update player object in view context
+                        messages.success(request, _("Expense successfully saved."))
+                        # Redirect to same page to show updated list and clear form
+                        return HttpResponseRedirect(request.path)
+                    else:
+                        messages.error(request, _("Insufficient ducats for this expense."))
+                        # Re-render form with error (or add non-field error)
+                        form.add_error(None, _("Insufficient ducats."))
+                except (ValueError, TypeError):
+                     messages.error(request, _("Invalid ducat amount selected."))
+                     form.add_error('ducats', _("Invalid amount."))
 
-			else: # Form is invalid
-			    messages.error(request, _("Please correct the errors below."))
-		else: # GET request
-			form = ExpenseForm(player)
-		context['form'] = form
-	else: # Player is done
-	    messages.info(request, _("You have already confirmed your actions for this phase."))
+            else: # Form is invalid
+                messages.error(request, _("Please correct the errors below."))
+        else: # GET request
+            form = ExpenseForm(player)
+        context['form'] = form
+    else: # Player is done
+        messages.info(request, _("You have already confirmed your actions for this phase."))
 
-	return render_to_response('machiavelli/expenses_actions.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/expenses_actions.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @login_required
 def undo_expense(request, slug='', expense_id=''):
-	# ... (Logic okay, but ensure player is not done) ...
-	game = get_object_or_404(Game, slug=slug)
-	player = get_object_or_404(Player, game=game, user=request.user)
-	expense = get_object_or_404(Expense, id=expense_id, player=player)
+    # ... (Logic okay, but ensure player is not done) ...
+    game = get_object_or_404(Game, slug=slug)
+    player = get_object_or_404(Player, game=game, user=request.user)
+    expense = get_object_or_404(Expense, id=expense_id, player=player)
 
-	if player.done:
-	    messages.error(request, _("Cannot undo expense after confirming actions."))
-	    return redirect(game)
+    if player.done:
+        messages.error(request, _("Cannot undo expense after confirming actions."))
+        return redirect(game)
 
-	if expense.confirmed:
-	    messages.error(request, _("Cannot undo a confirmed expense."))
-	    return redirect('expenses', slug=game.slug) # Redirect back to expenses page
+    if expense.confirmed:
+        messages.error(request, _("Cannot undo a confirmed expense."))
+        return redirect('expenses', slug=game.slug) # Redirect back to expenses page
 
-	try:
-		expense.undo() # Model method handles refund and deletion
-		messages.success(request, _("Expense successfully undone."))
-	except Exception as e: # Catch potential errors during undo
-		messages.error(request, _("Expense could not be undone."))
-		if logging: logging.error("Error undoing expense {expense_id} for player {player.id}: {e}")
+    try:
+        expense.undo() # Model method handles refund and deletion
+        messages.success(request, _("Expense successfully undone."))
+    except Exception as e: # Catch potential errors during undo
+        messages.error(request, _("Expense could not be undone."))
+        if logging: logging.error("Error undoing expense {expense_id} for player {player.id}: {e}")
 
-	return redirect('expenses', slug=game.slug) # Redirect back to expenses page
+    return redirect('expenses', slug=game.slug) # Redirect back to expenses page
 
 # --- Other Views (Game Results, Logs, Ranking, Scenario - largely unchanged) ---
 @never_cache
 def game_results(request, slug=''):
-	# ... (remains same) ...
-	game = get_object_or_404(Game, slug=slug)
-	if game.phase != PHINACTIVE:
-		# Redirect active games back to the game view
-		return redirect('show-game', slug=game.slug)
-	scores = game.score_set.filter(user__isnull=False).order_by('-points')
-	context = {'game': game,
-				'map' : game.get_map_url(),
-				'players': scores,
-				'show_log': False,}
-	# Check if TurnLog exists instead of BaseEvent
-	if game.turnlog_set.exists():
-		context['show_log'] = True
-	return render_to_response('machiavelli/game_results.html',
-							context,
-							context_instance=RequestContext(request))
+    # ... (remains same) ...
+    game = get_object_or_404(Game, slug=slug)
+    if game.phase != PHINACTIVE:
+        # Redirect active games back to the game view
+        return redirect('show-game', slug=game.slug)
+    scores = game.score_set.filter(user__isnull=False).order_by('-points')
+    context = {'game': game,
+                'map' : game.get_map_url(),
+                'players': scores,
+                'show_log': False,}
+    # Check if TurnLog exists instead of BaseEvent
+    if game.turnlog_set.exists():
+        context['show_log'] = True
+    return render_to_response('machiavelli/game_results.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @never_cache
 @login_required # Require login to view logs? Or make public?
@@ -990,583 +1158,583 @@ def logs_by_game(request, slug=''):
 
 @login_required
 def create_game(request):
-	context = sidebar_context(request)
-	context.update( {'user': request.user,})
-	if request.method == 'POST':
-		# Pass user to GameForm constructor
-		game_form = forms.GameForm(user=request.user, data=request.POST)
-		config_form = forms.ConfigurationForm(request.POST)
-		if game_form.is_valid() and config_form.is_valid(): # Validate both forms
-			new_game = game_form.save(commit=False)
-			# Calculate initial slots based on scenario
-			new_game.slots = new_game.scenario.get_slots() # Get actual player count
-			if new_game.slots > 0:
-			    new_game.slots -= 1 # Decrement for the creator
-			else:
-			    # Handle scenarios with 0 or 1 player? Or assume always > 1
-			    messages.error(request, _("Scenario requires more players."))
-			    # Redirect or show error without saving
-			    return render_to_response('machiavelli/game_form.html', {
-			        'game_form': game_form, 'config_form': config_form, **context
-			    }, context_instance=RequestContext(request))
+    context = sidebar_context(request)
+    context.update( {'user': request.user,})
+    if request.method == 'POST':
+        # Pass user to GameForm constructor
+        game_form = forms.GameForm(user=request.user, data=request.POST)
+        config_form = forms.ConfigurationForm(request.POST)
+        if game_form.is_valid() and config_form.is_valid(): # Validate both forms
+            new_game = game_form.save(commit=False)
+            # Calculate initial slots based on scenario
+            new_game.slots = new_game.scenario.get_slots() # Get actual player count
+            if new_game.slots > 0:
+                new_game.slots -= 1 # Decrement for the creator
+            else:
+                # Handle scenarios with 0 or 1 player? Or assume always > 1
+                messages.error(request, _("Scenario requires more players."))
+                # Redirect or show error without saving
+                template_context = {'game_form': game_form, 'config_form': config_form}
+                template_context.update(context)
+                return render_to_response('machiavelli/game_form.html',
+                    template_context,
+                    context_instance=RequestContext(request))
 
-			new_game.save() # Save game first to get PK
+            new_game.save() # Save game first to get PK
 
-			# Save configuration linked to the new game
-			config = config_form.save(commit=False)
-			config.game = new_game
-			config.save()
+            # Save configuration linked to the new game
+            config = config_form.save(commit=False)
+            config.game = new_game
+            config.save()
 
-			# Create player entry for the creator
-			new_player = Player(user=request.user, game=new_game)
-			new_player.save()
+            # Create player entry for the creator
+            new_player = Player(user=request.user, game=new_game)
+            new_player.save()
 
-			cache.delete('sidebar_activity')
-			messages.success(request, _("Game successfully created."))
-			if new_game.private:
-				return redirect('invite-users', slug=new_game.slug)
-			else:
-				return redirect('summary')
-		else:
-		    # Forms are invalid, pass them back to the template with errors
-		    messages.error(request, _("Please correct the errors below."))
-	else:
-		game_form = forms.GameForm(user=request.user) # Pass user here too
-		config_form = forms.ConfigurationForm()
+            cache.delete('sidebar_activity')
+            messages.success(request, _("Game successfully created."))
+            if new_game.private:
+                return redirect('invite-users', slug=new_game.slug)
+            else:
+                return redirect('summary')
+        else:
+            # Forms are invalid, pass them back to the template with errors
+            messages.error(request, _("Please correct the errors below."))
+    else:
+        game_form = forms.GameForm(user=request.user) # Pass user here too
+        config_form = forms.ConfigurationForm()
 
-	context['scenarios'] = Scenario.objects.filter(enabled=True)
-	context['game_form'] = game_form
-	context['config_form'] = config_form
-	return render_to_response('machiavelli/game_form.html',
-							context,
-							context_instance=RequestContext(request))
+    context['scenarios'] = Scenario.objects.filter(enabled=True)
+    context['game_form'] = game_form
+    context['config_form'] = config_form
+    return render_to_response('machiavelli/game_form.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @login_required
 def invite_users(request, slug=''):
-	g = get_object_or_404(Game, slug=slug)
-	## check that the game is open
-	if g.slots == 0:
-		raise Http404
-	## check that the current user is the creator of the game
-	if g.created_by != request.user:
-		raise Http404
-	context = sidebar_context(request)
-	context.update({'game': g,})
-	context.update({'players': g.player_set.exclude(user__isnull=True)})
-	invitations = Invitation.objects.filter(game=g)
-	context.update({'invitations': invitations})
-	if request.method == 'POST':
-		form = forms.InvitationForm(request.POST)
-		if form.is_valid():
-			message = form.cleaned_data['message']
-			user_list = form.cleaned_data['user_list']
-			user_names = user_list.split(',')
-			for u in user_names:
-				name = u.strip()
-				try:
-					user = User.objects.get(username=name)
-				except ObjectDoesNotExist:
-					continue
-				else:
-					## check that the user is not already in the game
-					try:
-						Player.objects.get(game=g, user=user)
-					except ObjectDoesNotExist:
-						## check for existing invitation
-						try:
-							Invitation.objects.get(game=g, user=user)
-						except ObjectDoesNotExist:
-							i = Invitation()
-							i.game = g
-							i.user = user
-							i.message = message
-							i.save()
-	else:
-		form = forms.InvitationForm()
-	context.update({'form': form})
-	return render_to_response('machiavelli/invitation_form.html',
-							context,
-							context_instance=RequestContext(request))
+    g = get_object_or_404(Game, slug=slug)
+    ## check that the game is open
+    if g.slots == 0:
+        raise Http404
+    ## check that the current user is the creator of the game
+    if g.created_by != request.user:
+        raise Http404
+    context = sidebar_context(request)
+    context.update({'game': g,})
+    context.update({'players': g.player_set.exclude(user__isnull=True)})
+    invitations = Invitation.objects.filter(game=g)
+    context.update({'invitations': invitations})
+    if request.method == 'POST':
+        form = forms.InvitationForm(request.POST)
+        if form.is_valid():
+            message = form.cleaned_data['message']
+            user_list = form.cleaned_data['user_list']
+            user_names = user_list.split(',')
+            for u in user_names:
+                name = u.strip()
+                try:
+                    user = User.objects.get(username=name)
+                except ObjectDoesNotExist:
+                    continue
+                else:
+                    ## check that the user is not already in the game
+                    try:
+                        Player.objects.get(game=g, user=user)
+                    except ObjectDoesNotExist:
+                        ## check for existing invitation
+                        try:
+                            Invitation.objects.get(game=g, user=user)
+                        except ObjectDoesNotExist:
+                            i = Invitation()
+                            i.game = g
+                            i.user = user
+                            i.message = message
+                            i.save()
+    else:
+        form = forms.InvitationForm()
+    context.update({'form': form})
+    return render_to_response('machiavelli/invitation_form.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @login_required
 def join_game(request, slug=''):
-	g = get_object_or_404(Game, slug=slug)
-	invitation = None
-	## check if the user has defined his languages
-	if not request.user.get_profile().has_languages():
-		messages.error(request, _("You must define at least one known language before joining a game."))
-		messages.info(request, _("Define your languages and then, try again."))
-		return redirect("profile_languages_edit")
-	if g.private:
-		## check if user has been invited
-		try:
-			invitation = Invitation.objects.get(game=g, user=request.user)
-		except ObjectDoesNotExist:
-			messages.error(request, _("This game is private and you have not been invited."))
-			return redirect("games-joinable")
-	else:
-		karma = request.user.get_profile().karma
-		if karma < settings.KARMA_TO_JOIN:
-			err = _("You need a minimum karma of %s to join a game.") % settings.KARMA_TO_JOIN
-			messages.error(request, err)
-			return redirect("summary")
-		if g.fast and karma < settings.KARMA_TO_FAST:
-			err = _("You need a minimum karma of %s to join a fast game.") % settings.KARMA_TO_FAST
-			messages.error(request, err)
-			return redirect("games-joinable")
-	if g.slots > 0:
-		try:
-			Player.objects.get(user=request.user, game=g)
-		except:
-			## the user is not in the game
-			new_player = Player(user=request.user, game=g)
-			new_player.save()
-			if invitation:
-				invitation.delete()
-			g.player_joined()
-			messages.success(request, _("You have successfully joined the game."))
-			cache.delete('sidebar_activity')
-		else:
-			messages.error(request, _("You had already joined this game."))
-	return redirect('summary')
+    g = get_object_or_404(Game, slug=slug)
+    invitation = None
+    ## check if the user has defined his languages
+    if not request.user.get_profile().has_languages():
+        messages.error(request, _("You must define at least one known language before joining a game."))
+        messages.info(request, _("Define your languages and then, try again."))
+        return redirect("profile_languages_edit")
+    if g.private:
+        ## check if user has been invited
+        try:
+            invitation = Invitation.objects.get(game=g, user=request.user)
+        except ObjectDoesNotExist:
+            messages.error(request, _("This game is private and you have not been invited."))
+            return redirect("games-joinable")
+    else:
+        karma = request.user.get_profile().karma
+        if karma < settings.KARMA_TO_JOIN:
+            err = _("You need a minimum karma of %s to join a game.") % settings.KARMA_TO_JOIN
+            messages.error(request, err)
+            return redirect("summary")
+        if g.fast and karma < settings.KARMA_TO_FAST:
+            err = _("You need a minimum karma of %s to join a fast game.") % settings.KARMA_TO_FAST
+            messages.error(request, err)
+            return redirect("games-joinable")
+    if g.slots > 0:
+        try:
+            Player.objects.get(user=request.user, game=g)
+        except:
+            ## the user is not in the game
+            new_player = Player(user=request.user, game=g)
+            new_player.save()
+            if invitation:
+                invitation.delete()
+            g.player_joined()
+            messages.success(request, _("You have successfully joined the game."))
+            cache.delete('sidebar_activity')
+        else:
+            messages.error(request, _("You had already joined this game."))
+    return redirect('summary')
 
 @login_required
 def leave_game(request, slug=''):
-	g = get_object_or_404(Game, slug=slug, slots__gt=0)
-	try:
-		player = Player.objects.get(user=request.user, game=g)
-	except:
-		## the user is not in the game
-		messages.error(request, _("You had not joined this game."))
-	else:
-		player.delete()
-		g.slots += 1
-		g.save()
-		cache.delete('sidebar_activity')
-		messages.success(request, _("You have left the game."))
-		## if the game has no players, delete the game
-		if g.player_set.count() == 0:
-			g.delete()
-			messages.info(request, _("The game has been deleted."))
-	return redirect('summary')
+    g = get_object_or_404(Game, slug=slug, slots__gt=0)
+    try:
+        player = Player.objects.get(user=request.user, game=g)
+    except:
+        ## the user is not in the game
+        messages.error(request, _("You had not joined this game."))
+    else:
+        player.delete()
+        g.slots += 1
+        g.save()
+        cache.delete('sidebar_activity')
+        messages.success(request, _("You have left the game."))
+        ## if the game has no players, delete the game
+        if g.player_set.count() == 0:
+            g.delete()
+            messages.info(request, _("The game has been deleted."))
+    return redirect('summary')
 
 @login_required
 def make_public(request, slug=''):
-	g = get_object_or_404(Game, slug=slug, slots__gt=0,
-						private=True, created_by=request.user)
-	g.private = False
-	g.save()
-	g.invitation_set.all().delete()
-	messages.success(request, _("The game is now open to all users."))
-	return redirect('games-pending')
+    g = get_object_or_404(Game, slug=slug, slots__gt=0,
+                        private=True, created_by=request.user)
+    g.private = False
+    g.save()
+    g.invitation_set.all().delete()
+    messages.success(request, _("The game is now open to all users."))
+    return redirect('games-pending')
 
 @login_required
 def overthrow(request, revolution_id):
-	revolution = get_object_or_404(Revolution, pk=revolution_id)
-	g = revolution.government.game
-	try:
-		## check that overthrowing user is not a player
-		Player.objects.get(user=request.user, game=g)
-	except ObjectDoesNotExist:
-		try:
-			## check that there is not another revolution with the same player
-			Revolution.objects.get(government__game=g, opposition=request.user)
-		except ObjectDoesNotExist:
-			karma = request.user.get_profile().karma
-			if karma < settings.KARMA_TO_JOIN:
-				err = _("You need a minimum karma of %s to join a game.") % settings.KARMA_TO_JOIN
-				messages.error(request, err)
-				return redirect("summary")
-			revolution.opposition = request.user
-			revolution.save()
-			messages.success(request, _("Your overthrow attempt has been saved."))
-		else:
-			messages.error(request, _("You are already attempting an overthrow on another player in the same game."))
-	else:
-		messages.error(request, _("You are already playing this game."))
-	return redirect("summary")
-
-@login_required
+    revolution = get_object_or_404(Revolution, pk=revolution_id)
+    g = revolution.government.game
+    try:
+        ## check that overthrowing user is not a player
+        Player.objects.get(user=request.user, game=g)
+    except ObjectDoesNotExist:
+        try:
+            ## check that there is not another revolution with the same player
+            Revolution.objects.get(government__game=g, opposition=request.user)
+        except ObjectDoesNotExist:
+            karma = request.user.get_profile().karma
+            if karma < settings.KARMA_TO_JOIN:
+                err = _("You need a minimum karma of %s to join a game.") % settings.KARMA_TO_JOIN
+                messages.error(request, err)
+                return redirect("summary")
+            revolution.opposition = request.user
+            revolution.save()
+            messages.success(request, _("Your overthrow attempt has been saved."))
+        else:
+            messages.error(request, _("You are already attempting an overthrow on another player in the same game."))
+    else:
+        messages.error(request, _("You are already playing this game."))
+    return redirect("summary")
 
 # --- Excommunication Views (unchanged logic, rely on model methods) ---
 @login_required
 def excommunicate(request, slug, player_id):
-	# ... (remains same) ...
-	game = get_object_or_404(Game, slug=slug)
-	if game.phase == PHINACTIVE or not game.configuration.excommunication:
-		messages.error(request, _("You cannot excommunicate in this game or phase."))
-		return redirect(game)
-	papacy = get_object_or_404(Player, user=request.user, game=game, may_excommunicate=True)
-	if not papacy.can_excommunicate():
-		messages.error(request, _("You cannot excommunicate in the current season or have already acted."))
-		return redirect(game)
-	try:
-		player = Player.objects.get(game=game, id=player_id, eliminated=False, conqueror__isnull=True, may_excommunicate=False)
-	except Player.DoesNotExist:
-		messages.error(request, _("You cannot excommunicate this country (perhaps already eliminated or is the Papacy?)."))
-	else:
-		player.set_excommunication(by_pope=True)
-		papacy.has_sentenced = True
-		papacy.save(update_fields=['has_sentenced'])
-		messages.success(request, _("%(country)s has been excommunicated.") % {'country': player.country})
-	return redirect(game)
+    # ... (remains same) ...
+    game = get_object_or_404(Game, slug=slug)
+    if game.phase == PHINACTIVE or not game.configuration.excommunication:
+        messages.error(request, _("You cannot excommunicate in this game or phase."))
+        return redirect(game)
+    papacy = get_object_or_404(Player, user=request.user, game=game, may_excommunicate=True)
+    if not papacy.can_excommunicate():
+        messages.error(request, _("You cannot excommunicate in the current season or have already acted."))
+        return redirect(game)
+    try:
+        player = Player.objects.get(game=game, id=player_id, eliminated=False, conqueror__isnull=True, may_excommunicate=False)
+    except Player.DoesNotExist:
+        messages.error(request, _("You cannot excommunicate this country (perhaps already eliminated or is the Papacy?)."))
+    else:
+        player.set_excommunication(by_pope=True)
+        papacy.has_sentenced = True
+        papacy.save(update_fields=['has_sentenced'])
+        messages.success(request, _("%(country)s has been excommunicated.") % {'country': player.country})
+    return redirect(game)
 
 @login_required
 def forgive_excommunication(request, slug, player_id):
-	# ... (remains same) ...
-	game = get_object_or_404(Game, slug=slug)
-	if game.phase == PHINACTIVE or not game.configuration.excommunication:
-		messages.error(request, _("You cannot forgive excommunications in this game or phase."))
-		return redirect(game)
-	papacy = get_object_or_404(Player, user=request.user, game=game, may_excommunicate=True)
-	if not papacy.can_forgive():
-		messages.error(request, _("You cannot forgive excommunications in the current season or have already acted."))
-		return redirect(game)
-	try:
-		player = Player.objects.get(game=game, id=player_id, eliminated=False, conqueror__isnull=True, is_excommunicated=True)
-	except Player.DoesNotExist:
-		messages.error(request, _("This country is not currently excommunicated or cannot be forgiven."))
-	else:
-		player.unset_excommunication()
-		papacy.has_sentenced = True
-		papacy.save(update_fields=['has_sentenced'])
-		messages.success(request, _("%(country)s has been forgiven.") % {'country': player.country})
-	return redirect(game)
+    # ... (remains same) ...
+    game = get_object_or_404(Game, slug=slug)
+    if game.phase == PHINACTIVE or not game.configuration.excommunication:
+        messages.error(request, _("You cannot forgive excommunications in this game or phase."))
+        return redirect(game)
+    papacy = get_object_or_404(Player, user=request.user, game=game, may_excommunicate=True)
+    if not papacy.can_forgive():
+        messages.error(request, _("You cannot forgive excommunications in the current season or have already acted."))
+        return redirect(game)
+    try:
+        player = Player.objects.get(game=game, id=player_id, eliminated=False, conqueror__isnull=True, is_excommunicated=True)
+    except Player.DoesNotExist:
+        messages.error(request, _("This country is not currently excommunicated or cannot be forgiven."))
+    else:
+        player.unset_excommunication()
+        papacy.has_sentenced = True
+        papacy.save(update_fields=['has_sentenced'])
+        messages.success(request, _("%(country)s has been forgiven.") % {'country': player.country})
+    return redirect(game)
 
 #@cache_page(60 * 60)
 def scenario_list(request):
-	""" Gets a list of all the enabled scenarios. """
-	context = sidebar_context(request)	
-	scenarios = Scenario.objects.filter(enabled=True)
-	context.update( {'scenarios': scenarios, })
+    """ Gets a list of all the enabled scenarios. """
+    context = sidebar_context(request)	
+    scenarios = Scenario.objects.filter(enabled=True)
+    context.update( {'scenarios': scenarios, })
 
-	return render_to_response('machiavelli/scenario_list.html',
-							context,
-							context_instance = RequestContext(request))
+    return render_to_response('machiavelli/scenario_list.html',
+                            context,
+                            context_instance = RequestContext(request))
 
 @never_cache
 def show_scenario(request, scenario_id):
-	scenario = get_object_or_404(Scenario, id=scenario_id, enabled=True)
+    scenario = get_object_or_404(Scenario, id=scenario_id, enabled=True)
 
-	countries = Country.objects.filter(home__scenario=scenario).distinct()
-	autonomous = Setup.objects.filter(scenario=scenario, country__isnull=True)
-	major_cities = scenario.cityincome_set.all()
-	disabled_areas = Area.objects.filter(disabledarea__scenario=scenario).values_list('name', flat=True)
+    countries = Country.objects.filter(home__scenario=scenario).distinct()
+    autonomous = Setup.objects.filter(scenario=scenario, country__isnull=True)
+    major_cities = scenario.cityincome_set.all()
+    disabled_areas = Area.objects.filter(disabledarea__scenario=scenario).values_list('name', flat=True)
 
-	countries_dict = {}
+    countries_dict = {}
 
-	for c in countries:
-		data = {}
-		data['name'] = c.name
-		data['homes'] = c.home_set.select_related().filter(scenario=scenario)
-		data['setups'] = c.setup_set.select_related().filter(scenario=scenario)
-		try:
-			treasury = c.treasury_set.get(scenario=scenario)
-			data['ducats'] = treasury.ducats
-			data['double'] = treasury.double
-		except Treasury.DoesNotExist:
-			# Create a default treasury for this country
-			treasury = Treasury.objects.create(scenario=scenario, country=c, ducats=0, double=False)
-			data['ducats'] = 0
-			data['double'] = False
-		countries_dict[c.static_name] = data
+    for c in countries:
+        data = {}
+        data['name'] = c.name
+        data['homes'] = c.home_set.select_related().filter(scenario=scenario)
+        data['setups'] = c.setup_set.select_related().filter(scenario=scenario)
+        try:
+            treasury = c.treasury_set.get(scenario=scenario)
+            data['ducats'] = treasury.ducats
+            data['double'] = treasury.double
+        except Treasury.DoesNotExist:
+            # Create a default treasury for this country
+            treasury = Treasury.objects.create(scenario=scenario, country=c, ducats=0, double=False)
+            data['ducats'] = 0
+            data['double'] = False
+        countries_dict[c.static_name] = data
 
-	return render_to_response('machiavelli/scenario_detail.html',
-							{'scenario': scenario,
-							'countries': countries_dict,
-							'autonomous': autonomous,
-							'major_cities': major_cities,
-							'disabled_areas': disabled_areas,
-							},
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/scenario_detail.html',
+                            {'scenario': scenario,
+                            'countries': countries_dict,
+                            'autonomous': autonomous,
+                            'major_cities': major_cities,
+                            'disabled_areas': disabled_areas,
+                            },
+                            context_instance=RequestContext(request))
 
 
 #@login_required
 #@cache_page(30 * 60)
 def hall_of_fame(request):
-	profiles_list = CondottieriProfile.objects.all().order_by('-weighted_score')
-	paginator = Paginator(profiles_list, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		profiles = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		profiles = paginator.page(paginator.num_pages)
-	context = {'profiles': profiles}
-	return render_to_response('machiavelli/hall_of_fame.html',
-							context,
-							context_instance=RequestContext(request))
+    profiles_list = CondottieriProfile.objects.all().order_by('-weighted_score')
+    paginator = Paginator(profiles_list, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        profiles = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        profiles = paginator.page(paginator.num_pages)
+    context = {'profiles': profiles}
+    return render_to_response('machiavelli/hall_of_fame.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 def ranking(request, key='', val=''):
-	""" Gets the qualification, ordered by scores, for a given parameter. """
-	
-	scores = Score.objects.all().order_by('-points')
-	if key == 'user': # by user
-		user = get_object_or_404(User, username=val)
-		scores = scores.filter(user=user)
-		title = _("Ranking for the user") + ' ' + val
-	elif key == 'scenario': # by scenario
-		scenario = get_object_or_404(Scenario, name=val)
-		scores = scores.filter(game__scenario=scenario)
-		title = _("Ranking for the scenario") + ' ' + val
-	elif key == 'country': # by country
-		country = get_object_or_404(Country, css_class=val)
-		scores = scores.filter(country=country)
-		title = _("Ranking for the country") + ' ' + country.name
-	else:
-		raise Http404
+    """ Gets the qualification, ordered by scores, for a given parameter. """
+    
+    scores = Score.objects.all().order_by('-points')
+    if key == 'user': # by user
+        user = get_object_or_404(User, username=val)
+        scores = scores.filter(user=user)
+        title = _("Ranking for the user") + ' ' + val
+    elif key == 'scenario': # by scenario
+        scenario = get_object_or_404(Scenario, name=val)
+        scores = scores.filter(game__scenario=scenario)
+        title = _("Ranking for the scenario") + ' ' + val
+    elif key == 'country': # by country
+        country = get_object_or_404(Country, css_class=val)
+        scores = scores.filter(country=country)
+        title = _("Ranking for the country") + ' ' + country.name
+    else:
+        raise Http404
 
-	paginator = Paginator(scores, 10)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		qualification = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		qualification = paginator.page(paginator.num_pages)
-	context = {
-		'qualification': qualification,
-		'key': key,
-		'val': val,
-		'title': title,
-		}
-	return render_to_response('machiavelli/ranking.html',
-							context,
-							context_instance=RequestContext(request))
+    paginator = Paginator(scores, 10)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        qualification = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        qualification = paginator.page(paginator.num_pages)
+    context = {
+        'qualification': qualification,
+        'key': key,
+        'val': val,
+        'title': title,
+        }
+    return render_to_response('machiavelli/ranking.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @login_required
 #@cache_page(60 * 60) # cache 1 hour
 def turn_log_list(request, slug=''):
-	game = get_object_or_404(Game, slug=slug)
-	log_list = game.turnlog_set.all()
-	paginator = Paginator(log_list, 1)
-	try:
-		page = int(request.GET.get('page', '1'))
-	except ValueError:
-		page = 1
-	try:
-		log = paginator.page(page)
-	except (EmptyPage, InvalidPage):
-		log = paginator.page(paginator.num_pages)
-	context = {
-		'game': game,
-		'log': log,
-		}
+    game = get_object_or_404(Game, slug=slug)
+    log_list = game.turnlog_set.all()
+    paginator = Paginator(log_list, 1)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        log = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        log = paginator.page(paginator.num_pages)
+    context = {
+        'game': game,
+        'log': log,
+        }
 
-	return render_to_response('machiavelli/turn_log_list.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/turn_log_list.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 # --- Financial/Political Actions ---
 @login_required
 def give_money(request, slug, player_id):
-	# ... (Logic okay, uses LendForm) ...
-	game = get_object_or_404(Game, slug=slug)
-	if game.phase == PHINACTIVE or not game.configuration.finances: # Check phase and finances
-		messages.error(request, _("You cannot give money in this game or phase."))
-		return redirect(game)
-	borrower = get_object_or_404(Player, id=player_id, game=game)
-	lender = get_object_or_404(Player, user=request.user, game=game)
+    # ... (Logic okay, uses LendForm) ...
+    game = get_object_or_404(Game, slug=slug)
+    if game.phase == PHINACTIVE or not game.configuration.finances: # Check phase and finances
+        messages.error(request, _("You cannot give money in this game or phase."))
+        return redirect(game)
+    borrower = get_object_or_404(Player, id=player_id, game=game)
+    lender = get_object_or_404(Player, user=request.user, game=game)
 
-	if lender == borrower:
-	    messages.error(request, _("You cannot give money to yourself."))
-	    return redirect(game)
-	if lender.done:
-	    messages.error(request, _("You cannot give money after confirming actions."))
-	    return redirect(game)
+    if lender == borrower:
+        messages.error(request, _("You cannot give money to yourself."))
+        return redirect(game)
+    if lender.done:
+        messages.error(request, _("You cannot give money after confirming actions."))
+        return redirect(game)
 
-	context = base_context(request, game, lender)
+    context = base_context(request, game, lender)
 
-	if request.method == 'POST':
-		form = forms.LendForm(request.POST)
-		if form.is_valid():
-			ducats = form.cleaned_data['ducats']
-			if ducats > lender.ducats:
-				messages.error(request, _("You cannot give more money than you have."))
-				# Re-render form with error
-				context['form'] = form
-				context['borrower'] = borrower
-				return render_to_response('machiavelli/give_money.html', context, context_instance=RequestContext(request))
+    if request.method == 'POST':
+        form = forms.LendForm(request.POST)
+        if form.is_valid():
+            ducats = form.cleaned_data['ducats']
+            if ducats > lender.ducats:
+                messages.error(request, _("You cannot give more money than you have."))
+                # Re-render form with error
+                context['form'] = form
+                context['borrower'] = borrower
+                return render_to_response('machiavelli/give_money.html', context, context_instance=RequestContext(request))
 
-			# Use F expressions for atomic update
-			Player.objects.filter(id=lender.id).update(ducats=F('ducats') - ducats)
-			Player.objects.filter(id=borrower.id).update(ducats=F('ducats') + ducats)
+            # Use F expressions for atomic update
+            Player.objects.filter(id=lender.id).update(ducats=F('ducats') - ducats)
+            Player.objects.filter(id=borrower.id).update(ducats=F('ducats') + ducats)
 
-			messages.success(request, _("Successfully sent %(ducats)s ducats to %(country)s.") % {'ducats': ducats, 'country': borrower.country})
-			if notification:
-				extra_context = {'game': lender.game, 'ducats': ducats, 'country': lender.country, 'STATIC_URL': settings.STATIC_URL}
-				notice_users = [borrower.user] if borrower.user else []
-				if notice_users:
-				    if lender.game.fast: notification.send_now(notice_users, "received_ducats", extra_context)
-				    else: notification.send(notice_users, "received_ducats", extra_context)
-			return redirect(game)
-		else:
-		    messages.error(request, _("Invalid amount entered."))
-	else:
-		form = forms.LendForm()
-	context['form'] = form
-	context['borrower'] = borrower
+            messages.success(request, _("Successfully sent %(ducats)s ducats to %(country)s.") % {'ducats': ducats, 'country': borrower.country})
+            if notification:
+                extra_context = {'game': lender.game, 'ducats': ducats, 'country': lender.country, 'STATIC_URL': settings.STATIC_URL}
+                notice_users = [borrower.user] if borrower.user else []
+                if notice_users:
+                    if lender.game.fast: notification.send_now(notice_users, "received_ducats", extra_context)
+                    else: notification.send(notice_users, "received_ducats", extra_context)
+            return redirect(game)
+        else:
+            messages.error(request, _("Invalid amount entered."))
+    else:
+        form = forms.LendForm()
+    context['form'] = form
+    context['borrower'] = borrower
 
-	return render_to_response('machiavelli/give_money.html',
-							context,
-							context_instance=RequestContext(request))
+    return render_to_response('machiavelli/give_money.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @login_required
 def borrow_money(request, slug):
-	# ... (Logic okay, uses updated BorrowForm with validation) ...
-	game = get_object_or_404(Game, slug=slug)
-	player = get_object_or_404(Player, user=request.user, game=game)
-	# Allow borrowing only during specific phases (e.g., before Order Writing)
-	# Rule X implies during Ducat Borrowing Phase - map this to a game phase like PHLENDERS or before PHORDERS
-	allowed_phases = [PHLENDERS, PHNEGOTIATION] # Example: Allow during Negotiation or specific Lender phase
-	if game.phase not in allowed_phases or not game.configuration.lenders or player.done:
-		messages.error(request, _("You cannot borrow money at this moment."))
-		return redirect(game)
+    # ... (Logic okay, uses updated BorrowForm with validation) ...
+    game = get_object_or_404(Game, slug=slug)
+    player = get_object_or_404(Player, user=request.user, game=game)
+    # Allow borrowing only during specific phases (e.g., before Order Writing)
+    # Rule X implies during Ducat Borrowing Phase - map this to a game phase like PHLENDERS or before PHORDERS
+    allowed_phases = [PHLENDERS, PHNEGOTIATION] # Example: Allow during Negotiation or specific Lender phase
+    if game.phase not in allowed_phases or not game.configuration.lenders or player.done:
+        messages.error(request, _("You cannot borrow money at this moment."))
+        return redirect(game)
 
-	context = base_context(request, game, player)
-	credit = player.get_credit()
-	try: loan = player.loan
-	except Loan.DoesNotExist: loan = None
+    context = base_context(request, game, player)
+    credit = player.get_credit()
+    try: loan = player.loan
+    except Loan.DoesNotExist: loan = None
 
-	if loan: # Player must repay existing loan
-		context.update({'loan': loan})
-		if request.method == 'POST':
-			form = forms.RepayForm(request.POST) # Use RepayForm for confirmation
-			if form.is_valid(): # Simple validation for POST
-			    if player.ducats >= loan.debt:
-			        Player.objects.filter(id=player.id).update(ducats=F('ducats') - loan.debt)
-			        loan.delete()
-			        messages.success(request, _("You have repaid the loan."))
-			    else:
-			        messages.error(request, _("You don't have enough money to repay the loan."))
-			    return redirect(game)
-		else:
-			form = forms.RepayForm()
-	else: # Player may ask for a new loan
-		if player.defaulted: # Rule X.B
-		    messages.error(request, _("You cannot borrow money after defaulting on a previous loan."))
-		    return redirect(game)
-		if credit <= 0:
-		     messages.info(request, _("You currently have no credit available to borrow."))
-		     # Optionally disable form or show message clearly
+    if loan: # Player must repay existing loan
+        context.update({'loan': loan})
+        if request.method == 'POST':
+            form = forms.RepayForm(request.POST) # Use RepayForm for confirmation
+            if form.is_valid(): # Simple validation for POST
+                if player.ducats >= loan.debt:
+                    Player.objects.filter(id=player.id).update(ducats=F('ducats') - loan.debt)
+                    loan.delete()
+                    messages.success(request, _("You have repaid the loan."))
+                else:
+                    messages.error(request, _("You don't have enough money to repay the loan."))
+                return redirect(game)
+        else:
+            form = forms.RepayForm()
+    else: # Player may ask for a new loan
+        if player.defaulted: # Rule X.B
+            messages.error(request, _("You cannot borrow money after defaulting on a previous loan."))
+            return redirect(game)
+        if credit <= 0:
+             messages.info(request, _("You currently have no credit available to borrow."))
+             # Optionally disable form or show message clearly
 
-		if request.method == 'POST':
-			form = forms.BorrowForm(player=player, data=request.POST) # Pass player to form
-			if form.is_valid():
-				ducats = form.cleaned_data['ducats']
-				term = int(form.cleaned_data['term'])
-				# Calculate debt based on interest (Rule X.A.3)
-				interest_rate = 0.20 if term == 1 else 0.50
-				interest = ceil(ducats * interest_rate)
-				debt_amount = ducats + int(interest)
+        if request.method == 'POST':
+            form = forms.BorrowForm(player=player, data=request.POST) # Pass player to form
+            if form.is_valid():
+                ducats = form.cleaned_data['ducats']
+                term = int(form.cleaned_data['term'])
+                # Calculate debt based on interest (Rule X.A.3)
+                interest_rate = 0.20 if term == 1 else 0.50
+                interest = ceil(ducats * interest_rate)
+                debt_amount = ducats + int(interest)
 
-				new_loan = Loan(player=player, debt=debt_amount, season=game.season)
-				new_loan.year = game.year + term
-				new_loan.save()
+                new_loan = Loan(player=player, debt=debt_amount, season=game.season)
+                new_loan.year = game.year + term
+                new_loan.save()
 
-				Player.objects.filter(id=player.id).update(ducats=F('ducats') + ducats)
-				messages.success(request, _("You have borrowed %(ducats)s ducats. You must repay %(debt)s by %(season)s, %(year)s.") % {
-				    'ducats': ducats, 'debt': debt_amount, 'season': new_loan.get_season_display(), 'year': new_loan.year
-				})
-				return redirect(game)
-			else:
-			    messages.error(request, _("Please correct the errors below."))
-		else:
-			form = forms.BorrowForm(player=player) # Pass player to form
+                Player.objects.filter(id=player.id).update(ducats=F('ducats') + ducats)
+                messages.success(request, _("You have borrowed %(ducats)s ducats. You must repay %(debt)s by %(season)s, %(year)s.") % {
+                    'ducats': ducats, 'debt': debt_amount, 'season': new_loan.get_season_display(), 'year': new_loan.year
+                })
+                return redirect(game)
+            else:
+                messages.error(request, _("Please correct the errors below."))
+        else:
+            form = forms.BorrowForm(player=player) # Pass player to form
 
-	context.update({'credit': credit, 'form': form,})
-	return render_to_response('machiavelli/borrow_money.html',
-							context,
-							context_instance=RequestContext(request))
+    context.update({'credit': credit, 'form': form,})
+    return render_to_response('machiavelli/borrow_money.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 @login_required
 def assassination(request, slug):
-	# ... (Logic okay, uses updated AssassinationForm) ...
-	game = get_object_or_404(Game, slug=slug)
-	player = get_object_or_404(Player, user=request.user, game=game)
-	# Allow assassination attempts during specific phase (e.g., before Order Writing)
-	allowed_phases = [PHORDERS, PHNEGOTIATION] # Example
-	if game.phase not in allowed_phases or not game.configuration.assassinations or player.done:
-		messages.error(request, _("You cannot attempt an assassination at this moment."))
-		return redirect(game)
+    # ... (Logic okay, uses updated AssassinationForm) ...
+    game = get_object_or_404(Game, slug=slug)
+    player = get_object_or_404(Player, user=request.user, game=game)
+    # Allow assassination attempts during specific phase (e.g., before Order Writing)
+    allowed_phases = [PHORDERS, PHNEGOTIATION] # Example
+    if game.phase not in allowed_phases or not game.configuration.assassinations or player.done:
+        messages.error(request, _("You cannot attempt an assassination at this moment."))
+        return redirect(game)
 
-	context = base_context(request, game, player)
-	AssassinationForm = forms.make_assassination_form(player) # Uses updated form maker
+    context = base_context(request, game, player)
+    AssassinationForm = forms.make_assassination_form(player) # Uses updated form maker
 
-	if request.method == 'POST':
-		form = AssassinationForm(request.POST)
-		if form.is_valid():
-			ducats = form.cleaned_data['ducats'] # Already validated as int in [12, 24, 36]
-			target_country = form.cleaned_data['target']
-			try:
-			    target_player = Player.objects.get(game=game, country=target_country)
-			except Player.DoesNotExist:
-			     messages.error(request, _("Target player not found in this game."))
-			     return redirect(game) # Or re-render form
+    if request.method == 'POST':
+        form = AssassinationForm(request.POST)
+        if form.is_valid():
+            ducats = form.cleaned_data['ducats'] # Already validated as int in [12, 24, 36]
+            target_country = form.cleaned_data['target']
+            try:
+                target_player = Player.objects.get(game=game, country=target_country)
+            except Player.DoesNotExist:
+                 messages.error(request, _("Target player not found in this game."))
+                 return redirect(game) # Or re-render form
 
-			# Check if player has the assassin token (Model method handles this check implicitly via queryset)
-			try:
-				assassin_token = Assassin.objects.get(owner=player, target=target_country)
-			except Assassin.DoesNotExist:
-				messages.error(request, _("You do not have an assassin token for %(country)s.") % {'country': target_country})
-				return redirect(game) # Or re-render form
+            # Check if player has the assassin token (Model method handles this check implicitly via queryset)
+            try:
+                assassin_token = Assassin.objects.get(owner=player, target=target_country)
+            except Assassin.DoesNotExist:
+                messages.error(request, _("You do not have an assassin token for %(country)s.") % {'country': target_country})
+                return redirect(game) # Or re-render form
 
-			# Save the attempt, remove token, deduct ducats
-			assassination_attempt = Assassination(killer=player, target=target_player, ducats=ducats)
-			assassination_attempt.save()
-			assassin_token.delete()
-			Player.objects.filter(id=player.id).update(ducats=F('ducats') - ducats)
+            # Save the attempt, remove token, deduct ducats
+            assassination_attempt = Assassination(killer=player, target=target_player, ducats=ducats)
+            assassination_attempt.save()
+            assassin_token.delete()
+            Player.objects.filter(id=player.id).update(ducats=F('ducats') - ducats)
 
-			messages.success(request, _("Assassination attempt against %(country)s recorded.") % {'country': target_country})
-			return redirect(game)
-		else:
-		    messages.error(request, _("Please correct the errors below."))
-	else:
-		form = AssassinationForm()
+            messages.success(request, _("Assassination attempt against %(country)s recorded.") % {'country': target_country})
+            return redirect(game)
+        else:
+            messages.error(request, _("Please correct the errors below."))
+    else:
+        form = AssassinationForm()
 
-	context.update({'form': form,})
-	# Check if player can afford *any* attempt
-	context['can_afford'] = player.ducats >= 12 and player.assassin_set.exists()
-	return render_to_response('machiavelli/assassination.html',
-							context,
-							context_instance=RequestContext(request))
+    context.update({'form': form,})
+    # Check if player can afford *any* attempt
+    context['can_afford'] = player.ducats >= 12 and player.assassin_set.exists()
+    return render_to_response('machiavelli/assassination.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 # --- Whisper Views (unchanged) ---
 @login_required
 def new_whisper(request, slug):
-	# ... (remains same) ...
-	game = get_object_or_404(Game, slug=slug)
-	try:
-		player = Player.objects.get(user=request.user, game=game)
-	except ObjectDoesNotExist:
-		messages.error(request, _("You cannot write messages in this game"))
-		return redirect(game)
-	if request.method == 'POST':
-		form = forms.WhisperForm(request.user, game, data=request.POST)
-		if form.is_valid():
-			form.save()
-			messages.success(request, _("Whisper sent.")) # Add feedback
-		else:
-		    messages.error(request, _("Whisper could not be sent.")) # Add feedback
-	# Redirect back to game view regardless of success/failure or method
-	return redirect(game)
+    # ... (remains same) ...
+    game = get_object_or_404(Game, slug=slug)
+    try:
+        player = Player.objects.get(user=request.user, game=game)
+    except ObjectDoesNotExist:
+        messages.error(request, _("You cannot write messages in this game"))
+        return redirect(game)
+    if request.method == 'POST':
+        form = forms.WhisperForm(request.user, game, data=request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Whisper sent.")) # Add feedback
+        else:
+            messages.error(request, _("Whisper could not be sent.")) # Add feedback
+    # Redirect back to game view regardless of success/failure or method
+    return redirect(game)
 
 
 @login_required
 def whisper_list(request, slug):
-	# ... (remains same) ...
-	game = get_object_or_404(Game, slug=slug)
-	whisper_list = game.whisper_set.all() # Consider pagination for long lists
-	context = {
-		'game': game,
-		'whisper_list': whisper_list,
-		}
-	return render_to_response('machiavelli/whisper_list.html',
-							context,
-							context_instance=RequestContext(request))
+    # ... (remains same) ...
+    game = get_object_or_404(Game, slug=slug)
+    whisper_list = game.whisper_set.all() # Consider pagination for long lists
+    context = {
+        'game': game,
+        'whisper_list': whisper_list,
+        }
+    return render_to_response('machiavelli/whisper_list.html',
+                            context,
+                            context_instance=RequestContext(request))
 
 # --- AJAX Views ---
 
@@ -1579,7 +1747,7 @@ def get_valid_destinations(request, slug):
     """
     game = get_object_or_404(Game, slug=slug)
     unit_id = request.GET.get('unit_id')
-    order_code = request.GET.get('order_code') # Renamed from order_type for clarity
+    order_code = request.GET.get('order_code')
 
     response_data = {'destinations': []} # Default empty
 
@@ -1588,15 +1756,11 @@ def get_valid_destinations(request, slug):
         player = Player.objects.get(user=request.user, game=game)
 
         # --- Permission Check ---
-        # Basic check: Player owns the unit
         can_order = (unit.player == player)
-        # Advanced: Allow ordering if bought via bribe (requires tracking confirmed bribes)
-        # if not can_order and game.configuration.finances:
-        #     can_order = Expense.objects.filter(player=player, type=10, unit=unit, confirmed=True).exists() # Check confirmed 'Buy A/F'
 
         if not can_order:
              if logging: logging.warning("User {request.user} cannot order unit {unit_id}")
-             return JsonResponse(response_data)
+             return json_response(response_data)
 
         # --- Process Order Code ---
         destinations_list = []
@@ -1605,7 +1769,7 @@ def get_valid_destinations(request, slug):
             # 1. Check Preconditions
             if unit.siege_stage > 0: # Rule VII.B.4
                 if logging: logging.info("Unit {unit_id} cannot advance, siege_stage > 0")
-                return JsonResponse(response_data) # Cannot advance if besieging
+                return json_response(response_data) # Cannot advance if besieging
 
             # 2. Find Directly Adjacent Valid Destinations
             bordering_areas = unit.area.board_area.borders.all() # Get Area objects
@@ -1654,10 +1818,10 @@ def get_valid_destinations(request, slug):
             valid_types = []
             # 1. Check Preconditions
             if not unit.area.board_area.is_fortified: # Rule VII.B.7.a
-                 return JsonResponse(response_data)
+                 return json_response(response_data)
             # Rule VII.B.7.h: Besieged Garrison may not convert
             if unit.type == 'G' and Unit.objects.filter(area=unit.area, siege_stage__gt=0).exclude(id=unit.id).exists():
-                 return JsonResponse(response_data)
+                 return json_response(response_data)
 
             # 2. Determine Valid Conversion Types
             board_area = unit.area.board_area
@@ -1693,14 +1857,12 @@ def get_valid_destinations(request, slug):
 
     except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
         if logging: logging.error("Error in get_valid_destinations for game {slug}: {e}")
-        # Return default empty list on error, don't expose internal errors
         response_data = {'destinations': []}
-    except Exception as e: # Catch unexpected errors
+    except Exception as e:
          if logging: logging.error("Unexpected error in get_valid_destinations for game {slug}: {e}")
          response_data = {'destinations': []}
 
-
-    return JsonResponse(response_data)
+    return json_response(response_data)
 
 
 @login_required
@@ -1719,7 +1881,7 @@ def get_valid_support_destinations(request, slug):
         player = Player.objects.get(user=request.user, game=game)
 
         if unit.player != player: # Basic ownership check
-            return JsonResponse(response_data)
+            return json_response(response_data)
 
         supportable_target_areas = []
         # Rule VII.B.5.c: Garrison supports own province
@@ -1764,89 +1926,7 @@ def get_valid_support_destinations(request, slug):
          if logging: logging.error("Unexpected error in get_valid_support_destinations for game {slug}: {e}")
          response_data = {'destinations': []}
 
-    return JsonResponse(response_data)
-
-
-@login_required
-def get_supportable_units(request, slug):
-    """
-    AJAX view: Given a SUPPORTING unit and a TARGET AREA, find units
-    in that area (or potentially moving to it) that can be supported.
-    """
-    game = get_object_or_404(Game, slug=slug)
-    unit_id = request.GET.get('unit_id') # The SUPPORTING unit
-    target_area_id = request.GET.get('target_area_id') # The AREA being supported INTO
-
-    response_data = {'units': []}
-
-    try:
-        unit = Unit.objects.select_related('area__board_area', 'player').get(id=unit_id, player__game=game)
-        target_area = GameArea.objects.select_related('board_area').get(id=target_area_id, game=game)
-        player = Player.objects.get(user=request.user, game=game)
-
-        if unit.player != player:
-            return JsonResponse(response_data)
-
-        # --- Check if supporter can actually support into target_area ---
-        can_support_target = False
-        if unit.type == 'G':
-             can_support_target = (unit.area == target_area) # Rule VII.B.5.c
-        else:
-             # Rule VII.B.5.a: Must be able to advance into target_area (no transport)
-             can_support_target = unit.area.board_area.is_adjacent(target_area.board_area,
-                                                                    fleet=(unit.type == 'F'),
-                                                                    source_unit_coast=unit.coast)
-             # Check type compatibility
-             if unit.type == 'A' and target_area.board_area.is_sea: can_support_target = False
-             if unit.type == 'F' and not target_area.board_area.is_sea and not target_area.board_area.is_coast: can_support_target = False
-
-        if not can_support_target:
-             if logging: logging.warning("Unit {unit_id} cannot support into area {target_area_id}")
-             return JsonResponse(response_data)
-
-        # --- Find units to be supported in the target area ---
-        # 1. Units HOLDING in the target area
-        holding_units = Unit.objects.filter(
-            player__game=game, area=target_area
-        ).exclude(id=unit.id).select_related('area__board_area', 'player__country') # Exclude self
-
-        # 2. Units attempting to MOVE INTO the target area
-        # Find areas adjacent to target_area from which a unit could move in
-        possible_origins = GameArea.objects.filter(
-             game=game, board_area__borders=target_area.board_area
-        ).select_related('board_area')
-
-        moving_units_qs = Unit.objects.none()
-        for origin_ga in possible_origins:
-             # Check if units in origin_ga could move to target_area
-             units_in_origin = Unit.objects.filter(player__game=game, area=origin_ga)
-             for u_origin in units_in_origin:
-                  if u_origin.area.board_area.is_adjacent(target_area.board_area,
-                                                          fleet=(u_origin.type == 'F'),
-                                                          source_unit_coast=u_origin.coast):
-                       # Check if this unit has an order to move to target_area
-                       # This requires looking at unconfirmed orders, potentially complex.
-                       # Simplification: List all units that *could* move into the target area.
-                       # The user selects the intended supported unit/move in the form.
-                       moving_units_qs |= Q(id=u_origin.id)
-
-
-        # Combine holding and potentially moving units
-        supportable_units = (holding_units | Unit.objects.filter(moving_units_qs)) \
-                            .distinct().order_by('player__country__name', 'type', 'area__board_area__code')
-
-        # Format response
-        units_data = [{'id': u.id, 'description': u.supportable_order()} for u in supportable_units]
-        response_data['units'] = units_data
-
-    except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
-        if logging: logging.error("Error in get_supportable_units for game {slug}: {e}")
-        response_data = {'units': []}
-    except Exception as e:
-         if logging: logging.error("Unexpected error in get_supportable_units for game {slug}: {e}")
-         response_data = {'units': []}
-
-    return JsonResponse(response_data)
+    return json_response(response_data)
 
 
 @login_required
@@ -1872,7 +1952,7 @@ def get_area_info(request, slug):
          if logging: logging.error("Unexpected error in get_area_info for game {slug}, area {area_id}: {e}")
          pass
 
-    return JsonResponse(area_info)
+    return json_response(area_info)
 
 def get_valid_adjacent_areas(game, area, for_fleet=False):
 
@@ -2001,55 +2081,59 @@ def get_supportable_units_query(game, unit, valid_areas=None):
 
 @login_required
 def get_supportable_units(request, slug):
-    # ... (Needs careful review based on rules VII.B.5) ...
+    """
+    AJAX view: Given a SUPPORTING unit and a TARGET AREA, find units
+    in that area (or potentially moving to it) that can be supported.
+    """
     game = get_object_or_404(Game, slug=slug)
     unit_id = request.GET.get('unit_id')
-    # for_convoy = request.GET.get('for_convoy') == 'true' # Handled separately?
 
     response_data = {'units': []}
 
     try:
-        unit = Unit.objects.get(id=unit_id, player__game=game)
+        unit = Unit.objects.select_related('area__board_area', 'player').get(id=unit_id, player__game=game)
         player = Player.objects.get(user=request.user, game=game)
 
         if unit.player != player:
-            return JsonResponse(response_data)
+            return json_response(response_data)
 
-        # Find units that this unit *could* potentially support
-        # Rule VII.B.5.a: Support into adjacent areas unit could move to.
+        # Find areas the unit can support into (Rule VII.B.5.a)
         supportable_target_areas_q = Q()
         if unit.type == 'G':
-             supportable_target_areas_q = Q(id=unit.area.id)
+             supportable_target_areas_q = Q(id=unit.area.id) # Garrison supports own area
         else:
             possible_advances = unit.area.board_area.borders.all()
             valid_area_ids = [unit.area.id] # Can always support hold in own area
             for area_board in possible_advances:
                  try:
                     game_area = GameArea.objects.get(game=game, board_area=area_board)
-                    if unit.area.board_area.is_adjacent(area_board, fleet=(unit.type == 'F')) and \
-                       game_area.board_area.accepts_type(unit.type):
-                        valid_area_ids.append(game_area.id)
+                    # Check direct adjacency (no convoy allowed for support reach)
+                    if unit.area.board_area.is_adjacent(area_board,
+                                                        fleet=(unit.type == 'F'),
+                                                        source_unit_coast=unit.coast):
+                         # Check unit type compatibility with target area
+                         if unit.type == 'A' and game_area.board_area.is_sea: continue
+                         if unit.type == 'F' and not game_area.board_area.is_sea and not game_area.board_area.is_coast: continue
+                         valid_area_ids.append(game_area.id)
                  except GameArea.DoesNotExist:
                      continue
             supportable_target_areas_q = Q(id__in=valid_area_ids)
 
-        # Find units located in those areas (or potentially moving into them)
-        # This is complex as it depends on the *other* units' orders which aren't known yet.
-        # Simplification: List units currently *in* the areas the supporting unit can reach.
+        # Find units located in those areas
         target_units = Unit.objects.filter(
             player__game=game,
-            area__in=GameArea.objects.filter(supportable_target_areas_q)
-        ).exclude(id=unit.id).select_related('area', 'area__board_area', 'player') # Exclude self
+            area_id__in=GameArea.objects.filter(supportable_target_areas_q).values_list('id', flat=True) # Filter by area IDs
+        ).exclude(id=unit.id).select_related('area__board_area', 'player__country') # Exclude self, optimize
 
-        # Filter out units that cannot be supported based on type? (e.g. Army supporting Fleet?)
-        # Rule doesn't explicitly forbid this, only that supporter must be able to reach target area.
-
+        # Format response
         units_data = [{'id': u.id, 'description': u.supportable_order()} for u in target_units]
         response_data['units'] = units_data
 
-    except (Unit.DoesNotExist, Player.DoesNotExist):
-        pass
+    except (Unit.DoesNotExist, Player.DoesNotExist, GameArea.DoesNotExist) as e:
+        if logging: logging.error("Error in get_supportable_units for game {slug}: {e}")
+        response_data = {'units': []}
+    except Exception as e:
+         if logging: logging.error("Unexpected error in get_supportable_units for game {slug}: {e}")
+         response_data = {'units': []}
 
-    return JsonResponse(response_data)
-    # return HttpResponse(json.dumps(response_data, ensure_ascii=False), content_type='application/json')
-
+    return json_response(response_data)

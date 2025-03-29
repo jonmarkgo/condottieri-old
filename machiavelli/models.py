@@ -89,7 +89,13 @@ SEASONS = ((1, _('Spring')),
            (2, _('Summer')),
            (3, _('Fall')),
            )
-
+VICTORY_TYPES = (
+    ('basic', _('Basic (12 Cities, 6 Conquered)')),
+    ('advanced_18', _('Advanced (18 Cities, 1 Conquered Home - <=4 Players)')),
+    ('advanced_15', _('Advanced (15 Cities, 1 Conquered Home - >=5 Players)')),
+    ('ultimate', _('Ultimate (23 Cities, 2 Conquered Homes)')),
+    # ('custom', _('Custom (Set Manually)')), # Optional: Add if you implement custom logic
+)
 # --- Phase Definitions ---
 
 # --- Phase Definitions ---
@@ -287,7 +293,7 @@ class Area(models.Model):
     """ This class describes **only** the area features in the board. The game is
 actually played in GameArea objects.
     """
-    name = AutoTranslateField(max_length=20)
+    name = AutoTranslateField(max_length=30)
     code = models.CharField(max_length=5, unique=True)
     is_sea = models.BooleanField(default=False)
     is_coast = models.BooleanField(default=False)
